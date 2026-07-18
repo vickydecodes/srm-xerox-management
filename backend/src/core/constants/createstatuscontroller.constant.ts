@@ -1,4 +1,4 @@
-import sendResponse from '@core/constants/responseWrapper.js';
+import sendResponse from '@core/constants/responsewrapper.constant.js';
 import { Response, Request } from 'express';
 
 export const createStatusControllers = (service: any, entityName: string) => {
