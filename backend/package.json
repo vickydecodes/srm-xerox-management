@@ -4,7 +4,7 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "check": "tsx src/tests/dev.check.ts",
+    "check": "tsx src/scripts/bootloader.ts",
     "dev": "npm run check && tsx watch src/server.ts",
     "build": "tsc --incremental false",
     "start": "node dist/server.js"
