@@ -1,0 +1,11 @@
+{
+  "entry": ["src/app.ts", "src/api/routes/*.route.ts", "src/api/controllers/*.controller.ts"],
+  "project": ["src/**/*.ts"],
+  "ignore": ["src/lib/**", "src/database/migrations/**", "src/tests/**"],
+  "ignoreExportsUsedInFile": true,
+  "ignoreDependencies": [
+    "@types/exceljs", "@types/hpp", "@types/ioredis", "@types/mongoose",
+    "@types/axios", "@types/chalk", "@types/express-rate-limit",
+    "@types/glob", "@types/helmet", "tsconfig-paths", "typedoc", "typedoc-plugin-markdown"
+  ]
+}
