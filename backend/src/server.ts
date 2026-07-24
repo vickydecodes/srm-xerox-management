@@ -5,6 +5,6 @@ import app from './app.ts';
 
 app.listen(ENV.PORT as number, '0.0.0.0', () => {
   console.log(
-    `✅SRM Xerox Server running on port ${ENV.PORT} (${ENV.NODE_ENV}) — REST + Socket.IO`
+    `✅SRM Xerox Server running on port ${ENV.PORT} (${ENV.NODE_ENV}) — REST`
   );
 });
