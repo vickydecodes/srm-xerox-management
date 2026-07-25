@@ -1,8 +1,8 @@
 import { enhanceDoc } from '@core/constants/enhancedoc.constant.ts';
-import inventoryProductModel, { IInventoryProduct } from '@db/models/inventory-product.model.ts';
+import ProductModel, { IProduct } from '@db/models/product.model.ts';
 
 
 
-export const enhanceProduct = (product: IInventoryProduct) => {
-  return enhanceDoc(inventoryProductModel, product, []);
+export const enhanceProduct = (product: IProduct) => {
+  return enhanceDoc(ProductModel, product, []);
 }
