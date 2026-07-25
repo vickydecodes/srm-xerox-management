@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const inventoryProductSchema = z.object({
+export const productSchema = z.object({
   name: z.string().trim().min(2, 'Product name is too short'),
   type: z.enum(['external', 'internal']),
   description: z.string().trim().optional(),
