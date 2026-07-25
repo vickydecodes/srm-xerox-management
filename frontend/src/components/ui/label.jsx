@@ -1,10 +1,12 @@
 import * as React from "react"
-import { Label as LabelPrimitive } from "radix-ui"
+import * as LabelPrimitive from "@radix-ui/react-label"
 
 import { cn } from "@/lib/utils"
 
 function Label({
   className,
+  need = false,
+  children,
   ...props
 }) {
   return (
@@ -14,8 +16,19 @@ function Label({
         "flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
         className
       )}
-      {...props} />
-  );
+      {...props}
+    >
+      {children}
+      {need && (
+        <span
+          aria-hidden
+          className="text-destructive font-medium"
+        >
+          *
+        </span>
+      )}
+    </LabelPrimitive.Root>
+  )
 }
 
 export { Label }
