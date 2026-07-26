@@ -4,7 +4,7 @@ import { extractBranch } from "./inventory-product.constants.ts";
 import {
     CreateInventoryProductPayload,
     UpdateInventoryProductPayload,
-} from "@typings/inventory.types.ts";
+} from "@typings/inventory-product.types.ts";
 import { createStatusControllers } from "@core/constants/createstatuscontroller.constant.ts";
 import sendResponse from "@core/constants/responsewrapper.constant.ts";
 import { buildQuery } from "@core/constants/querybuilder.constant.ts";
