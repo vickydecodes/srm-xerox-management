@@ -3,7 +3,7 @@ import { dynamicFilter } from '@core/constants/dynamicfilter.constant.ts';
 import {
     CreateInventoryProductPayload,
     UpdateInventoryProductPayload,
-} from "@typings/inventory.types.ts";
+} from "@typings/inventory-product.types.ts";
 import { Role } from "@typings/auth.types.ts";
 import {
     UPDATE_OPTIONS,
