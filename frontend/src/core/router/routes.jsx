@@ -1,4 +1,5 @@
 import Department from "@/pages/department/department";
+import Service from "@/pages/service/service";
 
 // app.routes.jsx
 export const appRoutes = [
@@ -16,5 +17,12 @@ export const appRoutes = [
         title: 'First Page',
         description: 'This is the first page',
         element: <Department/>,
+    },
+    {
+        path: '/services',
+        label: 'Services',
+        title: 'Services',
+        description: 'Manage services offered',
+        element: <Service/>,
     },
 ];

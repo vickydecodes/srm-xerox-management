@@ -2,7 +2,7 @@
 
 import { createContext, useContext } from 'react';
 import { useDepartmentModule } from '@/modules/department';
-
+import { useServiceModule } from '@/modules/service';   
 
 const ApiContext = createContext();
 
@@ -19,11 +19,15 @@ export const ApiProvider = ({ children }) => {
 
 
     const departmentModule = useDepartmentModule()
-
+    const serviceModule = useServiceModule(exported);
 
     Object.assign(exported, {
-        departments: departmentModule
+        departments: departmentModule, services: serviceModule
     });
+
+    
+
+
 
     return <ApiContext.Provider value={{ ...exported }}>{children}</ApiContext.Provider>;
 };
