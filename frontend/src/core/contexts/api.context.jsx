@@ -1,6 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
 
 import { createContext, useContext } from 'react';
+import { useDepartmentModule } from '@/modules/department';
+
 
 const ApiContext = createContext();
 
@@ -16,8 +18,11 @@ export const ApiProvider = ({ children }) => {
     const exported = {};
 
 
-    Object.assign(exported, {
+    const departmentModule = useDepartmentModule()
 
+
+    Object.assign(exported, {
+        departments: departmentModule
     });
 
     return <ApiContext.Provider value={{ ...exported }}>{children}</ApiContext.Provider>;

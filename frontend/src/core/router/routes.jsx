@@ -1,7 +1,9 @@
+import Department from "@/pages/department/department";
+
 // app.routes.jsx
 export const appRoutes = [
     {
-        path: '/',
+        path: '/first-page',
         label: 'Home page',
         title: 'Home page',
         description: 'Home page is the home page',
@@ -9,10 +11,10 @@ export const appRoutes = [
     }
     ,
     {
-        path: '/first-page',
+        path: '/',
         label: 'First Page',
         title: 'First Page',
         description: 'This is the first page',
-        element: <div>first page</div>,
+        element: <Department/>,
     },
 ];
