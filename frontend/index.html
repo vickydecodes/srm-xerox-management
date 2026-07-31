@@ -1,11 +1,114 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
+
+    <!-- ===================================== -->
+    <!-- 🔥 BASIC SEO -->
+    <!-- ===================================== -->
+    <title>SRM Xerox | Print & Shop Management System</title>
+
+    <meta
+      name="description"
+      content="SRM Xerox Management System helps manage print orders, billing, shop staff, and inventory across xerox and print shops seamlessly."
+    />
+    <meta
+      name="keywords"
+      content="SRM Xerox, print shop management, xerox billing, shop CRM, print order management, inventory portal"
+    />
+    <meta name="author" content="Cookie Inc" />
+    <meta name="theme-color" content="#0f172a" />
+
+    <!-- ===================================== -->
+    <!-- 🔥 FAVICONS -->
+    <!-- ===================================== -->
+    <link rel="icon" href="/logo.png" />
+    <link rel="apple-touch-icon" href="/logo.png" />
+
+    <!-- ===================================== -->
+    <!-- 🔥 OPEN GRAPH (For WhatsApp, FB, LinkedIn) -->
+    <!-- ===================================== -->
+    <meta property="og:title" content="SRM Xerox Management System" />
+    <meta
+      property="og:description"
+      content="A modern print shop management system for handling orders, billing, staff, and inventory efficiently."
+    />
+    <meta property="og:image" content="/logo.png" />
+    <meta property="og:url" content="https://srmxerox.in/" />
+    <meta property="og:type" content="website" />
+
+    <!-- ===================================== -->
+    <!-- 🔥 TWITTER CARD -->
+    <!-- ===================================== -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="SRM Xerox Management System" />
+    <meta
+      name="twitter:description"
+      content="Smart print shop management system for SRM Xerox."
+    />
+    <meta name="twitter:image" content="/assets/logo.png" />
+
+    <!-- ===================================== -->
+    <!-- 🔥 CANONICAL URLs -->
+    <!-- ===================================== -->
+    <link rel="canonical" href="https://srmxerox.in/" />
+
+    <!-- ===================================== -->
+    <!-- 🔥 STRUCTURED DATA — ORGANIZATION -->
+    <!-- ===================================== -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "SRM Xerox",
+        "url": "https://srmxerox.in",
+        "logo": "https://srmxerox.in/assets/logo.png",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Tamil Nadu, India",
+          "addressCountry": "IN"
+        },
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "contactType": "Customer Support",
+          "url": "https://srmxerox.in/contact"
+        }
+      }
+    </script>
+
+    <!-- ===================================== -->
+    <!-- 🔥 STRUCTURED DATA — BREADCRUMBS -->
+    <!-- Default breadcrumbs for Login + Orders -->
+    <!-- ===================================== -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Login",
+            "item": "https://srmxerox.in/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Orders",
+            "item": "https://srmxerox.in/orders"
+          }
+        ]
+      }
+    </script>
+
+    <!-- ===================================== -->
+    <!-- 🔥 PWA SUPPORT -->
+    <!-- ===================================== -->
+    <!-- <link rel="manifest" href="/manifest.webmanifest" /> -->
+
   </head>
+
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
