@@ -1,13 +1,14 @@
 import Department from "@/pages/department/department";
 import Product from "@/pages/product/product";
+import Bill from "@/pages/bill/bill";
 
 // app.routes.jsx
 export const appRoutes = [
     {
         path: '/Product',
-        label: 'Home page',
-        title: 'Home page',
-        description: 'Home page is the home page',
+        label: 'Product page',
+        title: 'Product page',
+        description: 'Product page is the product page',
         element: <Product/>,
     }
     ,
@@ -17,5 +18,12 @@ export const appRoutes = [
         title: 'First Page',
         description: 'This is the first page',
         element: <Department/>,
+    },
+    {
+        path: '/bill',
+        label: 'Bill Page',
+        title: 'Bill Page',
+        description: 'This is the bill page',
+        element: <Bill/>,
     },
 ];
