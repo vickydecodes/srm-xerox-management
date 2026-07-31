@@ -1,13 +1,14 @@
 import Department from "@/pages/department/department";
+import Product from "@/pages/product/product";
 
 // app.routes.jsx
 export const appRoutes = [
     {
-        path: '/first-page',
+        path: '/Product',
         label: 'Home page',
         title: 'Home page',
         description: 'Home page is the home page',
-        element: <div>Home page</div>
+        element: <Product/>,
     }
     ,
     {
