@@ -6,7 +6,6 @@ import { xss } from 'express-xss-sanitizer';
 import mongoSanitize from 'express-mongo-sanitize';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
-import { unallocatedRouteMiddleware } from '@core/middlewares/unallocated.middleware.ts';
 
 export const applySecurityMiddlewares = (app: Express) => {
   console.log('🛡️ Applying security middlewares...');
