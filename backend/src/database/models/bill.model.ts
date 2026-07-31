@@ -35,6 +35,7 @@ export interface IBill extends Document {
   tax: number;
   total: number;
   status: 'UNPAID' | 'PAID' | 'CANCELLED';
+  createdBy: Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -47,6 +48,7 @@ const BillSchema = new Schema<IBill>(
     discount: { type: Number, default: 0, min: 0 },
     tax: { type: Number, default: 0, min: 0 },
     total: { type: Number, min: 0 },
+    createdBy: { type: Schema.Types.ObjectId, refPath: 'User', required: true },
     status: { type: String, enum: ['UNPAID', 'PAID', 'CANCELLED'], default: 'UNPAID' },
   },
   { timestamps: true }
