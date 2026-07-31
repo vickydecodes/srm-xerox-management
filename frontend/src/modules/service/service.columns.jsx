@@ -35,7 +35,7 @@ export const useServiceColumns = (services) => {
         const service = row.original;
         return (
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => services.openCreate(service)}>
+            <Button variant="outline" onClick={() => services.openEdit(service)}>
               Edit
             </Button>
             <Button variant="destructive" onClick={() => services.remove(service.id)}>

@@ -5,22 +5,44 @@ import { useUI } from "@/core/contexts/ui.context";
 
 export const useServiceModule = (exported) => {
   const { openModal } = useUI();
-  const store = useServiceStore();
-  const { set, add, update, remove, setCurrent } = store;
+
+  // Subscribe reactively — this is what actually triggers re-renders on change
+  const list = useServiceStore((s) => s.list);
+  const loading = useServiceStore((s) => s.loading);
+  const pagination = useServiceStore((s) => s.pagination);
+  const current = useServiceStore((s) => s.current);
+
+  const { set, add, update, remove, setCurrent } = useServiceStore();
 
   const openCreate = () => {
-    console.log('openCreate called');
-    return openModal(modals.create, { submitFn: (data) => add(data), exported })
+    return openModal(modals.create, {
+      submitFn: (formData) =>
+        add({
+          id: Date.now(),       // temporary client-side id until real API assigns _id
+          code: `TEMP-${Date.now().toString().slice(-4)}`, // placeholder until backend generates real code
+          ...formData,
+        }),
+      exported,
+    })
   }
 
   const openEdit = (service) => {
     setCurrent(service);
     return openModal(modals.create, {
-      submitFn: (data) => update(service.id, data),
+      submitFn: (formData) => update(service.id, formData),
       exported,
       data: service,
     })
   }
+
+  const openDelete = (service) => {
+  return openModal(modals.delete, {
+    id: service.id,
+    name: service.name,
+    submitFn: () => remove(service.id),
+    exported,
+  })
+}
 
   const data = [
     { id: 1, code: 'S-001', name: 'AC Repair', unit: 'unit', price: 500, active: true, materials: [] },
@@ -32,18 +54,11 @@ export const useServiceModule = (exported) => {
   }
 
   return {
-    get state() {
-      return useServiceStore.getState().list;
-    },
-    get loading() {
-      return useServiceStore.getState().loading;
-    },
-    get pagination() {
-      return useServiceStore.getState().pagination
-    },
-    get current() {
-      return useServiceStore.getState().current;
-    },
+    
+    state: list,
+    loading,
+    pagination,
+    current,
     set,
     add,
     update,
@@ -52,6 +67,7 @@ export const useServiceModule = (exported) => {
     useServiceColumns,
     openCreate,
     openEdit,
+    openDelete,   
     data,
     load
   }

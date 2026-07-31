@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 
-export default function ServiceForm({ form }) {
+export default function ServiceForm({ form, isEdit = false }) {
   const fields = ["name", "description", "unit", "price"];
 
   const { fields: materialFields, append, remove } = useFieldArray({
@@ -22,6 +22,15 @@ export default function ServiceForm({ form }) {
 
   return (
     <>
+      {isEdit && (
+        <FormItem>
+          <FormLabel>Code</FormLabel>
+          <FormControl>
+            <Input value={form.getValues("code") ?? ""} disabled readOnly />
+          </FormControl>
+        </FormItem>
+      )}
+
       {fields.map((field) => (
         <FormField
           key={field}
