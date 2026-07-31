@@ -2,6 +2,7 @@
 
 import { createContext, useContext } from 'react';
 import { useDepartmentModule } from '@/modules/department';
+import { useProductModule } from '@/modules/products';
 
 
 const ApiContext = createContext();
@@ -19,10 +20,12 @@ export const ApiProvider = ({ children }) => {
 
 
     const departmentModule = useDepartmentModule()
+    const productModule = useProductModule()
 
 
     Object.assign(exported, {
-        departments: departmentModule
+        departments: departmentModule,
+        products: productModule
     });
 
     return <ApiContext.Provider value={{ ...exported }}>{children}</ApiContext.Provider>;
