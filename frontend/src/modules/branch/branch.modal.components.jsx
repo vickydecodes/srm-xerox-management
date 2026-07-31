@@ -22,11 +22,44 @@ export const Create = ({ submitFn = () => {}, closeModal = () => {} } = {}) => {
     defaultValues: {
       code: "",
       name: "",
-      active: true, // NEW
+      active: true,
     },
   });
-}
 
+  const { run, loading, ErrorAlert, clearError } = useAsync(submitFn);
+
+  useClearError(form, clearError);
+
+  const onSubmit = useSubmit({
+    run,
+    form,
+    onSuccess: closeModal,
+  });
+
+  return (
+    <DialogContent className="w-xl">
+      <DialogHeader>
+        <DialogTitle>Create Branch</DialogTitle>
+        <DialogDescription>Enter details of the branch</DialogDescription>
+      </DialogHeader>
+
+      <Form {...form}>
+        <form className="grid gap-4 py-2" onSubmit={form.handleSubmit(onSubmit)}>
+          <BranchForm form={form} />
+          {ErrorAlert}
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button type="submit" loading={loading} loadingText="Saving the branch..">
+              Save
+            </Button>
+          </DialogFooter>
+        </form>
+      </Form>
+    </DialogContent>
+  );
+};
 
 export const Edit = ({ branch, submitFn = () => {}, closeModal = () => {} } = {}) => {
   const form = useForm({
@@ -34,7 +67,7 @@ export const Edit = ({ branch, submitFn = () => {}, closeModal = () => {} } = {}
     defaultValues: {
       code: branch?.code || "",
       name: branch?.name || "",
-      active: branch?.active ?? true, // NEW
+      active: branch?.active ?? true,
     },
   });
 
