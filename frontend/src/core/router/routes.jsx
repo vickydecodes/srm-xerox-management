@@ -1,6 +1,7 @@
 import Department from "@/pages/department/department";
 import Product from "@/pages/product/product";
 import Bill from "@/pages/bill/bill";
+import Branch from "@/pages/branch/branch";
 
 // app.routes.jsx
 export const appRoutes = [
@@ -25,5 +26,12 @@ export const appRoutes = [
         title: 'Bill Page',
         description: 'This is the bill page',
         element: <Bill/>,
+    },
+    {
+        path: '/branch',
+        label: 'Branch Page',
+        title: 'Branch Page',
+        description: 'This is the branch page',
+        element: <Branch/>,
     },
 ];
