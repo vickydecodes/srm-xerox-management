@@ -1,0 +1,1 @@
+export { useBillModule } from "./bill.module";
