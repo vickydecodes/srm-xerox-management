@@ -1,6 +1,7 @@
+// mongoerrorparser.constant.ts
 import { mongo, Error } from 'mongoose';
 const { MongoServerError } = mongo;
-const { ValidationError } = Error;
+const { ValidationError, CastError } = Error;
 
 export const parseMongoError = (err: any) => {
   if (err instanceof MongoServerError && err.code === 11000) {
@@ -8,6 +9,7 @@ export const parseMongoError = (err: any) => {
     return {
       message: `${key.charAt(0).toUpperCase() + key.slice(1)} already exists`,
       code: 'DUPLICATE_KEY',
+      status: 409,
       field: key,
     };
   }
@@ -17,11 +19,21 @@ export const parseMongoError = (err: any) => {
     return {
       message: errors.join(', '),
       code: 'VALIDATION_ERROR',
+      status: 400,
+    };
+  }
+
+  if (err instanceof CastError) {
+    return {
+      message: `Invalid value for field "${err.path}": ${err.value}`,
+      code: 'CAST_ERROR',
+      status: 400,
     };
   }
 
   return {
     message: err.message || 'Unknown error',
     code: 'UNKNOWN_ERROR',
+    status: 500,
   };
 };
