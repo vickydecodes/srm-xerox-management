@@ -9,10 +9,9 @@ export interface IUser extends Document {
   login_id: string;
   email: string;
   phone: string;
+  address?: string;
   password: string;
-
   role: 'super_admin' | 'branch_admin' | 'department_admin' | 'shop_admin' | 'staff';
-
   branch?: mongoose.Types.ObjectId;
 
   active: boolean;
