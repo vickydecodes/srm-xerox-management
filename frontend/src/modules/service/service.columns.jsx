@@ -38,7 +38,7 @@ export const useServiceColumns = (services) => {
             <Button variant="outline" onClick={() => services.openEdit(service)}>
               Edit
             </Button>
-            <Button variant="destructive" onClick={() => services.remove(service.id)}>
+            <Button variant="destructive" onClick={() => services.openDelete(service)}>
               Delete
             </Button>
           </div>

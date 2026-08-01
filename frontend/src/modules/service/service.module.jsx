@@ -1,60 +1,64 @@
+import { createCrud } from "@/core/factory/entity.crud";
 import { useServiceColumns } from "./service.columns";
 import { modals } from "./service.modals";
 import { useServiceStore } from "./service.store";
 import { useUI } from "@/core/contexts/ui.context";
+import { apiurls } from "@/core/api/api.urls";
+import { createEntityQueryActions } from "@/core/utils/entity.util";
 
 export const useServiceModule = (exported) => {
   const { openModal } = useUI();
 
-  // Subscribe reactively — this is what actually triggers re-renders on change
+  // Subscribe reactively — triggers re-renders on change
   const list = useServiceStore((s) => s.list);
   const loading = useServiceStore((s) => s.loading);
   const pagination = useServiceStore((s) => s.pagination);
   const current = useServiceStore((s) => s.current);
 
-  const { set, add, update, remove, setCurrent } = useServiceStore();
+  const store = useServiceStore();
+  const { set, add, update, remove, setCurrent, setQuery } = store;
+
+  const { services } = apiurls;
+
+  const crud = createCrud({
+    entity: 'Service',
+    urls: services,
+    store: store,
+    getRole: () => 'super_admin',
+  });
 
   const openCreate = () => {
     return openModal(modals.create, {
-      submitFn: (formData) =>
-        add({
-          id: Date.now(),       // temporary client-side id until real API assigns _id
-          code: `TEMP-${Date.now().toString().slice(-4)}`, // placeholder until backend generates real code
-          ...formData,
-        }),
+      submitFn: (formData) => crud.create(formData),
       exported,
-    })
-  }
+    });
+  };
 
   const openEdit = (service) => {
     setCurrent(service);
-    return openModal(modals.create, {
-      submitFn: (formData) => update(service.id, formData),
+    return openModal(modals.edit, {
+      service,
+      submitFn: (formData) => crud.edit(service.id, formData),
       exported,
-      data: service,
-    })
-  }
+    });
+  };
 
   const openDelete = (service) => {
-  return openModal(modals.delete, {
-    id: service.id,
-    name: service.name,
-    submitFn: () => remove(service.id),
-    exported,
-  })
-}
+    return openModal(modals.delete, {
+      id: service.id,
+      name: service.name,
+      onConfirm: (id) => crud.erase(id),
+      exported,
+    });
+  };
 
-  const data = [
-    { id: 1, code: 'S-001', name: 'AC Repair', unit: 'unit', price: 500, active: true, materials: [] },
-    { id: 2, code: 'S-002', name: 'Xerox Printing', unit: 'page', price: 2, active: true, materials: [] },
-  ]
-
-  const load = async () => {
-    await set(data)
-  }
+  const { fetch, reset, sortByColumn, presets } = createEntityQueryActions({
+    crud,
+    getQuery: () => useServiceStore.getState().query,
+    setQuery,
+  });
 
   return {
-    
     state: list,
     loading,
     pagination,
@@ -67,8 +71,11 @@ export const useServiceModule = (exported) => {
     useServiceColumns,
     openCreate,
     openEdit,
-    openDelete,   
-    data,
-    load
-  }
-}
+    openDelete,
+    crud,
+    fetch,
+    reset,
+    sortByColumn,
+    filters: presets,
+  };
+};
