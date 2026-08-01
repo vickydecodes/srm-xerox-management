@@ -55,6 +55,16 @@ const apiurls = {
         retrieve: { method: 'put', url: (id) => `${base_url}/bills/${id}/retrieve` },
         erase: { method: 'delete', url: (id) => `${base_url}/bills/${id}/erase` },
     },
+    branches: {
+    create: { method: 'post', url: () => `${base_url}/branches` },
+    getAll: { method: 'get', url: () => `${base_url}/branches` },
+    getOne: { method: 'get', url: (id) => `${base_url}/branches/${id}` },
+    edit: { method: 'put', url: (id) => `${base_url}/branches/${id}` },
+    delete: { method: 'delete', url: (id) => `${base_url}/branches/${id}` },
+    setActiveStatus: { method: 'patch', url: (id) => `${base_url}/branches/${id}/active-status` },
+    retrieve: { method: 'put', url: (id) => `${base_url}/branches/${id}/retrieve` },
+    erase: { method: 'delete', url: (id) => `${base_url}/branches/${id}/erase` },
+},
 };
 
 export { apiurls };

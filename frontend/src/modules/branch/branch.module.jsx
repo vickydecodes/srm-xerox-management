@@ -1,21 +1,32 @@
+import { createCrud } from "@/core/factory/entity.crud";
 import { useBranchColumns } from "./branch.coulmns";
 import { modals } from "./branch.modals";
 import { useBranchStore } from "./branch.store";
 import { useUI } from "@/core/contexts/ui.context";
+import { apiurls } from "@/core/api/api.urls";
+import { createEntityQueryActions } from "@/core/utils/entity.util";
 
 export const useBranchModule = (exported) => {
   const { openModal } = useUI();
   const store = useBranchStore();
-  const { set, add, update, remove, setCurrent } = store;
+  const { set, add, update, remove, setCurrent, setQuery } = store;
+  const { branches } = apiurls;
+
+  const crud = createCrud({
+    entity: 'Branch',
+    urls: branches,
+    store: store,
+    getRole: () => 'super_admin',
+  });
 
   const openCreate = () => {
-    return openModal(modals.create, { submitFn: (data) => add(data), exported });
+    return openModal(modals.create, { submitFn: (data) => crud.create(data), exported });
   };
 
   const openEdit = (branch) => {
     return openModal(modals.edit, {
       branch,
-      submitFn: (data) => update(branch.id, data),
+      submitFn: (data) => crud.edit(branch.id, data),
       exported,
     });
   };
@@ -24,19 +35,16 @@ export const useBranchModule = (exported) => {
     return openModal(modals.delete, {
       id,
       name,
-      onConfirm: (id) => remove(id),
+      onConfirm: (id) => crud.delete(id),
       exported,
     });
   };
 
-  const data = [
-  { id: 1, code: 'BR-001', name: 'FSH', active: true, createdAt: new Date().toISOString() },
-  { id: 2, code: 'BR-002', name: 'Easwari', active: true, createdAt: new Date().toISOString() },
-];
-
-  const load = async () => {
-    await set(data);
-  };
+  const { fetch, reset, sortByColumn, presets } = createEntityQueryActions({
+    crud,
+    getQuery: () => useBranchStore.getState().query,
+    setQuery,
+  });
 
   return {
     get state() {
@@ -60,7 +68,10 @@ export const useBranchModule = (exported) => {
     openCreate,
     openEdit,
     openDelete,
-    data,
-    load,
+    crud,
+    fetch,
+    reset,
+    sortByColumn,
+    filters: presets,
   };
 };

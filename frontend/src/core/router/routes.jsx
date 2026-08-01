@@ -16,9 +16,9 @@ export const appRoutes = [
     ,
     {
         path: '/',
-        label: 'First Page',
-        title: 'First Page',
-        description: 'This is the first page',
+        label: 'Department',
+        title: 'Department Page',
+        description: 'Manage departments and their details',
         element: <Department/>,
     },
     {
