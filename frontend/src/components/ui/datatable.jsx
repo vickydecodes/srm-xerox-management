@@ -180,8 +180,6 @@ export default function DataTable({
     return config;
   }, [filters, exports, customs]);
 
-
-
   return (
     <div className="w-full">
 

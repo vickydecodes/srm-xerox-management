@@ -11,8 +11,10 @@ export const createStatusControllers = (service: any, entityName: string) => {
     },
 
     setActiveStatus: async (req: Request, res: Response) => {
-      const { active } = req.body;
-
+      const { active } = req.body ?? {};
+      if (typeof active !== 'boolean') {
+        return sendResponse.badRequest(res, 'active must be a boolean');
+      }
       const item = await service.setActiveStatus(req.params.id, active);
       if (!item) return sendResponse.notFound(res, entityName);
 

@@ -131,14 +131,14 @@ const sendResponse = {
     }),
 
   error: (res: Response, model: string, err?: any) => {
-    const parsed = parseMongoError(err);
-    return res.status(500).json({
-      success: false,
-      message: parsed.message || `Error processing ${model}`,
-      code: parsed.code || 'UNKNOWN_ERROR',
-      timestamp: new Date().toISOString(),
-    });
-  },
+  const parsed = parseMongoError(err);
+  return res.status(parsed.status || 500).json({
+    success: false,
+    message: parsed.message || `Error processing ${model}`,
+    code: parsed.code || 'UNKNOWN_ERROR',
+    timestamp: new Date().toISOString(),
+  });
+},
 };
 
 export default sendResponse;

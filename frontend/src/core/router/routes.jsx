@@ -1,18 +1,46 @@
+import Department from "@/pages/department/department";
+import Service from "@/pages/service/service";
+import Product from "@/pages/product/product";
+import Bill from "@/pages/bill/bill";
+import Branch from "@/pages/branch/branch";
+
 // app.routes.jsx
 export const appRoutes = [
     {
-        path: '/',
-        label: 'Home page',
-        title: 'Home page',
-        description: 'Home page is the home page',
-        element: <div>Home page</div>
+        path: '/Product',
+        label: 'Product page',
+        title: 'Product page',
+        description: 'Product page is the product page',
+        element: <Product/>,
     }
     ,
     {
-        path: '/first-page',
+        path: '/',
         label: 'First Page',
         title: 'First Page',
         description: 'This is the first page',
-        element: <div>first page</div>,
+        element: <Department/>,
+    },
+    {
+        path: '/services',
+        label: 'Services',
+        title: 'Services',
+        description: 'Manage services offered',
+        element: <Service/>,
+    },
+  {
+      
+        path: '/bill',
+        label: 'Bill Page',
+        title: 'Bill Page',
+        description: 'This is the bill page',
+        element: <Bill/>,
+    },
+    {
+        path: '/branch',
+        label: 'Branch Page',
+        title: 'Branch Page',
+        description: 'This is the branch page',
+        element: <Branch/>,
     },
 ];
