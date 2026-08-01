@@ -9,9 +9,6 @@ import { camelToTitle } from '../utils/helper.utils';
 
 export const createCrud = ({ entity, urls, store, getRole }) => {
   const crud = {};
-
-
-
   const defaultMessages = {
     create: 'created successfully',
     edit: 'updated successfully',
@@ -21,12 +18,12 @@ export const createCrud = ({ entity, urls, store, getRole }) => {
   };
 
   const DOWNLOAD_KEYS = ['download', 'exportCsv', 'exportXlsx', 'exportPdf', 'exportMarksheetCsv'];
-  const SET_KEYS = [];
-  const ADD_KEYS = [];
-  const UPDATE_KEYS = [];
-  const DELETE_KEYS = [];
-  const RETRIEVE_KEYS = [];
-  const ERASE_KEYS = [];
+  const SET_KEYS = ['getAll'];
+  const ADD_KEYS = ['create'];
+  const UPDATE_KEYS = ['edit'];
+  const DELETE_KEYS = ['delete'];
+  const RETRIEVE_KEYS = ['retrieve'];
+  const ERASE_KEYS = ['erase'];
 
   Object.entries(urls).forEach(([key, config]) => {
     const { method, url } = config;

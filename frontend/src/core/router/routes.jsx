@@ -7,7 +7,7 @@ import Branch from "@/pages/branch/branch";
 // app.routes.jsx
 export const appRoutes = [
     {
-        path: '/Product',
+        path: '/product',
         label: 'Product page',
         title: 'Product page',
         description: 'Product page is the product page',

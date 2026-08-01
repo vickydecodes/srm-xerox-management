@@ -75,7 +75,7 @@ export const useProductColumns = (products) => {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 variant="destructive"
-                onClick={() => products.openDelete(product.id, product.name)}
+                onClick={() => products.openDelete(product._id, product.name)}
               >
                 Delete
               </DropdownMenuItem>
