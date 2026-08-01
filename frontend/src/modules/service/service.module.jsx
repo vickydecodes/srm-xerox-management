@@ -35,13 +35,13 @@ export const useServiceModule = (exported) => {
   };
 
   const openEdit = (service) => {
-    setCurrent(service);
-    return openModal(modals.edit, {
-      service,
-      submitFn: (formData) => crud.edit(service.id, formData),
-      exported,
-    });
-  };
+  setCurrent(service);
+  return openModal(modals.edit, {
+    service,
+    submitFn: (formData) => crud.edit(service.id, formData),
+    exported,
+  });
+};
 
   const openDelete = (service) => {
     return openModal(modals.delete, {
