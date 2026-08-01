@@ -4,6 +4,7 @@ import { createContext, useContext } from 'react';
 import { useDepartmentModule } from '@/modules/department';
 import { useProductModule } from '@/modules/products';
 import { useBillModule } from '@/modules/bill';
+import { useBranchModule } from '@/modules/branch';
 
 
 const ApiContext = createContext();
@@ -23,12 +24,14 @@ export const ApiProvider = ({ children }) => {
     const departmentModule = useDepartmentModule()
     const productModule = useProductModule()
     const billModule = useBillModule()
+    const branchModule = useBranchModule()
 
 
     Object.assign(exported, {
         departments: departmentModule,
         products: productModule,
-        bills: billModule
+        bills: billModule,
+        branches: branchModule
     });
 
     return <ApiContext.Provider value={{ ...exported }}>{children}</ApiContext.Provider>;
