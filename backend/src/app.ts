@@ -7,6 +7,8 @@ import { maintenanceMode } from '@core/middlewares/maintenance.middleware.js';
 import { loadRoutes } from './lib/routeloader.ts';
 import { tracer } from '@core/middlewares/tracer.middleware.ts';
 import { unallocatedHandler } from '@core/middlewares/unallocated.middleware.ts';
+import '@db/models/branch.model.ts'; // ensures Branch schema is registered before any populate() calls
+
 const app: Express = express();
 
 app.get('/', (req: Request, res: Response) => {

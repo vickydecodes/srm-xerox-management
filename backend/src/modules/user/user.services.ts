@@ -15,6 +15,7 @@ import {
 import { enhanceUser } from './user.util.ts';
 import { userFilterConfig } from './user.filterconfig.ts';
 
+
 export const createUser = async (data: CreateUserPayload) => {
   const user = await new User(data).save();
   return enhanceUser(user);
