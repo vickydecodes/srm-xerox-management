@@ -38,7 +38,7 @@ export const Create = ({ submitFn = () => {}, closeModal = () => {}, data } = {}
 
       <Form {...form}>
         <form className="grid gap-4 py-2" onSubmit={form.handleSubmit(onSubmit)}>
-          <DepartmentForm form={form} isEdit={!!data} />
+          <DepartmentForm form={form} isEdit={data} />
           {ErrorAlert}
           <DialogFooter>
             <DialogClose asChild>

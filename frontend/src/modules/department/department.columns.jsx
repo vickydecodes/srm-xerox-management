@@ -1,4 +1,12 @@
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { MoreHorizontal } from "lucide-react"
 import { Hint } from "@/core/utils/tooltip.util"
 
 export const useDepartmentColumns = (departments) => {
@@ -19,14 +27,25 @@ export const useDepartmentColumns = (departments) => {
       cell: ({ row }) => {
         const dept = row.original;
         return (
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => departments.openEdit(dept)}>
-              Edit
-            </Button>
-            <Button variant="destructive" onClick={() => departments.openDelete(dept)}>
-              Delete
-            </Button>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="size-8">
+                <MoreHorizontal className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => departments.openEdit(dept)}>
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => departments.openDelete(dept)}
+              >
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )
       }
     }

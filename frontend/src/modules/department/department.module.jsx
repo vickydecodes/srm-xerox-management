@@ -1,50 +1,61 @@
+import { createCrud } from "@/core/factory/entity.crud";
 import { useDepartmentColumns } from "./department.columns";
 import { modals } from "./department.modals";
 import { useDepartmentStore } from "./department.store";
 import { useUI } from "@/core/contexts/ui.context";
-
+import { apiurls } from "@/core/api/api.urls";
+import { createEntityQueryActions } from "@/core/utils/entity.util";
 
 export const useDepartmentModule = (exported) => {
   const { openModal } = useUI();
 
-  // Subscribe reactively so components re-render on store changes
   const list = useDepartmentStore((s) => s.list);
   const loading = useDepartmentStore((s) => s.loading);
   const pagination = useDepartmentStore((s) => s.pagination);
   const current = useDepartmentStore((s) => s.current);
 
-  const { set, add, update, remove, setCurrent } = useDepartmentStore();
+  const store = useDepartmentStore();
+  const { set, add, update, remove, setCurrent, setQuery } = store;
+
+  const { departments } = apiurls;
+
+  const crud = createCrud({
+    entity: 'Department',
+    urls: departments,
+    store: store,
+    getRole: () => 'super_admin',
+  });
 
   const openCreate = () => {
-    return openModal(modals.create, { submitFn: (data) => add(data), exported })
-  }
+    return openModal(modals.create, {
+      submitFn: (data) => crud.create(data),
+      exported,
+    });
+  };
 
   const openEdit = (dept) => {
     setCurrent(dept);
     return openModal(modals.create, {
-      submitFn: (formData) => update(dept.id, formData),
+      submitFn: (formData) => crud.edit(dept.id, formData),
       exported,
       data: dept,
-    })
-  }
+    });
+  };
 
   const openDelete = (dept) => {
     return openModal(modals.delete, {
       id: dept.id,
       name: dept.name,
-      submitFn: () => remove(dept.id),
+      submitFn: (id) => crud.delete(id),
       exported,
-    })
-  }
+    });
+  };
 
-  const data = [
-    { id: 1, name: 'rajkaran' },
-    { id: 2, name: 'ajay vikram' },
-  ]
-
-  const load = async () => {
-    await set(data)
-  }
+  const { fetch, reset, sortByColumn, presets } = createEntityQueryActions({
+    crud,
+    getQuery: () => useDepartmentStore.getState().query,
+    setQuery,
+  });
 
   return {
     state: list,
@@ -60,7 +71,10 @@ export const useDepartmentModule = (exported) => {
     openCreate,
     openEdit,
     openDelete,
-    data,
-    load
-  }
-}
+    crud,
+    fetch,
+    reset,
+    sortByColumn,
+    filters: presets,
+  };
+};
