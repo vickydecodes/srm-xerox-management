@@ -1,4 +1,5 @@
 import Department from "@/pages/department/department";
+import Service from "@/pages/service/service";
 import Product from "@/pages/product/product";
 import Bill from "@/pages/bill/bill";
 import Branch from "@/pages/branch/branch";
@@ -21,6 +22,14 @@ export const appRoutes = [
         element: <Department/>,
     },
     {
+        path: '/services',
+        label: 'Services',
+        title: 'Services',
+        description: 'Manage services offered',
+        element: <Service/>,
+    },
+  {
+      
         path: '/bill',
         label: 'Bill Page',
         title: 'Bill Page',

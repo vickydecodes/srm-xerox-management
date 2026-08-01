@@ -1,0 +1,1 @@
+export { useServiceModule } from "./service.module";
