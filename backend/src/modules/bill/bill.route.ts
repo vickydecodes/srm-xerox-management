@@ -1,0 +1,34 @@
+import { Router } from 'express';
+// import { authMiddleware } from '@core/middlewares/auth.middleware.js';
+// import { accessControl } from '@core/middlewares/access.middleware.js';
+// import { zodValidate } from '@core/middlewares/zod.validator.js';
+// import { createBillSchema, updateBillSchema, setBillActiveStatusSchema } from './bill.validator.js';
+
+import {
+  createBill,
+  getAllBills,
+  getBillById,
+  updateBill,
+  deleteBill,
+  setBillActiveStatus,
+  retrieveBill,
+  eraseBill,
+} from './bill.controller.js';
+
+const router = Router();
+
+// router.use(authMiddleware);
+// router.use(accessControl);
+
+// const MODULE = '-bill';
+
+router.post('/', createBill);
+router.get('/', getAllBills);
+router.get('/:id', getBillById);
+router.put('/:id', updateBill);
+router.delete('/:id', deleteBill);
+router.patch('/:id/active-status', setBillActiveStatus);
+router.put('/:id/retrieve', retrieveBill);
+router.delete('/:id/erase', eraseBill);
+
+export default router;
