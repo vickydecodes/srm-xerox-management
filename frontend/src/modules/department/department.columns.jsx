@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button"
 import { Hint } from "@/core/utils/tooltip.util"
 
 export const useDepartmentColumns = (departments) => {
-    return [
+  return [
     {
       accessorKey: 'id',
       header: () => Hint('Id', 'The academic year of this batch'),
@@ -14,13 +14,21 @@ export const useDepartmentColumns = (departments) => {
       cell: ({ row }) => <span>{row.getValue('name')}</span>,
     },
     {
-        accessorKey: 'create',
-        header: () => Hint('create', 'delete button'),
-        cell: ({row}) => {
+      accessorKey: 'actions',
+      header: () => Hint('Actions', 'Edit or delete this department'),
+      cell: ({ row }) => {
         const dept = row.original;
-        return <Button onClick={() => departments.openCreate(dept.id, dept.name)}>Delete department</Button>
-        }
+        return (
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => departments.openEdit(dept)}>
+              Edit
+            </Button>
+            <Button variant="destructive" onClick={() => departments.openDelete(dept)}>
+              Delete
+            </Button>
+          </div>
+        )
+      }
     }
   ]
 }
-

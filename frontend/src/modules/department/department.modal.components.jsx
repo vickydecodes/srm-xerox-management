@@ -10,13 +10,12 @@ import { departmentCreateSchema } from "./department.schema";
 import DepartmentForm from "./department.form";
 
 
-export const Create = ({ submitFn = () => {}, closeModal = () => {} } = {}) => {
+export const Create = ({ submitFn = () => {}, closeModal = () => {}, data } = {}) => {
   const form = useForm({
     resolver: zodResolver(departmentCreateSchema),
-    defaultValues: {
-        id: '',
+    defaultValues: data ?? {
+      id: '',
       name: '',
-     
     },
   });
 
@@ -33,13 +32,13 @@ export const Create = ({ submitFn = () => {}, closeModal = () => {} } = {}) => {
   return (
     <DialogContent className="w-xl">
       <DialogHeader>
-        <DialogTitle>Create Department</DialogTitle>
-        <DialogDescription>Enter details of Deprtment</DialogDescription>
+        <DialogTitle>{data ? "Edit Department" : "Create Department"}</DialogTitle>
+        <DialogDescription>Enter details of Department</DialogDescription>
       </DialogHeader>
 
       <Form {...form}>
         <form className="grid gap-4 py-2" onSubmit={form.handleSubmit(onSubmit)}>
-          <DepartmentForm form={form} />
+          <DepartmentForm form={form} isEdit={!!data} />
           {ErrorAlert}
           <DialogFooter>
             <DialogClose asChild>
@@ -56,29 +55,33 @@ export const Create = ({ submitFn = () => {}, closeModal = () => {} } = {}) => {
 };
 
 
+export const Delete = ({ id, name, submitFn = () => {}, closeModal = () => {} }) => {
+  const { run, loading, ErrorAlert } = useAsync(submitFn);
 
+  const handleDelete = async () => {
+    await run(id);
+    closeModal();
+  };
 
-export const Delete = ({ id, name, closeModal }) => (
-  <DialogContent className="sm:max-w-[425px]">
-    <DialogHeader>
-      <DialogTitle>Are you sure? {id} {name}</DialogTitle>
-      <DialogDescription>
-        This will be stored as deleted, this branch record can be retrieved by Admin.
-      </DialogDescription>
-    </DialogHeader>
+  return (
+    <DialogContent className="sm:max-w-[425px]">
+      <DialogHeader>
+        <DialogTitle>Are you sure? {id} {name}</DialogTitle>
+        <DialogDescription>
+          This will be stored as deleted, this branch record can be retrieved by Admin.
+        </DialogDescription>
+      </DialogHeader>
 
-    <DialogFooter>
-      <DialogClose asChild>
-        <Button variant="outline">Cancel</Button>
-      </DialogClose>
-      <Button
-        variant="destructive"
-        onClick={() => {
-          closeModal();
-        }}
-      >
-        Delete
-      </Button>
-    </DialogFooter>
-  </DialogContent>
-);
+      {ErrorAlert}
+
+      <DialogFooter>
+        <DialogClose asChild>
+          <Button variant="outline">Cancel</Button>
+        </DialogClose>
+        <Button variant="destructive" loading={loading} onClick={handleDelete}>
+          Delete
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  );
+};
