@@ -2,7 +2,7 @@ import { Document, Schema, model } from 'mongoose';
 
 export interface IBranch extends Document {
   name: string;
-  code: number;
+  code: string;
   active: boolean;
   deleted: boolean;
   deletedAt?: Date;
@@ -22,3 +22,5 @@ const BranchSchema = new Schema(
 );
 
 export const Branch = model<IBranch>('Branch', BranchSchema);
+
+export default Branch;
