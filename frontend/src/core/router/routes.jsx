@@ -29,6 +29,7 @@ export const appRoutes = [
         title: 'Department Page',
         description: 'Manage departments and their details',
         element: <Department/>,
+        icon: <IconBuildingCommunity className="h-5 w-5 shrink-0"/>
     },
     {
         path: '/services',
