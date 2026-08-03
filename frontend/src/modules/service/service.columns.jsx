@@ -1,4 +1,12 @@
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { MoreHorizontal } from "lucide-react"
 import { Hint } from "@/core/utils/tooltip.util"
 
 export const useServiceColumns = (services) => {
@@ -34,14 +42,25 @@ export const useServiceColumns = (services) => {
       cell: ({ row }) => {
         const service = row.original;
         return (
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => services.openEdit(service)}>
-              Edit
-            </Button>
-            <Button variant="destructive" onClick={() => services.remove(service.id)}>
-              Delete
-            </Button>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="size-8">
+                <MoreHorizontal className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => services.openEdit(service)}>
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => services.openDelete(service)}
+              >
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )
       }
     }

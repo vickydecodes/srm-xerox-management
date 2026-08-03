@@ -1,5 +1,6 @@
-import { Create } from "./department.modal.components";
+import { Create, Delete } from "./department.modal.components";
 
 export const modals = {
-    create: Create
+  create: Create,
+  delete: Delete,
 }

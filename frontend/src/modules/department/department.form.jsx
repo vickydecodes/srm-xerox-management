@@ -8,10 +8,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-// import { Checkbox } from "@/components/ui/checkbox";
 
-export default function DepartmentForm({ form }) {
-  const fields = ["name", 'id'];
+export default function DepartmentForm({ form, isEdit = false }) {
+  const fields = ["name", "id"];
 
   return (
     <>
@@ -24,7 +23,11 @@ export default function DepartmentForm({ form }) {
             <FormItem>
               <FormLabel>{field.charAt(0).toUpperCase() + field.slice(1)}</FormLabel>
               <FormControl>
-                <Input placeholder={`Enter ${field}`} {...f} />
+                <Input
+                  placeholder={`Enter ${field}`}
+                  disabled={isEdit && field === "id"}
+                  {...f}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
