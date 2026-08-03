@@ -33,7 +33,7 @@ const validatePassword = async (raw: string, hashed: string) => {
 export const login = async (loginId: string, password?: string) => {
   ensureFields({ loginId, password });
 
-  const user: any = await User.findOne({ loginId }).select('+password');
+  const user: any = await User.findOne({ login_id: loginId }).select('+password');
   if (!user) throw new ApiError(404, ERROR.USER_NOT_FOUND);
 
   const role: Role = user.role;
