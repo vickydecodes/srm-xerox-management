@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
-import { useApi } from '@/core/contexts/api.context';
-import { useLoader } from '@/core/hooks/useLoader';
-import { BillForm } from '@/modules/bill/bill.form';
+import { useEffect } from "react";
+import { useApi } from "@/core/contexts/api.context";
+import { useLoader } from "@/core/hooks/useLoader";
+import { BillForm } from "@/modules/bill/bill.form";
 
 export default function BillCreation() {
   const { products, departments, branches, bills } = useApi();
@@ -16,8 +16,12 @@ export default function BillCreation() {
     loadPageModules();
   }, []);
 
-  const handleSubmit = (data) => {
-    bills.create(data);
+  const handleSubmit = async (data) => {
+    try {
+      await bills.create(data);
+    } catch {
+      // already toasted by createCrud's error handler — nothing else needed here
+    }
   };
 
   return (
@@ -28,7 +32,7 @@ export default function BillCreation() {
         branches={branches.state}
         departments={departments.state}
         onSubmit={handleSubmit}
-        loading={bills.loading}
+        loading={bills.loading?.create ?? false}
       />
     </div>
   );
