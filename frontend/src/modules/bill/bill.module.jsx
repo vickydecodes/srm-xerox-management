@@ -55,6 +55,7 @@ export const useBillModule = (exported) => {
     openView,
     openDelete,
     crud,
+    create: crud.create,
     fetch,
     reset,
     sortByColumn,
