@@ -5,6 +5,7 @@ import {
     IconReceipt,
     IconGitBranch,
     IconLogout2,
+    IconCalculator 
 } from '@tabler/icons-react';
 
 import Department from "@/pages/department/department";
@@ -21,6 +22,7 @@ export const appRoutes = [
         label: 'Create bill',
         title: 'Create bill with existing products and services',
         description: 'Create bill with existing products and services',
+        icon: <IconCalculator  className="h-5 w-5 shrink-0" />,
         element: <BillCreation />
     },
     {
