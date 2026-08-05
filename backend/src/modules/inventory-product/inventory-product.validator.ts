@@ -17,7 +17,12 @@ export const inventoryProductSchema = z.object({
 
     quantity: z
      .number()
+     .int()
      .min(0, "Quantity cannot be negative"),
+
+    price: z
+     .number()
+     .min(0, "Price cannot be negative"),
 
 });
 

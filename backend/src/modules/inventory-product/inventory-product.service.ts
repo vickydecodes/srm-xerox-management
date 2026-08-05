@@ -13,7 +13,7 @@ import {
     getVisibility,
 } from "./inventory-product.constants.ts";
 import { enhanceInventoryProduct } from './inventory-product.util.ts';
-import { inventoryProductFilterConfig } from './inventory-product.filter.ts';
+import { inventoryProductFilterConfig } from './inventory-product.filterconfig.ts';
 
 export const createInventoryProduct = async (
     data: CreateInventoryProductPayload
