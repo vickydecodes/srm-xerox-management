@@ -1,8 +1,12 @@
 import { Router } from 'express';
-// import { authMiddleware } from '@core/middlewares/auth.middleware.js';
+import { authMiddleware } from '@core/middlewares/auth.middleware.js';
 // import { accessControl } from '@core/middlewares/access.middleware.js';
-// import { zodValidate } from '@core/middlewares/zod.validator.js';
-// import { branchSchema } from './branch.validator.js';
+import { zodValidate } from '@core/middlewares/zod.validator.js';
+import {
+  createBranchSchema,
+  updateBranchSchema,
+  setBranchActiveStatusSchema,
+} from './branch.validator.js';
 
 import {
   createBranch,
@@ -17,18 +21,42 @@ import {
 
 const router = Router();
 
-// router.use(authMiddleware);
+router.use(authMiddleware);
+
 // router.use(accessControl);
 
 // const MODULE = '-branch';
 
-router.post('/', createBranch);
+router.post(
+  '/',
+  zodValidate(createBranchSchema, 'body', 'CreateBranchSchema'),
+  createBranch
+);
+
 router.get('/', getAllBranches);
+
 router.get('/:id', getBranchById);
-router.put('/:id', updateBranch);
+
+router.put(
+  '/:id',
+  zodValidate(updateBranchSchema, 'body', 'UpdateBranchSchema'),
+  updateBranch
+);
+
 router.delete('/:id', deleteBranch);
-router.patch('/:id/active-status', setBranchActiveStatus);
+
+router.patch(
+  '/:id/active-status',
+  zodValidate(
+    setBranchActiveStatusSchema,
+    'body',
+    'SetBranchActiveStatusSchema'
+  ),
+  setBranchActiveStatus
+);
+
 router.put('/:id/retrieve', retrieveBranch);
+
 router.delete('/:id/erase', eraseBranch);
 
 export default router;

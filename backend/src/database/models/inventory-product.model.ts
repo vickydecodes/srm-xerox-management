@@ -5,6 +5,7 @@ export interface IInventoryProduct extends Document {
   product: mongoose.Types.ObjectId;
   variant: Map<string, string>;
   quantity: number;
+  price: number;
   active: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -16,6 +17,7 @@ const InventoryProductSchema = new Schema<IInventoryProduct>(
     product: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
     variant: { type: Map, of: String, default: {} },
     quantity: { type: Number, default: 0, min: 0 },
+    price: {type: Number, required: true, min: 0},
     active: { type: Boolean, default: true },
   },
   { timestamps: true }

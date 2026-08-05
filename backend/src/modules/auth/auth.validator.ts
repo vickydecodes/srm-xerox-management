@@ -14,15 +14,11 @@ export const getCurrentUserSchema = z.object({
 });
 
 export const changePasswordSchema = z.object({
-  body: z.object({
-    currentPassword: z.string().min(1, 'Current password is required'),
-    newPassword: passwordSchema,
-  }),
+  currentPassword: z.string().min(1, 'Current password is required'),
+  newPassword: passwordSchema,
 });
 
 export const adminResetPasswordSchema = z.object({
-  body: z.object({
-    targetId: objectId,
-    newPassword: passwordSchema,
-  }),
+  targetId: objectId,
+  newPassword: passwordSchema,
 });
