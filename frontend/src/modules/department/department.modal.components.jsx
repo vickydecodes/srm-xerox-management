@@ -7,6 +7,8 @@ import { useSubmit } from "@/core/hooks/useSubmit";
 import { useForm } from "react-hook-form";
 import { zodResolver } from '@hookform/resolvers/zod';
 import { departmentCreateSchema } from "./department.schema";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import DepartmentForm from "./department.form";
 
 
@@ -192,6 +194,51 @@ export const ActiveStatus = ({
         >
           {exported?.loading?.edit ? 'Updating...' : actionLabel}
         </Button>
+      </DialogFooter>
+    </DialogContent>
+  );
+};
+
+export const View = ({ department } = {}) => {
+  return (
+    <DialogContent className="w-xl">
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          {department?.name || "Department"}
+          {department?.active !== undefined && (
+            <Badge variant={department.active ? "default" : "secondary"}>
+              {department.active ? "Active" : "Inactive"}
+            </Badge>
+          )}
+        </DialogTitle>
+        <DialogDescription>
+          Created on{" "}
+          {department?.createdAt
+            ? new Date(department.createdAt).toLocaleDateString()
+            : "—"}
+        </DialogDescription>
+      </DialogHeader>
+
+      <div className="grid gap-4 py-2">
+        {/* ID */}
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-muted-foreground">ID</p>
+          <p className="text-sm font-mono">{department?.id || "—"}</p>
+        </div>
+
+        <Separator />
+
+        {/* Name */}
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-muted-foreground">Name</p>
+          <p className="text-sm">{department?.name || "—"}</p>
+        </div>
+      </div>
+
+      <DialogFooter>
+        <DialogClose asChild>
+          <Button variant="outline">Close</Button>
+        </DialogClose>
       </DialogFooter>
     </DialogContent>
   );
