@@ -53,9 +53,11 @@ async function seedBranchesAndDepartments() {
     { name: 'Coimbatore', code: 2, active: true },
   ]);
 
+  const fetchedBranches = await Branch.find({});
+
   const departments = await Department.insertMany([
-    { name: 'Physics', code: 1, active: true },
-    { name: 'Chemistry', code: 2, active: true },
+    { name: 'Physics', code: 1, active: true, branch: fetchedBranches[0]._id },
+    { name: 'Chemistry', code: 2, active: true, branch: fetchedBranches[1]._id },
   ]);
 
   console.log(`Seeded ${branches.length} branches, ${departments.length} departments`);

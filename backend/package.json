@@ -4,12 +4,13 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-  "check": "tsx src/scripts/bootloader.ts",
-  "test": "vitest run",
-  "dev": "npm run check && tsx watch src/server.ts",
-  "build": "tsc --incremental false",
-  "start": "node dist/server.js"
-},
+    "check": "tsx src/scripts/bootloader.ts",
+    "test": "vitest run",
+    "dev": "npm run check && tsx watch src/server.ts",
+    "build": "tsc --incremental false",
+    "start": "node dist/server.js",
+    "seed": "npx tsx src/lib/seed.ts"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
