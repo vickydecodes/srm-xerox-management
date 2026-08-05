@@ -5,7 +5,6 @@ export interface IInventoryProduct extends Document {
   product: mongoose.Types.ObjectId;
   variant: Map<string, string>;
   quantity: number;
-  price: number;
   active: boolean;
   createdAt: Date;
   updatedAt: Date;
