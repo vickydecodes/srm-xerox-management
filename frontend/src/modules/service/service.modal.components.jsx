@@ -336,6 +336,7 @@ export const ActiveStatus = ({
   exported,
 }) => {
   const actionLabel = status ? "Deactivate" : "Activate";
+  const isDeactivating = Boolean(status);
 
   const onConfirm = async () => {
     await submitFn(id, {
@@ -345,26 +346,38 @@ export const ActiveStatus = ({
   };
 
   return (
-    <DialogContent className="sm:max-w-[425px] pe-10">
+    <DialogContent className="w-xl">
       <DialogHeader>
-        <DialogTitle>{actionLabel} Branch</DialogTitle>
-
+        <DialogTitle>{actionLabel} Service</DialogTitle>
         <DialogDescription>
-          {status ? (
-            <>
-              This will <strong>deactivate</strong> the Branch.
-              <br />
-              Students will no longer be able to Join this Branch.
-            </>
-          ) : (
-            <>
-              This will <strong>activate</strong> the Branch.
-              <br />
-              The Branch will become available again.
-            </>
-          )}
+          Confirm the status change for this Service.
         </DialogDescription>
       </DialogHeader>
+
+      <div className="rounded-lg border p-4 my-2">
+        {isDeactivating ? (
+          <div className="space-y-1 text-sm">
+            <p>
+              This will <strong className="text-destructive">deactivate</strong>{" "}
+              the Service.
+            </p>
+            <p className="text-muted-foreground">
+              It will no longer be available for use until it is activated
+              again.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-1 text-sm">
+            <p>
+              This will <strong className="text-primary">activate</strong> the
+              Service.
+            </p>
+            <p className="text-muted-foreground">
+              The Service will become available again.
+            </p>
+          </div>
+        )}
+      </div>
 
       <DialogFooter>
         <DialogClose asChild>
@@ -374,11 +387,13 @@ export const ActiveStatus = ({
         </DialogClose>
 
         <Button
-          variant={status ? "destructive" : "default"}
+          variant={isDeactivating ? "destructive" : "default"}
           onClick={onConfirm}
           disabled={exported?.loading?.edit}
+          loading={exported?.loading?.edit}
+          loadingText="Updating..."
         >
-          {exported?.loading?.edit ? "Updating..." : actionLabel}
+          {actionLabel}
         </Button>
       </DialogFooter>
     </DialogContent>
