@@ -21,12 +21,42 @@ export const useServiceModule = (exported) => {
   const { services } = apiurls;
 
   const crud = createCrud({
-    entity: 'Service',
+    entity: "Service",
     urls: services,
     store: store,
-    getRole: () => 'super_admin',
+    getRole: () => "super_admin",
   });
 
+  const openErase = (id) => {
+    return openModal(modals.erase, {
+      id,
+      submitFn: (id) => crud.erase(id), // permanent delete
+      closeModal: () => {}, // will be injected by openModal usually
+      exported,
+    });
+  };
+
+  const openView = (service) => {
+    return openModal(modals.view, { service, exported });
+  };
+
+  const openRetrieve = (id) => {
+    return openModal(modals.retrieve, {
+      id,
+      submitFn: (id) =>
+        crud.retrieve?.(id) ?? crud.edit(id, { deleted: false }),
+      exported,
+    });
+  };
+
+  const openActiveStatus = (service) => {
+    return openModal(modals.activeStatus, {
+      id: service._id ?? service.id,
+      status: service.active,
+      submitFn: (id, data) => crud.edit(id, data),
+      exported,
+    });
+  };
   const openCreate = () => {
     return openModal(modals.create, {
       submitFn: (formData) => crud.create(formData),
@@ -47,7 +77,7 @@ export const useServiceModule = (exported) => {
     return openModal(modals.delete, {
       id: service.id,
       name: service.name,
-      onConfirm: (id) => crud.erase(id),
+      onConfirm: (id) => crud.delete(id),
       exported,
     });
   };
@@ -72,6 +102,10 @@ export const useServiceModule = (exported) => {
     openCreate,
     openEdit,
     openDelete,
+    openErase,
+    openRetrieve,
+    openActiveStatus,
+    openView, 
     crud,
     fetch,
     reset,

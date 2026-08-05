@@ -1,4 +1,6 @@
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   DialogClose,
   DialogContent,
@@ -67,7 +69,11 @@ export const Create = ({ submitFn = () => { }, closeModal = () => { }, exported 
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button type="submit" loading={loading} loadingText="Saving the service..">
+            <Button
+              type="submit"
+              loading={loading}
+              loadingText="Saving the service.."
+            >
               Save
             </Button>
           </DialogFooter>
@@ -77,7 +83,12 @@ export const Create = ({ submitFn = () => { }, closeModal = () => { }, exported 
   );
 };
 
-export const Edit = ({ service, submitFn = () => { }, closeModal = () => { }, exported } = {}, ) => {
+export const Edit = ({
+  service,
+  submitFn = () => {},
+  closeModal = () => {},
+  exported,
+} = {}) => {
   const form = useForm({
     resolver: zodResolver(serviceEditSchema),
     defaultValues: {
@@ -109,11 +120,11 @@ export const Edit = ({ service, submitFn = () => { }, closeModal = () => { }, ex
 
   useEffect(() => {
     editModal();
-  }, [])
+  }, []);
 
   const products = exported.inventoryProducts.state
 
-  console.log(products)
+  console.log(products);
 
   return (
     <DialogContent className="w-xl max-h-[85vh] overflow-y-auto">
@@ -130,7 +141,11 @@ export const Edit = ({ service, submitFn = () => { }, closeModal = () => { }, ex
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button type="submit" loading={loading} loadingText="Saving the service..">
+            <Button
+              type="submit"
+              loading={loading}
+              loadingText="Saving the service.."
+            >
               Save
             </Button>
           </DialogFooter>
@@ -140,7 +155,12 @@ export const Edit = ({ service, submitFn = () => { }, closeModal = () => { }, ex
   );
 };
 
-export const Delete = ({ id, name, submitFn = () => { }, closeModal = () => { } }) => {
+export const Delete = ({
+  id,
+  name,
+  submitFn = () => {},
+  closeModal = () => {},
+}) => {
   const { run, loading, ErrorAlert } = useAsync(submitFn);
 
   const handleDelete = async () => {
@@ -151,9 +171,12 @@ export const Delete = ({ id, name, submitFn = () => { }, closeModal = () => { } 
   return (
     <DialogContent className="sm:max-w-[425px]">
       <DialogHeader>
-        <DialogTitle>Are you sure? {id} {name}</DialogTitle>
+        <DialogTitle>
+          Are you sure? {id} {name}
+        </DialogTitle>
         <DialogDescription>
-          This will be stored as deleted, this service record can be retrieved by Admin.
+          This will be stored as deleted, this service record can be retrieved
+          by Admin.
         </DialogDescription>
       </DialogHeader>
 
@@ -171,14 +194,103 @@ export const Delete = ({ id, name, submitFn = () => { }, closeModal = () => { } 
   );
 };
 
+export const View = ({ service } = {}) => {
+  const materials = service?.materials || [];
+
+  return (
+    <DialogContent className="w-xl">
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          {service?.name || "Service"}
+          <Badge variant={service?.active ? "default" : "secondary"}>
+            {service?.active ? "Active" : "Inactive"}
+          </Badge>
+        </DialogTitle>
+        <DialogDescription>
+          {service?.code && (
+            <span className="font-mono text-xs mr-2">{service.code}</span>
+          )}
+          Created on{" "}
+          {service?.createdAt
+            ? new Date(service.createdAt).toLocaleDateString()
+            : "—"}
+        </DialogDescription>
+      </DialogHeader>
+
+      <div className="grid gap-4 py-2">
+        {/* Description */}
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-muted-foreground">
+            Description
+          </p>
+          <p className="text-sm">
+            {service?.description?.trim() || "No description provided."}
+          </p>
+        </div>
+
+        <Separator />
+
+        {/* Unit & Price */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-muted-foreground">Unit</p>
+            <p className="text-sm">{service?.unit || "—"}</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-muted-foreground">Price</p>
+            <p className="text-sm font-semibold">
+              {service?.price != null ? Number(service.price).toFixed(2) : "—"}
+            </p>
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Materials */}
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-muted-foreground">Materials</p>
+
+          {materials.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No materials added.</p>
+          ) : (
+            <div className="grid gap-2">
+              {materials.map((item, i) => (
+                <div
+                  key={i}
+                  className="flex justify-between items-center text-sm border-b pb-2 last:border-0"
+                >
+                  <span className="font-mono text-xs">
+                    {item.product?._id ||
+                      item.product?.name ||
+                      item.product ||
+                      "—"}
+                  </span>
+                  <span className="text-muted-foreground">
+                    Qty: {item.quantity ?? "—"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <DialogFooter>
+        <DialogClose asChild>
+          <Button variant="outline">Close</Button>
+        </DialogClose>
+      </DialogFooter>
+    </DialogContent>
+  );
+};
 
 export const Erase = ({ id, submitFn, closeModal }) => (
   <DialogContent className="sm:max-w-[425px] pe-10">
     <DialogHeader>
       <DialogTitle>Are you sure?</DialogTitle>
       <DialogDescription>
-        <strong>Note:</strong> This operation is Permenent Delete. All the data related to this branch
-        will be lost.
+        <strong>Note:</strong> This operation is Permenent Delete. All the data
+        related to this branch will be lost.
       </DialogDescription>
     </DialogHeader>
 
@@ -203,8 +315,8 @@ export const Retrieve = ({ id, submitFn, closeModal }) => (
     <DialogHeader>
       <DialogTitle>Are you sure?</DialogTitle>
       <DialogDescription>
-        <strong>Note:</strong> this operation is retrieve All the data related to this branch will be
-        back.
+        <strong>Note:</strong> this operation is retrieve All the data related
+        to this branch will be back.
       </DialogDescription>
     </DialogHeader>
 
@@ -231,7 +343,8 @@ export const ActiveStatus = ({
   closeModal,
   exported,
 }) => {
-  const actionLabel = status ? 'Deactivate' : 'Activate';
+  const actionLabel = status ? "Deactivate" : "Activate";
+  const isDeactivating = Boolean(status);
 
   const onConfirm = async () => {
     await submitFn(id, {
@@ -241,26 +354,38 @@ export const ActiveStatus = ({
   };
 
   return (
-    <DialogContent className="sm:max-w-[425px] pe-10">
+    <DialogContent className="w-xl">
       <DialogHeader>
-        <DialogTitle>{actionLabel} Branch</DialogTitle>
-
+        <DialogTitle>{actionLabel} Service</DialogTitle>
         <DialogDescription>
-          {status ? (
-            <>
-              This will <strong>deactivate</strong> the Branch.
-              <br />
-              Students will no longer be able to Join this Branch.
-            </>
-          ) : (
-            <>
-              This will <strong>activate</strong> the Branch.
-              <br />
-              The Branch will become available again.
-            </>
-          )}
+          Confirm the status change for this Service.
         </DialogDescription>
       </DialogHeader>
+
+      <div className="rounded-lg border p-4 my-2">
+        {isDeactivating ? (
+          <div className="space-y-1 text-sm">
+            <p>
+              This will <strong className="text-destructive">deactivate</strong>{" "}
+              the Service.
+            </p>
+            <p className="text-muted-foreground">
+              It will no longer be available for use until it is activated
+              again.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-1 text-sm">
+            <p>
+              This will <strong className="text-primary">activate</strong> the
+              Service.
+            </p>
+            <p className="text-muted-foreground">
+              The Service will become available again.
+            </p>
+          </div>
+        )}
+      </div>
 
       <DialogFooter>
         <DialogClose asChild>
@@ -270,11 +395,13 @@ export const ActiveStatus = ({
         </DialogClose>
 
         <Button
-          variant={status ? 'destructive' : 'default'}
+          variant={isDeactivating ? "destructive" : "default"}
           onClick={onConfirm}
           disabled={exported?.loading?.edit}
+          loading={exported?.loading?.edit}
+          loadingText="Updating..."
         >
-          {exported?.loading?.edit ? 'Updating...' : actionLabel}
+          {actionLabel}
         </Button>
       </DialogFooter>
     </DialogContent>

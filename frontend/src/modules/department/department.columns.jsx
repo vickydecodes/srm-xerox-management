@@ -52,6 +52,8 @@ export const useDepartmentColumns = (departments) => {
       header: () => Hint('Actions', 'Edit or manage this department'),
       cell: ({ row }) => {
         const dept = row.original;
+        const isDeleted =
+          dept.deleted === true || dept.isDeleted === true || !!dept.deletedAt;
 
         return (
           <DropdownMenu>
@@ -61,21 +63,26 @@ export const useDepartmentColumns = (departments) => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => departments.openView(dept)}>
+                View
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => departments.openEdit(dept)}>
                 Edit
               </DropdownMenuItem>
 
               <DropdownMenuItem
-                onClick={() => departments.openActiveStatus(dept._id, dept.active)}
+                onClick={() =>
+                  departments.openActiveStatus(dept._id, dept.active)
+                }
               >
-                {dept.active ? 'Deactivate' : 'Activate'}
+                {dept.active ? "Deactivate" : "Activate"}
               </DropdownMenuItem>
 
               <DropdownMenuSeparator />
 
               <DropdownMenuItem
                 variant="destructive"
-                onClick={() => departments.openDelete(dept)}
+                onClick={() => departments.openDelete(dept._id)}
               >
                 Delete
               </DropdownMenuItem>
@@ -85,13 +92,17 @@ export const useDepartmentColumns = (departments) => {
               >
                 Erase Permanently
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => departments.openRetrieve(dept._id)}>
-                Retrieve
-              </DropdownMenuItem>
+              {isDeleted && (
+                <DropdownMenuItem
+                  onClick={() => departments.openRetrieve(dept._id)}
+                >
+                  Retrieve
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
-        )
-      }
-    }
-  ]
-}
+        );
+      },
+    },
+  ];
+};

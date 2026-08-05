@@ -20,11 +20,15 @@ export const useDepartmentModule = (exported) => {
   const { departments } = apiurls;
 
   const crud = createCrud({
-    entity: 'Department',
+    entity: "Department",
     urls: departments,
     store: store,
-    getRole: () => 'super_admin',
+    getRole: () => "super_admin",
   });
+
+  const openView = (department) => {
+    return openModal(modals.view, { department, exported });
+  };
 
   const openCreate = () => {
     return openModal(modals.create, {
@@ -51,7 +55,7 @@ export const useDepartmentModule = (exported) => {
     });
   };
 
-   const openErase = (id) => {
+  const openErase = (id) => {
     return openModal(modals.erase, {
       id,
       submitFn: (id) => crud.erase(id),
@@ -96,6 +100,7 @@ export const useDepartmentModule = (exported) => {
     openCreate,
     openEdit,
     openDelete,
+    openView,
     openErase,
     openRetrieve,
     openActiveStatus,
