@@ -1,8 +1,12 @@
 import { Router } from 'express';
-// import { authMiddleware } from '@core/middlewares/auth.middleware.js';
+import { authMiddleware } from '@core/middlewares/auth.middleware.js';
 // import { accessControl } from '@core/middlewares/access.middleware.js';
-// import { zodValidate } from '@core/middlewares/zod.validator.js';
-// import { departmentSchema } from './department.validator.js';
+import { zodValidate } from '@core/middlewares/zod.validator.js';
+import {
+  createDepartmentSchema,
+  updateDepartmentSchema,
+  setDepartmentActiveStatusSchema,
+} from './department.validator.js';
 
 import {
   createDepartment,
@@ -17,18 +21,50 @@ import {
 
 const router = Router();
 
-// router.use(authMiddleware);
+router.use(authMiddleware);
+
 // router.use(accessControl);
 
 // const MODULE = '-department';
 
-router.post('/', createDepartment);
+router.post(
+  '/',
+  zodValidate(
+    createDepartmentSchema,
+    'body',
+    'CreateDepartmentSchema'
+  ),
+  createDepartment
+);
+
 router.get('/', getAllDepartments);
+
 router.get('/:id', getDepartmentById);
-router.put('/:id', updateDepartment);
+
+router.put(
+  '/:id',
+  zodValidate(
+    updateDepartmentSchema,
+    'body',
+    'UpdateDepartmentSchema'
+  ),
+  updateDepartment
+);
+
 router.delete('/:id', deleteDepartment);
-router.patch('/:id/active-status', setDepartmentActiveStatus);
+
+router.patch(
+  '/:id/active-status',
+  zodValidate(
+    setDepartmentActiveStatusSchema,
+    'body',
+    'SetDepartmentActiveStatusSchema'
+  ),
+  setDepartmentActiveStatus
+);
+
 router.put('/:id/retrieve', retrieveDepartment);
+
 router.delete('/:id/erase', eraseDepartment);
 
 export default router;
