@@ -59,7 +59,7 @@ export default function Login() {
 
   return (
     <div className="min-h-[100svh] grid lg:grid-cols-2 xrx-shell">
-      {/* LEFT: scanner panel */}
+      {}
       <div className="hidden lg:flex flex-col bg-[#14161A] text-[#F1F3F4] relative overflow-hidden">
         <div className="xrx-grid" />
 
@@ -79,7 +79,7 @@ export default function Login() {
               </div>
             </div>
 
-            {/* Scanner document stack + sweeping scan bar */}
+            {}
             <div className="xrx-scanner mb-10">
               <div className="xrx-sheet xrx-sheet-3" />
               <div className="xrx-sheet xrx-sheet-2" />
@@ -109,11 +109,11 @@ export default function Login() {
         </div>
       </div>
 
-      {/* RIGHT: counter ticket login */}
+      {}
       <div className="flex min-h-[100svh] items-center justify-center px-4 py-6 sm:px-6 bg-[#F1F3F4]">
         <div className="w-full max-w-md space-y-6">
 
-          {/* Mobile header */}
+          {}
           <div className="text-center lg:hidden">
             <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-md bg-[#14161A] text-[#2FD4D7]">
               <Printer className="h-8 w-8" />

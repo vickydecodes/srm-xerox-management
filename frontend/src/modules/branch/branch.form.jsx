@@ -7,7 +7,6 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 
 export default function BranchForm({ form }) {
   const fields = ["code", "name"];
@@ -29,19 +28,6 @@ export default function BranchForm({ form }) {
           )}
         />
       ))}
-
-      <FormField
-        control={form.control}
-        name="active"
-        render={({ field }) => (
-          <FormItem className="flex flex-row items-center gap-2 space-y-0">
-            <FormControl>
-              <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-            </FormControl>
-            <FormLabel className="mb-0">Active</FormLabel>
-          </FormItem>
-        )}
-      />
     </>
   );
 }

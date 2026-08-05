@@ -6,16 +6,21 @@ import { useClearError } from "@/core/hooks/useClearError";
 import { useSubmit } from "@/core/hooks/useSubmit";
 import { useForm } from "react-hook-form";
 import { zodResolver } from '@hookform/resolvers/zod';
-import { departmentCreateSchema } from "./department.schema";
+import { departmentCreateSchema, departmentEditSchema } from "./department.schema";
 import DepartmentForm from "./department.form";
 
 
 export const Create = ({ submitFn = () => {}, closeModal = () => {}, data } = {}) => {
   const form = useForm({
-    resolver: zodResolver(departmentCreateSchema),
-    defaultValues: data ?? {
-      id: '',
+    resolver: zodResolver(data ? departmentEditSchema : departmentCreateSchema),
+    defaultValues: data ? {
+      code: data.code,
+      name: data.name,
+      branch: typeof data.branch === 'object' ? data.branch?._id : data.branch,
+    } : {
+      code: '',
       name: '',
+      branch: '',
     },
   });
 
@@ -44,7 +49,7 @@ export const Create = ({ submitFn = () => {}, closeModal = () => {}, data } = {}
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button type="submit" loading={loading} loadingText="Saving the branch..">
+            <Button type="submit" loading={loading} loadingText="Saving the department..">
               Save
             </Button>
           </DialogFooter>
@@ -68,7 +73,7 @@ export const Delete = ({ id, name, submitFn = () => {}, closeModal = () => {} })
       <DialogHeader>
         <DialogTitle>Are you sure? {id} {name}</DialogTitle>
         <DialogDescription>
-          This will be stored as deleted, this branch record can be retrieved by Admin.
+          This will be stored as deleted, this department record can be retrieved by Admin.
         </DialogDescription>
       </DialogHeader>
 
@@ -93,7 +98,7 @@ export const Erase = ({ id, submitFn, closeModal }) => (
     <DialogHeader>
       <DialogTitle>Are you sure?</DialogTitle>
       <DialogDescription>
-        <strong>Note:</strong> This operation is Permenent Delete. All the data related to this branch
+        <strong>Note:</strong> This operation is Permenent Delete. All the data related to this department
         will be lost.
       </DialogDescription>
     </DialogHeader>
@@ -119,7 +124,7 @@ export const Retrieve = ({ id, submitFn, closeModal }) => (
     <DialogHeader>
       <DialogTitle>Are you sure?</DialogTitle>
       <DialogDescription>
-        <strong>Note:</strong> this operation is retrieve All the data related to this branch will be
+        <strong>Note:</strong> this operation is retrieve All the data related to this department will be
         back.
       </DialogDescription>
     </DialogHeader>

@@ -22,31 +22,7 @@ export const useProductColumns = (products) => {
       header: () => Hint('Name', 'Product name'),
       cell: ({ row }) => <span>{row.getValue('name')}</span>,
     },
-    {
-      accessorKey: 'description',
-      header: () => Hint('Description', 'Product description'),
-      cell: ({ row }) => (
-        <span className="text-muted-foreground line-clamp-1">
-          {row.getValue('description') || '-'}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'variants',
-      header: () => Hint('Variants', 'Available variant groups'),
-      cell: ({ row }) => {
-        const variants = row.getValue('variants') || {};
-        const keys = Object.keys(variants);
-        if (!keys.length) return <span className="text-muted-foreground">-</span>;
-        return (
-          <div className="flex flex-wrap gap-1">
-            {keys.map((k) => (
-              <Badge key={k} variant="secondary">{k}</Badge>
-            ))}
-          </div>
-        );
-      },
-    },
+
     {
       accessorKey: 'active',
       header: () => Hint('Status', 'Whether the product is active'),

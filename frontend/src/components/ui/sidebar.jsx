@@ -8,7 +8,7 @@ import { Search } from 'lucide-react';
 
 const SidebarContext = createContext(undefined);
 
-// eslint-disable-next-line react-refresh/only-export-components
+
 export const useSidebar = () => {
   const context = useContext(SidebarContext);
   if (!context) {

@@ -61,7 +61,7 @@ function DialogContent({ className, children, showCloseButton = true, ...props }
         )}
         {...props}
       >
-        {/* ✂️ ScrollArea removed — children render directly */}
+        {}
         {children}
         {showCloseButton && (
           <DialogPrimitive.Close

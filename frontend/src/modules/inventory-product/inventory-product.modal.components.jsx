@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import {
   DialogClose,
   DialogContent,
@@ -7,77 +6,70 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-} from "@/components/ui/form";
+import { Form } from "@/components/ui/form";
 import { useAsync } from "@/core/hooks/useAsync";
 import { useClearError } from "@/core/hooks/useClearError";
 import { useSubmit } from "@/core/hooks/useSubmit";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { productCreateSchema, productEditSchema } from "./product.schema";
-import ProductForm from "./product.form";
+import { useEffect } from "react";
+import { useLoader } from "@/core/hooks/useLoader";
+import { inventoryProductSchema } from "./inventory-product.schema";
+import { InventoryProductForm } from "./inventory-product.form";
+import { Button } from "@/components/ui/button";
 
+export const Create = ({ exported, submitFn, closeModal }) => {
+  const { createPreset } = useLoader();
+  const preset = createPreset(exported.products);
 
-const toVariantsMap = (variants = []) =>
-  variants.reduce((acc, { key, values }) => {
-    if (!key) return acc;
-    acc[key] = values
-      .split(",")
-      .map((v) => v.trim())
-      .filter(Boolean);
-    return acc;
-  }, {});
+  useEffect(() => {
+    preset();
+  }, []);
 
+  const products = exported.products.state;
 
-const toVariantsArray = (variants = {}) =>
-  Object.entries(variants).map(([key, values]) => ({
-    key,
-    values: Array.isArray(values) ? values.join(", ") : "",
-  }));
-
-export const Create = ({ submitFn = () => {}, closeModal = () => {} } = {}) => {
   const form = useForm({
-    resolver: zodResolver(productCreateSchema),
+    resolver: zodResolver(inventoryProductSchema),
     defaultValues: {
-      name: "",
-      description: "",
-      variants: [],
+      product: "",
+      variant: {},
+      quantity: 1,
+      price: 0,
+      active: true,
     },
+    mode: "onSubmit",
   });
 
-  const { run, loading, ErrorAlert, clearError } = useAsync(submitFn);
+  const { run, loading, ErrorAlert, clearError } = useAsync((data) => submitFn(data));
 
   useClearError(form, clearError);
 
   const onSubmit = useSubmit({
     run,
     form,
-    transform: (data) => ({ ...data, variants: toVariantsMap(data.variants) }),
     onSuccess: closeModal,
   });
 
   return (
     <DialogContent className="w-xl">
       <DialogHeader>
-        <DialogTitle>Create Product</DialogTitle>
-        <DialogDescription>Enter details of the product</DialogDescription>
+        <DialogTitle>Add Product to Inventory</DialogTitle>
+        <DialogDescription>
+          Select a product, pick a variant combination, and set the price & quantity
+        </DialogDescription>
       </DialogHeader>
 
       <Form {...form}>
         <form className="grid gap-4 py-2" onSubmit={form.handleSubmit(onSubmit)}>
-          <ProductForm form={form} />
+          <InventoryProductForm form={form} products={products} />
           {ErrorAlert}
+
           <DialogFooter>
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button type="submit" loading={loading} loadingText="Saving the product..">
-              Save
+            <Button type="submit" loading={loading} loadingText="Adding product...">
+              Add Product
             </Button>
           </DialogFooter>
         </form>
@@ -86,14 +78,26 @@ export const Create = ({ submitFn = () => {}, closeModal = () => {} } = {}) => {
   );
 };
 
-export const Edit = ({ product, submitFn = () => {}, closeModal = () => {} } = {}) => {
+export const Edit = ({ inventoryProduct, exported, submitFn = () => {}, closeModal = () => {} } = {}) => {
+  const { createPreset } = useLoader();
+  const preset = createPreset(exported.products);
+
+  console.log(inventoryProduct)
+
+  useEffect(() => {
+    preset();
+  }, []);
+
+  const products = exported.products.state;
+
   const form = useForm({
-    resolver: zodResolver(productEditSchema),
+    resolver: zodResolver(inventoryProductSchema),
     defaultValues: {
-      name: product?.name || "",
-      description: product?.description || "",
-      variants: toVariantsArray(product?.variants),
-      active: product?.active ?? true,
+      product: inventoryProduct?.product?._id ?? inventoryProduct?.product ?? "",
+      variant: inventoryProduct?.variant ?? {},
+      quantity: inventoryProduct?.quantity ?? 0,
+      price: inventoryProduct?.price ?? 0,
+      active: inventoryProduct?.active ?? true,
     },
   });
 
@@ -104,28 +108,28 @@ export const Edit = ({ product, submitFn = () => {}, closeModal = () => {} } = {
   const onSubmit = useSubmit({
     run,
     form,
-    transform: (data) => ({ ...data, variants: toVariantsMap(data.variants) }),
     onSuccess: closeModal,
   });
 
   return (
     <DialogContent className="w-xl">
       <DialogHeader>
-        <DialogTitle>Edit Product</DialogTitle>
-        <DialogDescription>Update details of {product?.name}</DialogDescription>
+        <DialogTitle>Edit Inventory Product</DialogTitle>
+        <DialogDescription>
+          Update details of {inventoryProduct?.product?.name || "this item"}
+        </DialogDescription>
       </DialogHeader>
 
       <Form {...form}>
         <form className="grid gap-4 py-2" onSubmit={form.handleSubmit(onSubmit)}>
-          <ProductForm form={form} />
-
-
+          <InventoryProductForm form={form} products={products} isEdit />
           {ErrorAlert}
+
           <DialogFooter>
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button type="submit" loading={loading} loadingText="Saving the product..">
+            <Button type="submit" loading={loading} loadingText="Saving..">
               Save
             </Button>
           </DialogFooter>
@@ -140,7 +144,7 @@ export const Delete = ({ id, name, closeModal = () => {}, onConfirm = () => {} }
     <DialogHeader>
       <DialogTitle>Are you sure you want to delete {name}?</DialogTitle>
       <DialogDescription>
-        This will be stored as deleted, this product record can be retrieved by Admin.
+        This will be stored as deleted, this inventory product record can be retrieved by Admin.
       </DialogDescription>
     </DialogHeader>
 
@@ -166,8 +170,8 @@ export const Erase = ({ id, submitFn, closeModal }) => (
     <DialogHeader>
       <DialogTitle>Are you sure?</DialogTitle>
       <DialogDescription>
-        <strong>Note:</strong> This operation is Permenent Delete. All the data related to this branch
-        will be lost.
+        <strong>Note:</strong> This operation is Permenent Delete. All the data related to this
+        inventory product will be lost.
       </DialogDescription>
     </DialogHeader>
 
@@ -187,13 +191,14 @@ export const Erase = ({ id, submitFn, closeModal }) => (
     </DialogFooter>
   </DialogContent>
 );
+
 export const Retrieve = ({ id, submitFn, closeModal }) => (
   <DialogContent className="sm:max-w-[425px] pe-10">
     <DialogHeader>
       <DialogTitle>Are you sure?</DialogTitle>
       <DialogDescription>
-        <strong>Note:</strong> this operation is retrieve All the data related to this branch will be
-        back.
+        <strong>Note:</strong> this operation is retrieve All the data related to this inventory
+        product will be back.
       </DialogDescription>
     </DialogHeader>
 
@@ -213,14 +218,9 @@ export const Retrieve = ({ id, submitFn, closeModal }) => (
     </DialogFooter>
   </DialogContent>
 );
-export const ActiveStatus = ({
-  id, 
-  status,
-  submitFn,
-  closeModal,
-  exported, 
-}) => {
-  const actionLabel = status ? 'Deactivate' : 'Activate';
+
+export const ActiveStatus = ({ id, status, submitFn, closeModal, exported }) => {
+  const actionLabel = status ? "Deactivate" : "Activate";
 
   const onConfirm = async () => {
     await submitFn(id, {
@@ -232,20 +232,20 @@ export const ActiveStatus = ({
   return (
     <DialogContent className="sm:max-w-[425px] pe-10">
       <DialogHeader>
-        <DialogTitle>{actionLabel} Branch</DialogTitle>
+        <DialogTitle>{actionLabel} Inventory Product</DialogTitle>
 
         <DialogDescription>
           {status ? (
             <>
-              This will <strong>deactivate</strong> the Branch.
+              This will <strong>deactivate</strong> the inventory product.
               <br />
-              Students will no longer be able to Join this Branch.
+              It will no longer be available for billing.
             </>
           ) : (
             <>
-              This will <strong>activate</strong> the Branch.
+              This will <strong>activate</strong> the inventory product.
               <br />
-              The Branch will become available again.
+              It will become available for billing again.
             </>
           )}
         </DialogDescription>
@@ -259,11 +259,11 @@ export const ActiveStatus = ({
         </DialogClose>
 
         <Button
-          variant={status ? 'destructive' : 'default'}
+          variant={status ? "destructive" : "default"}
           onClick={onConfirm}
           disabled={exported?.loading?.edit}
         >
-          {exported?.loading?.edit ? 'Updating...' : actionLabel}
+          {exported?.loading?.edit ? "Updating..." : actionLabel}
         </Button>
       </DialogFooter>
     </DialogContent>

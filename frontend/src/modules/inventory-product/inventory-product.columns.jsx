@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -7,33 +6,34 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Badge } from "@/components/ui/badge"
 import { MoreHorizontal } from "lucide-react"
 import { Hint } from "@/core/utils/tooltip.util"
-import formatDate from "@/core/utils/formatdate.util";
 
-export const useDepartmentColumns = (departments) => {
+export const useInventoryProductColumns = (inventoryProducts) => {
   return [
     {
-      accessorKey: 'code',
-      header: () => Hint('Code', 'Department code'),
-      cell: ({ row }) => <span>{row.getValue('code')}</span>,
-    },
-    {
-      accessorKey: 'name',
-      header: () => Hint('Name', 'Department name'),
-      cell: ({ row }) => <span>{row.getValue('name')}</span>,
-    },
-    {
-      accessorKey: 'branch',
-      header: () => Hint('Branch', 'Associated branch'),
+      accessorKey: 'product',
+      header: () => Hint('Product', 'The linked product'),
       cell: ({ row }) => {
-        const branch = row.getValue('branch');
-        return <span>{branch?.name || branch || '-'}</span>;
+        const product = row.getValue('product');
+        return <span>{product?.name || product}</span>;
       },
+    },
+
+    {
+      accessorKey: 'quantity',
+      header: () => Hint('Quantity', 'Stock quantity available'),
+      cell: ({ row }) => <span>{row.getValue('quantity')}</span>,
+    },
+    {
+      accessorKey: 'price',
+      header: () => Hint('Price', 'Price per unit'),
+      cell: ({ row }) => <span>{Number(row.getValue('price') || 0).toFixed(2)}</span>,
     },
     {
       accessorKey: 'active',
-      header: () => Hint('Status', 'Whether the department is active'),
+      header: () => Hint('Active', 'Whether this inventory product is active'),
       cell: ({ row }) => (
         <Badge variant={row.getValue('active') ? 'default' : 'outline'}>
           {row.getValue('active') ? 'Active' : 'Inactive'}
@@ -41,17 +41,10 @@ export const useDepartmentColumns = (departments) => {
       ),
     },
     {
-      accessorKey: 'createdAt',
-      header: () => Hint('Created', 'Department creation date'),
-      cell: ({ row }) => (
-        <span className="text-muted-foreground">{formatDate(row.getValue('createdAt'))}</span>
-      ),
-    },
-    {
       accessorKey: 'actions',
-      header: () => Hint('Actions', 'Edit or manage this department'),
+      header: () => Hint('Actions', 'Edit or manage this inventory product'),
       cell: ({ row }) => {
-        const dept = row.original;
+        const inventoryProduct = row.original;
 
         return (
           <DropdownMenu>
@@ -61,31 +54,33 @@ export const useDepartmentColumns = (departments) => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => departments.openEdit(dept)}>
+              <DropdownMenuItem onClick={() => inventoryProducts.openEdit(inventoryProduct)}>
                 Edit
               </DropdownMenuItem>
 
               <DropdownMenuItem
-                onClick={() => departments.openActiveStatus(dept._id, dept.active)}
+                onClick={() =>
+                  inventoryProducts.openActiveStatus(inventoryProduct._id, inventoryProduct.active)
+                }
               >
-                {dept.active ? 'Deactivate' : 'Activate'}
+                {inventoryProduct.active ? 'Deactivate' : 'Activate'}
               </DropdownMenuItem>
 
               <DropdownMenuSeparator />
 
               <DropdownMenuItem
                 variant="destructive"
-                onClick={() => departments.openDelete(dept)}
+                onClick={() => inventoryProducts.openDelete(inventoryProduct)}
               >
                 Delete
               </DropdownMenuItem>
               <DropdownMenuItem
                 variant="destructive"
-                onClick={() => departments.openErase(dept._id)}
+                onClick={() => inventoryProducts.openErase(inventoryProduct._id)}
               >
                 Erase Permanently
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => departments.openRetrieve(dept._id)}>
+              <DropdownMenuItem onClick={() => inventoryProducts.openRetrieve(inventoryProduct._id)}>
                 Retrieve
               </DropdownMenuItem>
             </DropdownMenuContent>

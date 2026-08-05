@@ -15,7 +15,7 @@ import Bill from "@/pages/bill/bill";
 import Branch from "@/pages/branch/branch";
 import BillCreation from '@/pages/bill-creation/bill-creation';
 
-// app.routes.jsx
+
 export const appRoutes = [
     {
         path: '/bill-creation',

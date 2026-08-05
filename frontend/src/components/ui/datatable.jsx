@@ -328,9 +328,9 @@ export default function DataTable({
           </Table>
         </div>)}
 
-      {/* ------------------------------ */}
-      {/* ⏪ PAGINATION FOOTER */}
-      {/* ------------------------------ */}
+      {}
+      {}
+      {}
       {!loading && (<div className="flex items-center justify-between py-4">
         {isServer ? (
           <div className="text-sm text-muted-foreground">
@@ -343,7 +343,7 @@ export default function DataTable({
         )}
 
         <div className="flex items-center gap-3">
-          {/* PAGE SIZE SELECT */}
+          {}
           <Select
             value={String(pageSize)}
             onValueChange={(value) => {
@@ -374,7 +374,7 @@ export default function DataTable({
             </SelectContent>
           </Select>
 
-          {/* PREVIOUS */}
+          {}
           <Button
             variant="outline"
             size="sm"

@@ -1,0 +1,1 @@
+export {useInventoryProductModule} from './inventory-product.module'

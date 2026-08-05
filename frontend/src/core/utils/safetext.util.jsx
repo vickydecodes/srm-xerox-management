@@ -1,4 +1,4 @@
-/* eslint-disable no-useless-assignment */
+
 import { capitalize } from './helper.utils';
 export const safetext = (value, fallbackOrOptions, maybeOptions) => {
   let fallback = 'Unknown data';

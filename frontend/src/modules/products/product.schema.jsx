@@ -12,5 +12,5 @@ export const productCreateSchema = z.object({
 });
 
 export const productEditSchema = productCreateSchema.extend({
-  active: z.boolean(),
+  active: z.boolean().optional(),
 });

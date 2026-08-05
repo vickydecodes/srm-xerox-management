@@ -23,11 +23,7 @@ export function EmptyDemo({
         <EmptyDescription>{description}</EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
-        {/* <div className="flex gap-2">
-          {buttons.map((b) => (
-            <Button onClick={b.action}>{b.label}</Button>
-          ))}
-        </div> */}
+        {}
       </EmptyContent>
     </Empty>
   );

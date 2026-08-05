@@ -10,14 +10,38 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { useSelectItems } from "@/core/hooks/useSelect";
+import {
+  Select,
+  SelectContent,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+const formatVariant = (variant) => {
+  if (!variant) return '';
+  const entries = typeof variant.entries === 'function' ? [...variant.entries()] : Object.entries(variant);
+  if (entries.length === 0) return '';
+  return `(${entries.map(([k, v]) => `${k}: ${v}`).join(', ')})`;
+};
 
-export default function ServiceForm({ form, isEdit = false }) {
+export default function ServiceForm({ form, isEdit = false, products }) {
   const fields = ["name", "description", "unit", "price"];
 
   const { fields: materialFields, append, remove } = useFieldArray({
     control: form.control,
     name: "materials",
+  });
+
+  console.log(products)
+
+  const productSelect = useSelectItems(products, {
+    emptyText: "No products available",
+    placeholder: "Select a product",
+    getLabel: (i) => {
+      const variantStr = formatVariant(i.variant);
+      const name = i.product?.name || "Unknown Product";
+      return `${name} ${variantStr}`.trim();
+    }
   });
 
   return (
@@ -48,31 +72,26 @@ export default function ServiceForm({ form, isEdit = false }) {
         />
       ))}
 
-      <FormField
-        control={form.control}
-        name="active"
-        render={({ field: f }) => (
-          <FormItem className="flex items-center gap-2">
-            <FormControl>
-              <Checkbox checked={f.value} onCheckedChange={f.onChange} />
-            </FormControl>
-            <FormLabel className="!mt-0">Active</FormLabel>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
       <div className="space-y-2">
         <FormLabel>Materials</FormLabel>
         {materialFields.map((item, index) => (
-          <div key={item.id} className="flex gap-2 items-start">
+          <div key={item._id} className="flex gap-2 items-start">
             <FormField
               control={form.control}
               name={`materials.${index}.product`}
               render={({ field: f }) => (
                 <FormItem className="flex-1">
                   <FormControl>
-                    <Input placeholder="Product ID" {...f} />
+                  <Select
+                value={f.value ? String(f.value) : undefined}
+                onValueChange={f.onChange}
+                disabled={isEdit}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={productSelect.placeholder} />
+                </SelectTrigger>
+                <SelectContent>{productSelect.items}</SelectContent>
+              </Select>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

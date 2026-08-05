@@ -1,12 +1,14 @@
 import { FilterConfig } from "@core/constants/dynamicfilter.constant.ts";
 import { IInventoryProduct } from '@db/models/inventory-product.model.ts';
 
-export const inventoryProductFilterConfig: FilterConfig<IInventoryProduct>= {
+export const inventoryProductFilterConfig: FilterConfig<IInventoryProduct> = {
     searchable: [
-        "product.name",
+        "name",
         "inventory.name"
     ],
-
+    searchableRefs: [
+        { field: 'product', ref: 'Product', matchOn: 'name' }
+    ],
     filterable: [
         "inventory",
         "product",

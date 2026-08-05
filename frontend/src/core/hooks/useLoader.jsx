@@ -1,50 +1,18 @@
 import { useState, useCallback } from 'react';
 
-/**
- * useLoader()
- *
- * load(...modules, force?)
- * -------------------------
- * - Call this to fetch module data.
- * - Pass module objects OR wrapped module configs.
- * - Optional last argument `true` will force reload.
- *
- * Examples:
- *   load(branches);
- *   load(branches, students);
- *   load(branches, true);
- *
- *   load(
- *     { module: branches, query: { full: true } },
- *     students
- *   );
- *
- *
- * createPreset(...modules)
- * -------------------------
- * - Creates a reusable loader for a fixed set of modules.
- *
- * Example:
- *   const loadDashboard = createPreset(branches, students);
- *
- *   loadDashboard();
- *   loadDashboard(true);
- */
+
 
 export const useLoader = () => {
   const [loading, setLoading] = useState(false);
 
-  /**
-   * Normalize modules into:
-   * { module, query }
-   */
+  
   const resolveItems = (items) => {
     const arr = Array.isArray(items) ? items : [items];
 
     return arr.flatMap((item) => {
       if (!item) return [];
 
-      // wrapped config
+      
       if (
         typeof item === 'object' &&
         item.module &&
@@ -53,7 +21,7 @@ export const useLoader = () => {
         return [item];
       }
 
-      // raw module
+      
       if (
         typeof item === 'object' &&
         typeof item.fetch === 'function'
@@ -65,17 +33,13 @@ export const useLoader = () => {
     });
   };
 
-  /**
-   * Detect trailing force flag
-   */
+  
   const parseForce = (args) => {
     const last = args[args.length - 1];
     return typeof last === 'boolean' ? last : false;
   };
 
-  /**
-   * Core loader
-   */
+  
   const load = useCallback(async (...args) => {
     if (!args.length) return [];
 
@@ -114,9 +78,7 @@ export const useLoader = () => {
     }
   }, []);
 
-  /**
-   * Preset loader (modules only, optional force)
-   */
+  
   const createPreset = useCallback(
     (...presetModules) =>
       (force = true, full = true) => {

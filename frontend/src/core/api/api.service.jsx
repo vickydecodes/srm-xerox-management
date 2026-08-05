@@ -56,7 +56,7 @@ export const downloadFile = async (url, params) => {
   let filename = 'download';
   const response = await api.get(url, {
     responseType: 'blob',
-    params: {...params, _t: Date.now()}, // prevent caching
+    params: {...params, _t: Date.now()}, 
     validateStatus: null,
   });
 
@@ -66,7 +66,7 @@ export const downloadFile = async (url, params) => {
     try {
       const json = JSON.parse(text);
       message = json.message || json.error || message;
-    } catch { /* not JSON */ }
+    } catch {  }
     
     const err = new Error(message);
     err.response = { status: response.status, data: { message } };

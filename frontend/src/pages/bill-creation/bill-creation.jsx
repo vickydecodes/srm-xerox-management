@@ -1,16 +1,54 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useApi } from "@/core/contexts/api.context";
 import { useLoader } from "@/core/hooks/useLoader";
+import { useAuth } from "@/core/contexts/auth.context";
+import { useAction } from "@/core/hooks/useAction";
+import { Button } from "@/components/ui/button";
 import { BillForm } from "@/modules/bill/bill.form";
+import { defaultBillValues } from "@/modules/bill/bill.schema";
+
+const methodMap = {
+  'CASH': 'cash',
+  'UPI': 'gpay',
+  'CREDIT': 'credit',
+};
+
+const getFormDefaultValues = (bill) => {
+  if (!bill) return defaultBillValues;
+  return {
+    paymentMethod: methodMap[bill.paymentMethod] || 'cash',
+    status: bill.status === 'PAID' ? 'paid' : 'unpaid',
+    branch: typeof bill.branch === 'object' ? bill.branch?._id : bill.branch || '',
+    department: typeof bill.department === 'object' ? bill.department?._id : bill.department || '',
+    discount: bill.discount || 0,
+    tax: bill.tax || 0,
+    items: bill.items.map((item) => ({
+      type: item.type,
+      item: typeof item.item === 'object' ? item.item?._id : item.item,
+      name: item.name,
+      quantity: item.quantity,
+      price: item.price,
+    })),
+  };
+};
 
 export default function BillCreation() {
-  const { products, departments, branches, bills } = useApi();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { usePageAction } = useAction();
+  const { inventoryProducts, services, departments, branches, bills } = useApi();
   const { createPreset } = useLoader();
 
-  // ASSUMPTION: dropped `bills` from the preset — a creation page doesn't
-  // need the existing bills list, only products/branches/departments to
-  // populate the selects.
-  const loadPageModules = createPreset(products, departments, branches);
+  const [editingBill, setEditingBill] = useState(null);
+
+  usePageAction({
+    edit: (bill) => {
+      setEditingBill(bill);
+    },
+  });
+
+  const loadPageModules = createPreset(inventoryProducts, services, departments, branches);
 
   useEffect(() => {
     loadPageModules();
@@ -18,21 +56,47 @@ export default function BillCreation() {
 
   const handleSubmit = async (data) => {
     try {
-      await bills.create(data);
+      const payload = {
+        ...data,
+        paymentMethod: data.paymentMethod === 'gpay' ? 'UPI' : data.paymentMethod.toUpperCase(),
+        status: data.status.toUpperCase(),
+      };
+      
+      if (editingBill) {
+        await bills.crud.edit(editingBill._id, payload);
+        navigate(`/${user.role}/bills`);
+      } else {
+        await bills.create(payload);
+      }
     } catch {
-      // already toasted by createCrud's error handler — nothing else needed here
+      // errors handled by CRUD layer
     }
   };
 
   return (
-    <div className="p-4 space-y-4">
-      <h1 className="text-lg font-semibold">Create bill</h1>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-3xl font-bold tracking-tight">
+          {editingBill ? `Edit Bill - ${editingBill.code}` : "Create Bill"}
+        </h2>
+        {editingBill && (
+          <Button
+            variant="outline"
+            onClick={() => navigate(`/${user.role}/bills`)}
+          >
+            Cancel Edit
+          </Button>
+        )}
+      </div>
       <BillForm
-        products={products.state}
+        inventoryProducts={inventoryProducts.state}
+        services={services.state}
         branches={branches.state}
         departments={departments.state}
+        defaultValues={getFormDefaultValues(editingBill)}
         onSubmit={handleSubmit}
-        loading={bills.loading?.create ?? false}
+        isEdit={!!editingBill}
+        loading={bills.loading?.create || bills.loading?.edit || false}
       />
     </div>
   );

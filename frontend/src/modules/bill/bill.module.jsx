@@ -5,9 +5,11 @@ import { useBillStore } from "./bill.store";
 import { useUI } from "@/core/contexts/ui.context";
 import { apiurls } from "@/core/api/api.urls";
 import { createEntityQueryActions } from "@/core/utils/entity.util";
+import { useAction } from "@/core/hooks/useAction";
 
 export const useBillModule = (exported) => {
   const { openModal } = useUI();
+  const { navigateWith } = useAction();
   const store = useBillStore();
   const { setQuery } = store;
   const { bills } = apiurls;
@@ -21,6 +23,20 @@ export const useBillModule = (exported) => {
 
   const openView = (bill) => {
     return openModal(modals.view, { bill, exported });
+  };
+
+  const openEdit = async (bill) => {
+    try {
+      const fullBill = await crud.getOne(bill._id);
+      navigateWith('bill-creation').edit(fullBill);
+    } catch {
+      
+    }
+  };
+
+  const togglePaymentStatus = (bill) => {
+    const newStatus = bill.status === 'PAID' ? 'UNPAID' : 'PAID';
+    return crud.edit(bill._id, { status: newStatus });
   };
 
   const openDelete = (id, code) => {
@@ -79,10 +95,12 @@ export const useBillModule = (exported) => {
     },
     useBillColumns,
     openView,
+    openEdit,
     openDelete,
     openErase,
     openRetrieve,
     openActiveStatus,
+    togglePaymentStatus,
     crud,
     create: crud.create,
     fetch,

@@ -9,7 +9,7 @@ import { createEntityQueryActions } from "@/core/utils/entity.util";
 export const useServiceModule = (exported) => {
   const { openModal } = useUI();
 
-  // Subscribe reactively — triggers re-renders on change
+  
   const list = useServiceStore((s) => s.list);
   const loading = useServiceStore((s) => s.loading);
   const pagination = useServiceStore((s) => s.pagination);
@@ -38,7 +38,7 @@ export const useServiceModule = (exported) => {
   setCurrent(service);
   return openModal(modals.edit, {
     service,
-    submitFn: (formData) => crud.edit(service.id, formData),
+    submitFn: (formData) => crud.edit(service._id, formData),
     exported,
   });
 };
