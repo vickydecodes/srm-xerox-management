@@ -1,11 +1,7 @@
 import {
-    IconBoxSeam,
     IconBuildingCommunity,
-    IconClipboardList,
-    IconReceipt,
-    IconGitBranch,
+
     IconLogout2,
-    IconCalculator
 } from '@tabler/icons-react';
 
 import Department from "@/pages/department/department";
