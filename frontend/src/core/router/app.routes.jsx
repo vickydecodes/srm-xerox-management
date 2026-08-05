@@ -1,4 +1,4 @@
-// AppRoutes.jsx
+
 import { Route, Routes } from 'react-router-dom';
 import Layout from '@/components/global/layout.jsx';
 import { adminRoutes } from './admin.routes.jsx';
@@ -13,7 +13,7 @@ import PublicNotFound from '@/components/global/notfound.jsx';
 import Login from '@/pages/login/login.jsx';
 import PublicRoute from './public.route.jsx';
 
-// One entry per role in the enum: ['super_admin', 'branch_admin', 'department_admin', 'shop_admin', 'staff']
+
 const roleRouteGroups = [
     adminRoutes,
     branchAdminRoutes,

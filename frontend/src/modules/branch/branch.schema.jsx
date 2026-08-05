@@ -6,4 +6,6 @@ export const branchCreateSchema = z.object({
   active: z.boolean().default(true),
 });
 
-export const branchEditSchema = branchCreateSchema;
+export const branchEditSchema = branchCreateSchema.extend({
+  active: z.boolean().optional(),
+});

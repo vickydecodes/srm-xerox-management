@@ -16,7 +16,6 @@ import {
   FormItem,
   FormLabel,
 } from "@/components/ui/form";
-import { Switch } from "@/components/ui/switch";
 import { useAsync } from "@/core/hooks/useAsync";
 import { useClearError } from "@/core/hooks/useClearError";
 import { useSubmit } from "@/core/hooks/useSubmit";
@@ -25,7 +24,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { productCreateSchema, productEditSchema } from "./product.schema";
 import ProductForm from "./product.form";
 
-// variants array (form shape) -> Map-like object (backend shape)
+
 const toVariantsMap = (variants = []) =>
   variants.reduce((acc, { key, values }) => {
     if (!key) return acc;
@@ -36,7 +35,7 @@ const toVariantsMap = (variants = []) =>
     return acc;
   }, {});
 
-// Map-like object (backend shape) -> variants array (form shape)
+
 const toVariantsArray = (variants = {}) =>
   Object.entries(variants).map(([key, values]) => ({
     key,
@@ -211,21 +210,6 @@ export const Edit = ({
         >
           <ProductForm form={form} />
 
-          <FormField
-            control={form.control}
-            name="active"
-            render={({ field }) => (
-              <FormItem className="flex items-center justify-between rounded-lg border p-3">
-                <FormLabel className="mb-0">Active</FormLabel>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
 
           {ErrorAlert}
           <DialogFooter>

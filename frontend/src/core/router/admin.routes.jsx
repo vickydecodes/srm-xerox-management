@@ -14,6 +14,7 @@ import Product from "@/pages/product/product";
 import Bill from "@/pages/bill/bill";
 import Branch from "@/pages/branch/branch";
 import BillCreation from '@/pages/bill-creation/bill-creation';
+import InventoryProduct from '@/pages/inventory-product/inventory-product';
 
 export const adminRoutes = {
     role: 'super_admin',
@@ -25,6 +26,14 @@ export const adminRoutes = {
             description: 'Create bill with existing products and services',
             icon: <IconCalculator className="h-5 w-5 shrink-0" />,
             element: <BillCreation />
+        },
+        {
+            path: '/super_admin/inventory',
+            label: 'Inventory Products',
+            title: 'Inventory Products',
+            description: 'Inventory Products ',
+            icon: <IconCalculator className="h-5 w-5 shrink-0" />,
+            element: <InventoryProduct />
         },
         {
             path: '/super_admin/product',

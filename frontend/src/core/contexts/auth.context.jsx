@@ -1,4 +1,4 @@
-/* eslint-disable react-refresh/only-export-components */
+
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { apiurls } from '../api/api.urls';

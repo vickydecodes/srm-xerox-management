@@ -1,29 +1,55 @@
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { MoreHorizontal } from "lucide-react";
-import { Hint } from "@/core/utils/tooltip.util";
+} from "@/components/ui/dropdown-menu"
+import { MoreHorizontal } from "lucide-react"
+import { Hint } from "@/core/utils/tooltip.util"
+import formatDate from "@/core/utils/formatdate.util";
 
 export const useDepartmentColumns = (departments) => {
   return [
     {
-      accessorKey: "id",
-      header: () => Hint("Id", "The academic year of this batch"),
-      cell: ({ row }) => <span>{row.getValue("_id")}</span>,
+      accessorKey: 'code',
+      header: () => Hint('Code', 'Department code'),
+      cell: ({ row }) => <span>{row.getValue('code')}</span>,
     },
     {
-      accessorKey: "name",
-      header: () => Hint("Name", "Unique batch code"),
-      cell: ({ row }) => <span>{row.getValue("name")}</span>,
+      accessorKey: 'name',
+      header: () => Hint('Name', 'Department name'),
+      cell: ({ row }) => <span>{row.getValue('name')}</span>,
     },
     {
-      accessorKey: "actions",
-      header: () => Hint("Actions", "Edit or manage this department"),
+      accessorKey: 'branch',
+      header: () => Hint('Branch', 'Associated branch'),
+      cell: ({ row }) => {
+        const branch = row.getValue('branch');
+        return <span>{branch?.name || branch || '-'}</span>;
+      },
+    },
+    {
+      accessorKey: 'active',
+      header: () => Hint('Status', 'Whether the department is active'),
+      cell: ({ row }) => (
+        <Badge variant={row.getValue('active') ? 'default' : 'outline'}>
+          {row.getValue('active') ? 'Active' : 'Inactive'}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: 'createdAt',
+      header: () => Hint('Created', 'Department creation date'),
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">{formatDate(row.getValue('createdAt'))}</span>
+      ),
+    },
+    {
+      accessorKey: 'actions',
+      header: () => Hint('Actions', 'Edit or manage this department'),
       cell: ({ row }) => {
         const dept = row.original;
         const isDeleted =

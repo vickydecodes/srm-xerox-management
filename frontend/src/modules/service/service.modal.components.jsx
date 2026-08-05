@@ -20,7 +20,7 @@ import ServiceForm from "./service.form";
 import { useLoader } from "@/core/hooks/useLoader";
 import { useEffect } from "react";
 
-export const Create = ({ submitFn = () => {}, closeModal = () => {} } = {}) => {
+export const Create = ({ submitFn = () => { }, closeModal = () => { }, exported } = {}) => {
   const form = useForm({
     resolver: zodResolver(serviceCreateSchema),
     defaultValues: {
@@ -35,6 +35,11 @@ export const Create = ({ submitFn = () => {}, closeModal = () => {} } = {}) => {
 
   const { run, loading, ErrorAlert, clearError } = useAsync(submitFn);
 
+
+  const { createPreset } = useLoader();
+
+  const serviceModal = createPreset(exported.inventoryProducts)
+
   useClearError(form, clearError);
 
   const onSubmit = useSubmit({
@@ -42,6 +47,12 @@ export const Create = ({ submitFn = () => {}, closeModal = () => {} } = {}) => {
     form,
     onSuccess: closeModal,
   });
+
+  useEffect(() => {
+    serviceModal();
+  }, []);
+
+  const products = exported.inventoryProducts.state
 
   return (
     <DialogContent className="w-xl max-h-[85vh] overflow-y-auto">
@@ -51,11 +62,8 @@ export const Create = ({ submitFn = () => {}, closeModal = () => {} } = {}) => {
       </DialogHeader>
 
       <Form {...form}>
-        <form
-          className="grid gap-4 py-2"
-          onSubmit={form.handleSubmit(onSubmit)}
-        >
-          <ServiceForm form={form} />
+        <form className="grid gap-4 py-2" onSubmit={form.handleSubmit(onSubmit)}>
+          <ServiceForm form={form} products={products} />
           {ErrorAlert}
           <DialogFooter>
             <DialogClose asChild>
@@ -89,13 +97,16 @@ export const Edit = ({
       unit: service?.unit || "",
       price: service?.price || 0,
       active: service?.active ?? true,
-      materials: service?.materials || [],
+      materials: service?.materials?.map((m) => ({
+        product: typeof m.product === 'object' && m.product ? m.product._id : m.product,
+        quantity: m.quantity,
+      })) || [],
     },
   });
 
   const { createPreset } = useLoader();
 
-  const editModal = createPreset(exported.products);
+  const editModal = createPreset(exported.inventoryProducts);
 
   const { run, loading, ErrorAlert, clearError } = useAsync(submitFn);
 
@@ -111,7 +122,7 @@ export const Edit = ({
     editModal();
   }, []);
 
-  const products = exported.products.state;
+  const products = exported.inventoryProducts.state
 
   console.log(products);
 
@@ -123,11 +134,8 @@ export const Edit = ({
       </DialogHeader>
 
       <Form {...form}>
-        <form
-          className="grid gap-4 py-2"
-          onSubmit={form.handleSubmit(onSubmit)}
-        >
-          <ServiceForm form={form} isEdit />
+        <form className="grid gap-4 py-2" onSubmit={form.handleSubmit(onSubmit)}>
+          <ServiceForm form={form} isEdit products={products} />
           {ErrorAlert}
           <DialogFooter>
             <DialogClose asChild>

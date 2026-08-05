@@ -35,6 +35,8 @@ export interface IBill extends Document {
   tax: number;
   total: number;
   paymentMethod: 'CASH' | 'UPI' | 'CREDIT';
+  branch?: Types.ObjectId;
+  department?: Types.ObjectId;
   status: 'UNPAID' | 'PAID' | 'CANCELLED';
   createdBy: Types.ObjectId;
   createdAt: Date;
@@ -50,6 +52,8 @@ const BillSchema = new Schema<IBill>(
     tax: { type: Number, default: 0, min: 0 },
     total: { type: Number, min: 0 },
     paymentMethod: { type: String, enum: ['CASH', 'UPI', 'CREDIT'] },
+    branch: { type: Schema.Types.ObjectId, ref: 'Branch' },
+    department: { type: Schema.Types.ObjectId, ref: 'Department' },
     createdBy: { type: Schema.Types.ObjectId, refPath: 'User', required: true },
     status: { type: String, enum: ['UNPAID', 'PAID', 'CANCELLED'], default: 'UNPAID' },
   },

@@ -1,4 +1,4 @@
-// public.route.jsx
+
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/core/contexts/auth.context';
 import Login from '@/pages/login/login';

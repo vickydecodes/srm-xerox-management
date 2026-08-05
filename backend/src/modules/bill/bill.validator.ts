@@ -7,6 +7,7 @@ const objectId = z.string().refine((val) => Types.ObjectId.isValid(val), {
 });
 
 const billItemSchema = z.object({
+  type: z.enum(['InventoryProduct', 'Service']),
   item: objectId,
   name: z.string().trim().min(1, 'name is required'),
   quantity: z.number().min(0, 'quantity cannot be negative'),
@@ -14,6 +15,9 @@ const billItemSchema = z.object({
 });
 
 export const createBillSchema = z.object({
+  paymentMethod: z.enum(['CASH', 'UPI', 'CREDIT']),
+  branch: objectId.optional(),
+  department: objectId.optional(),
   items: z.array(billItemSchema).min(1, 'at least one item is required'),
   discount: z.number().min(0).optional(),
   tax: z.number().min(0).optional(),
@@ -21,6 +25,9 @@ export const createBillSchema = z.object({
 
 export const updateBillSchema = z
   .object({
+    paymentMethod: z.enum(['CASH', 'UPI', 'CREDIT']).optional(),
+    branch: objectId.optional(),
+    department: objectId.optional(),
     items: z.array(billItemSchema).min(1).optional(),
     discount: z.number().min(0).optional(),
     tax: z.number().min(0).optional(),

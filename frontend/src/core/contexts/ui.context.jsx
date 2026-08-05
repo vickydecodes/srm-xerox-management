@@ -1,6 +1,6 @@
-/* eslint-disable react-hooks/immutability */
-/* eslint-disable react-hooks/static-components */
-/* eslint-disable react-refresh/only-export-components */
+
+
+
 import { useContext, createContext, useState, useCallback, useRef } from 'react';
 import { Dialog } from '@/components/ui/dialog';
 import { toast } from 'sonner';

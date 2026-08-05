@@ -1,4 +1,5 @@
 import Product from '@db/models/product.model.ts';
+import InventoryProduct from '@db/models/inventory-product.model.ts';
 import { dynamicFilter } from '@core/constants/dynamicfilter.constant.ts';
 import {
   CreateProductPayload,
@@ -40,6 +41,9 @@ export const getProductById = async (id: string) => {
 export const updateProduct = async (id: string, data: UpdateProductPayload) => {
   const updated = await Product.findByIdAndUpdate(id, data, UPDATE_OPTIONS);
   if (!updated) return null;
+  if (data.name) {
+    await InventoryProduct.updateMany({ product: id }, { name: data.name });
+  }
   return enhanceProduct(updated);
 };
 

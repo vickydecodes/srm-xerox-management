@@ -16,4 +16,6 @@ export const serviceCreateSchema = z.object({
   materials: z.array(serviceMaterialSchema).default([]),
 });
 
-export const serviceEditSchema = serviceCreateSchema;
+export const serviceEditSchema = serviceCreateSchema.extend({
+  active: z.boolean().optional(),
+});

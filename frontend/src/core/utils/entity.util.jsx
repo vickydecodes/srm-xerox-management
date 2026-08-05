@@ -19,7 +19,7 @@ export const createEntityQueryActions = ({ crud, getQuery, setQuery }) => {
       order: null,
       search: undefined,
 
-      // student/batch-module fields
+      
       branch: undefined,
       batch: undefined,
       batches: undefined,
@@ -30,7 +30,7 @@ export const createEntityQueryActions = ({ crud, getQuery, setQuery }) => {
       updatedAt: undefined,
       'paymentHistory.paymentMethodId': undefined,
 
-      // inventory-request fields
+      
       product: undefined,
       inventory: undefined,
       'requestedBy.inventory': undefined,
@@ -39,13 +39,13 @@ export const createEntityQueryActions = ({ crud, getQuery, setQuery }) => {
       'history.type': undefined,
       'history.source': undefined,
 
-      // inventory-ledger fields
+      
       event: undefined,
       direction: undefined,
       'reference.model': undefined,
       'reference.id': undefined,
 
-      // inventory-allocation fields
+      
       student: undefined,
       allocatedBy: undefined,
       collected: undefined,
@@ -97,14 +97,14 @@ export const createEntityQueryActions = ({ crud, getQuery, setQuery }) => {
   };
 
   const presets = {
-    // ─── generic sort/search ──────────────────────────────────────────────
+    
     latest: (f = {}) => fetch({ sortBy: 'createdAt', order: 'desc', page: 1, ...f }),
     oldest: (f = {}) => fetch({ sortBy: 'createdAt', order: 'asc', page: 1, ...f }),
     ascending: (field = 'name', f = {}) => fetch({ sortBy: field, order: 'asc', page: 1, ...f }),
     descending: (field = 'name', f = {}) => fetch({ sortBy: field, order: 'desc', page: 1, ...f }),
     search: (term, f = {}) => fetch({ search: term, page: 1, ...f }),
 
-    // ─── student/batch-module presets ─────────────────────────────────────
+    
     filterByBranch: (branch, f = {}) => fetch({ branch, page: 1, ...f }),
     filterByBatch: (batch, f = {}) => fetch({ batch, page: 1, ...f }),
     filterByBatches: (batches, f = {}) => fetch({ batches, page: 1, ...f }),
@@ -116,7 +116,7 @@ export const createEntityQueryActions = ({ crud, getQuery, setQuery }) => {
     filterByPaymentMethodId: (payment, f = {}) =>
       fetch({ 'paymentHistory.paymentMethodId': payment, page: 1, ...f }),
 
-    // ─── inventory-request presets ────────────────────────────────────────
+    
     filterByInventory: (inventory, f = {}) => fetch({ inventory, page: 1, ...f }),
     filterByProduct: (product, f = {}) => fetch({ product, page: 1, ...f }),
     filterByRequestingInventory: (inventoryId, f = {}) =>
@@ -130,17 +130,17 @@ export const createEntityQueryActions = ({ crud, getQuery, setQuery }) => {
     filterByLegSource: (inventoryId, f = {}) =>
       fetch({ 'history.source': inventoryId, page: 1, ...f }),
 
-    // ─── inventory-ledger presets ─────────────────────────────────────────
+    
     filterByDirection: (direction, f = {}) => fetch({ direction, page: 1, ...f }),
     filterByEvent: (event, f = {}) => fetch({ event, page: 1, ...f }),
     filterByReferenceModel: (model, f = {}) => fetch({ 'reference.model': model, page: 1, ...f }),
 
-    // ─── inventory-allocation presets ─────────────────────────────────────
+    
     filterByStudent: (student, f = {}) => fetch({ student, page: 1, ...f }),
     filterByAllocatedBy: (userId, f = {}) => fetch({ allocatedBy: userId, page: 1, ...f }),
     filterByCollected: (collected, f = {}) => fetch({ collected, page: 1, ...f }),
 
-    // ─── generic fallback — for any filterable path not worth a bespoke name ─
+    
     filterByField: (field, value, f = {}) => fetch({ [field]: value, page: 1, ...f }),
   };
 

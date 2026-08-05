@@ -14,11 +14,17 @@ export interface CreateBillPayload {
   items: CreateBillItemPayload[];
   discount?: number;
   tax?: number;
+  paymentMethod: 'CASH' | 'UPI' | 'CREDIT';
+  branch?: string;
+  department?: string;
 }
 
 export interface UpdateBillPayload {
   items?: CreateBillItemPayload[];
   discount?: number;
   tax?: number;
+  paymentMethod?: 'CASH' | 'UPI' | 'CREDIT';
+  branch?: string;
+  department?: string;
   status?: 'UNPAID' | 'PAID' | 'CANCELLED';
 }

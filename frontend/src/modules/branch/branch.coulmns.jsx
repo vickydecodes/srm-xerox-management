@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
 import { Hint } from "@/core/utils/tooltip.util";
-import formatdate from "@/core/utils/formatdate.util";
 
 export const useBranchColumns = (branches) => {
   return [
@@ -32,13 +31,7 @@ export const useBranchColumns = (branches) => {
         </Badge>
       ),
     },
-    {
-      accessorKey: 'createdAt',
-      header: () => Hint('Created', 'Branch creation date'),
-      cell: ({ row }) => (
-        <span className="text-muted-foreground">{formatdate(row.getValue('createdAt'))}</span>
-      ),
-    },
+
     {
       accessorKey: 'actions',
       header: () => Hint('Actions', 'More actions'),

@@ -6,6 +6,7 @@ import { createStatusControllers } from '@core/constants/createstatuscontroller.
 import sendResponse from '@core/constants/responsewrapper.constant.ts';
 import { buildQuery } from '@core/constants/querybuilder.constant.ts';
 import { wrapControllers } from '@core/constants/wrapcontroller.constant.ts';
+import { AccessRequest } from '@core/middlewares/access.middleware.ts';
 
 const billStatus = createStatusControllers(
   {
@@ -17,8 +18,8 @@ const billStatus = createStatusControllers(
 );
 
 const controllers = {
-  createBill: async (req: Request<{}, {}, CreateBillPayload>, res: Response) => {
-    const bill = await service.createBill(req.body, 'id');
+  createBill: async (req: AccessRequest<{}, {}, CreateBillPayload>, res: Response) => {
+    const bill = await service.createBill(req.body, req.user.id);
     return sendResponse.created(res, 'Bill', bill);
   },
 

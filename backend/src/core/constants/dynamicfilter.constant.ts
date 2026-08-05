@@ -1,8 +1,16 @@
 import mongoose, { Model, Document, PipelineStage, Types } from 'mongoose';
-import { analyzeSchemaPaths } from '@core/utils/schemaanalyzer.util.ts';
+import { analyzeSchemaPaths } from '@utils/schemaanalyzer.util.ts';
 import { castObjectIds } from '@core/utils/parseid.util.js';
+
+export interface SearchableRefConfig {
+  field: string; // local field holding the ObjectId, e.g. 'branch'
+  ref: string; // model name registered with mongoose, e.g. 'Branch'
+  matchOn: string; // field on the referenced model to regex-match, e.g. 'name'
+}
+
 export interface FilterConfig<T> {
   searchable?: (keyof T | string)[];
+  searchableRefs?: SearchableRefConfig[];
   filterable?: (keyof T | string)[];
   sortable?: (keyof T | string)[];
   defaultSort?: keyof T | string;
@@ -35,13 +43,25 @@ export async function dynamicFilter<T extends Document>(
     extras?: {
       select?: string;
     };
+    nestedPopulate?: any[];
+    forcePopulate?: any[]; // ← add this
+
     visibility?: 'all' | 'active-only';
     rawQuery?: Record<string, any>;
   } = {}
 ): Promise<PaginatedResult<T>> {
-  const { searchable = [], filterable = [], sortable = [], defaultSort = 'name' } = config;
+  mongoose.set('strictPopulate', false);
+  const {
+    searchable = [],
+    filterable = [],
+    sortable = [],
+    searchableRefs = [],
+    defaultSort = 'name',
+  } = config;
 
-  const { populatePaths, refIdPaths } = analyzeSchemaPaths(model.schema);
+  const { populatePaths, refIdPaths, dynamicRefPaths } = analyzeSchemaPaths(model.schema);
+  console.log('populatePaths:', populatePaths);
+  const dynamicRefPathSet = new Set(dynamicRefPaths.map((d) => d.path));
 
   const query: Record<string, any> = {};
 
@@ -104,9 +124,31 @@ export async function dynamicFilter<T extends Document>(
     query[key] = value;
   });
 
-  if (queryParams.search && searchable.length > 0) {
+  const lookupStages: PipelineStage[] = [];
+  const searchUnsetFields: string[] = [];
+
+  if (queryParams.search && (searchable.length > 0 || searchableRefs.length > 0)) {
     const r = new RegExp(queryParams.search.trim(), 'i');
-    query.$or = searchable.map((f) => ({ [f]: { $regex: r } }));
+    const orConditions: Record<string, any>[] = searchable.map((f) => ({ [f]: { $regex: r } }));
+
+    searchableRefs.forEach(({ field, ref, matchOn }) => {
+      const refModel = mongoose.model(ref);
+      const alias = `__search_${field.replace(/\./g, '_')}`;
+
+      lookupStages.push({
+        $lookup: {
+          from: refModel.collection.name,
+          localField: field,
+          foreignField: '_id',
+          as: alias,
+        },
+      });
+
+      searchUnsetFields.push(alias);
+      orConditions.push({ [`${alias}.${matchOn}`]: { $regex: r } });
+    });
+
+    query.$or = orConditions;
   }
 
   const sort: Record<string, 1 | -1> = { createdAt: -1 };
@@ -124,7 +166,7 @@ export async function dynamicFilter<T extends Document>(
   const sortField = Object.keys(sort)[0];
   const sortOrder = sort[sortField];
 
-  const pipeline: PipelineStage[] = [{ $match: query }];
+  const pipeline: PipelineStage[] = [...lookupStages, { $match: query }];
 
   if (DERIVED_SORT_FIELDS[sortField]) {
     pipeline.push({
@@ -238,11 +280,15 @@ export async function dynamicFilter<T extends Document>(
   }
 
   pipeline.push({
-    $project: { password: 0, __v: 0 },
+    $project: {
+      password: 0,
+      __v: 0,
+      ...Object.fromEntries(searchUnsetFields.map((f) => [f, 0])),
+    },
   });
 
-  let data: any[] = [];
-  let total = 0;
+  let data: any[];
+  let total: number;
 
   if (isFullFetch) {
     data = await model.aggregate(pipeline);
@@ -263,11 +309,22 @@ export async function dynamicFilter<T extends Document>(
   }
 
   if (populatePaths.length > 0) {
-    const STUDENT_SELECT = '_id name loginId standard batches branch';
-
     data = await model.populate(
       data,
       populatePaths.map((path) => {
+        // NEW: dynamic refs (refPath) — let mongoose resolve the model per-document.
+        // schemaPath.options.ref is undefined for these, so skip the static-ref logic below.
+        if (dynamicRefPathSet.has(path)) {
+
+          const selectByModel: Record<string, string> = {
+            InventoryRequest: '_id status quantity createdAt',
+            InventoryAllocation: '_id status quantity createdAt',
+          };
+
+
+          return { path };
+        }
+
         const schemaPath: any = model.schema.path(path);
         let refModelName = null;
 
@@ -288,20 +345,41 @@ export async function dynamicFilter<T extends Document>(
           }
         }
 
-        if (path === 'student') {
+        if (path === 'materials.product') {
           return {
-            path: 'student',
+            path: 'materials.product',
             match,
-            select: STUDENT_SELECT,
+            select: '_id product variant price quantity active',
             populate: [
-              { path: 'branch', select: '_id name code' },
-              { path: 'standard', select: '_id name' },
-              { path: 'batches', select: '_id name' },
+              { path: 'product', select: '_id name code' }
+            ]
+          };
+        }
+
+        if (path === 'inventory') {
+          return {
+            path: 'inventory',
+            select: '_id code branch',
+            options: { strictPopulate: false },
+            populate: [
+              {
+                path: 'branch',
+                select: '_id name code',
+              }
             ],
           };
         }
 
-        let baseSelect = ['_id', 'name'];
+        if (path === 'history.source') {
+          return {
+            path: 'history.source',
+            select: '_id code branch',
+            options: { strictPopulate: false },
+            populate: [{ path: 'branch', select: '_id name code' }],
+          };
+        }
+
+        const baseSelect = ['_id', 'name', 'code'];
 
         if (options?.extras?.select) {
           const extras = options.extras.select.split(/[\s,]+/).filter(Boolean);
@@ -309,13 +387,21 @@ export async function dynamicFilter<T extends Document>(
           baseSelect.push(...extras);
         }
 
+        const nestedPopulate = options?.nestedPopulate?.find((p) => p.path === path);
+
         return {
           path,
           match,
           select: baseSelect.join(' '),
+          ...(nestedPopulate && { populate: nestedPopulate.populate }),
         };
-      })
+      }),
+      { strictPopulate: false }
     );
+
+    if (options?.forcePopulate && options.forcePopulate.length > 0) {
+      data = await model.populate(data, options.forcePopulate, { strictPopulate: false });
+    }
   }
 
   const pages = limit === 0 ? 1 : Math.ceil(total / limit);

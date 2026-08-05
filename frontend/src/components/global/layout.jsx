@@ -1,4 +1,4 @@
-/* eslint-disable react-hooks/exhaustive-deps */
+
 'use client';
 import { useEffect } from 'react';
 import { Sidebar, SidebarBody, SidebarLink } from '@/components/ui/sidebar';
@@ -33,7 +33,7 @@ export default function Layout({ routes, logoutComponent }) {
                 'mx-auto flex w-full flex-1 flex-col overflow-hidden rounded-md border border-neutral-200 bg-gray-100 md:flex-row dark:border-neutral-700 dark:bg-neutral-800 h-[100vh]'
             )}
         >
-            {/* Sidebar */}
+            {}
             <Sidebar open={sidebarOpen} setOpen={setSidebarOpen}>
                 <SidebarBody className="justify-between gap-10">
                     <div className="flex flex-1 flex-col overflow-x-hidden overflow-y-auto scrollbar-none">
@@ -42,7 +42,7 @@ export default function Layout({ routes, logoutComponent }) {
                         
 
                         <div className="mt-8 flex flex-col gap-2">
-                            {/* All routes, flat, no grouping */}
+                            {}
                             {routes.map((route) => (
                                 <SidebarLink key={route.path} link={route} />
                             ))}
@@ -68,7 +68,7 @@ export default function Layout({ routes, logoutComponent }) {
                 role={role}
             />
 
-            {/* Main Content */}
+            {}
             <div
                 className={
                     currentRoute?.title
@@ -76,7 +76,7 @@ export default function Layout({ routes, logoutComponent }) {
                         : 'relative w-full  bg-gray-50 dark:bg-gray-900 overflow-auto scrollbar-none'
                 }
             >
-                {/* Top bar */}
+                {}
                 {currentRoute?.title && currentRoute?.description && (
                     <div className="flex justify-between items-center md:m-[20px] mb-[40px]">
                         <div className="">
@@ -94,7 +94,7 @@ export default function Layout({ routes, logoutComponent }) {
                     </div>
                 )}
 
-                {/* Main Outlet content */}
+                {}
                 <div className="m-1 md:m-10 overflow-auto">
                     <Outlet />
                 </div>
