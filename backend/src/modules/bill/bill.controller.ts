@@ -19,7 +19,13 @@ const billStatus = createStatusControllers(
 
 const controllers = {
   createBill: async (req: AccessRequest<{}, {}, CreateBillPayload>, res: Response) => {
-    const bill = await service.createBill(req.body, req.user.id);
+    
+    if(!req.user){
+      return sendResponse.badRequest(res, 'User not authenticated')
+    }
+    
+    
+    const bill = await service.createBill(req.body, req?.user?.id);
     return sendResponse.created(res, 'Bill', bill);
   },
 

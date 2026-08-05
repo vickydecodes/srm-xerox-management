@@ -29,7 +29,6 @@ import InventoryProduct from '@db/models/inventory-product.model.ts';
 import Service from '@db/models/service.model.ts';
 import Bill, { BillItemType } from '@db/models/bill.model.ts';
 import { Counter } from '@db/models/counter.model.ts';
-import Department from '@db/models/department.model.ts';
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/srm_xerox_db';
 

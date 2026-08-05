@@ -41,6 +41,8 @@ export interface IBill extends Document {
   createdBy: Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
+  deleted: Boolean;
+  deletedAt: Date;
 }
 
 const BillSchema = new Schema<IBill>(
@@ -56,6 +58,8 @@ const BillSchema = new Schema<IBill>(
     department: { type: Schema.Types.ObjectId, ref: 'Department' },
     createdBy: { type: Schema.Types.ObjectId, refPath: 'User', required: true },
     status: { type: String, enum: ['UNPAID', 'PAID', 'CANCELLED'], default: 'UNPAID' },
+    deleted: { type: Boolean, default: false },
+    deletedAt: { type: Date },
   },
   { timestamps: true }
 );
