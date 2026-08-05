@@ -1,4 +1,6 @@
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   DialogClose,
   DialogContent,
@@ -41,6 +43,81 @@ const toVariantsArray = (variants = {}) =>
     values: Array.isArray(values) ? values.join(", ") : "",
   }));
 
+export const View = ({ product } = {}) => {
+  const variants = product?.variants || {};
+  const variantEntries = Object.entries(variants);
+
+  return (
+    <DialogContent className="w-xl">
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          {product?.name || "Product"}
+          <Badge variant={product?.active ? "default" : "secondary"}>
+            {product?.active ? "Active" : "Inactive"}
+          </Badge>
+        </DialogTitle>
+        <DialogDescription>
+          Created on{" "}
+          {product?.createdAt
+            ? new Date(product.createdAt).toLocaleDateString()
+            : "—"}
+        </DialogDescription>
+      </DialogHeader>
+
+      <div className="grid gap-4 py-2">
+        {/* Description */}
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-muted-foreground">
+            Description
+          </p>
+          <p className="text-sm">
+            {product?.description?.trim() || "No description provided."}
+          </p>
+        </div>
+
+        <Separator />
+
+        {/* Variants */}
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-muted-foreground">Variants</p>
+
+          {variantEntries.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No variants defined.
+            </p>
+          ) : (
+            <div className="grid gap-2">
+              {variantEntries.map(([key, values]) => (
+                <div
+                  key={key}
+                  className="flex items-start justify-between gap-4 text-sm border-b pb-2 last:border-0"
+                >
+                  <span className="font-medium capitalize min-w-[80px]">
+                    {key}
+                  </span>
+                  <div className="flex flex-wrap gap-1 justify-end">
+                    {(Array.isArray(values) ? values : [values]).map((v) => (
+                      <Badge key={v} variant="outline">
+                        {v}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <DialogFooter>
+        <DialogClose asChild>
+          <Button variant="outline">Close</Button>
+        </DialogClose>
+      </DialogFooter>
+    </DialogContent>
+  );
+};
+
 export const Create = ({ submitFn = () => {}, closeModal = () => {} } = {}) => {
   const form = useForm({
     resolver: zodResolver(productCreateSchema),
@@ -70,14 +147,21 @@ export const Create = ({ submitFn = () => {}, closeModal = () => {} } = {}) => {
       </DialogHeader>
 
       <Form {...form}>
-        <form className="grid gap-4 py-2" onSubmit={form.handleSubmit(onSubmit)}>
+        <form
+          className="grid gap-4 py-2"
+          onSubmit={form.handleSubmit(onSubmit)}
+        >
           <ProductForm form={form} />
           {ErrorAlert}
           <DialogFooter>
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button type="submit" loading={loading} loadingText="Saving the product..">
+            <Button
+              type="submit"
+              loading={loading}
+              loadingText="Saving the product.."
+            >
               Save
             </Button>
           </DialogFooter>
@@ -87,7 +171,11 @@ export const Create = ({ submitFn = () => {}, closeModal = () => {} } = {}) => {
   );
 };
 
-export const Edit = ({ product, submitFn = () => {}, closeModal = () => {} } = {}) => {
+export const Edit = ({
+  product,
+  submitFn = () => {},
+  closeModal = () => {},
+} = {}) => {
   const form = useForm({
     resolver: zodResolver(productEditSchema),
     defaultValues: {
@@ -117,7 +205,10 @@ export const Edit = ({ product, submitFn = () => {}, closeModal = () => {} } = {
       </DialogHeader>
 
       <Form {...form}>
-        <form className="grid gap-4 py-2" onSubmit={form.handleSubmit(onSubmit)}>
+        <form
+          className="grid gap-4 py-2"
+          onSubmit={form.handleSubmit(onSubmit)}
+        >
           <ProductForm form={form} />
 
           <FormField
@@ -127,7 +218,10 @@ export const Edit = ({ product, submitFn = () => {}, closeModal = () => {} } = {
               <FormItem className="flex items-center justify-between rounded-lg border p-3">
                 <FormLabel className="mb-0">Active</FormLabel>
                 <FormControl>
-                  <Switch checked={field.value} onCheckedChange={field.onChange} />
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
                 </FormControl>
               </FormItem>
             )}
@@ -138,7 +232,11 @@ export const Edit = ({ product, submitFn = () => {}, closeModal = () => {} } = {
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button type="submit" loading={loading} loadingText="Saving the product..">
+            <Button
+              type="submit"
+              loading={loading}
+              loadingText="Saving the product.."
+            >
               Save
             </Button>
           </DialogFooter>
@@ -148,12 +246,18 @@ export const Edit = ({ product, submitFn = () => {}, closeModal = () => {} } = {
   );
 };
 
-export const Delete = ({ id, name, closeModal = () => {}, onConfirm = () => {} }) => (
+export const Delete = ({
+  id,
+  name,
+  closeModal = () => {},
+  onConfirm = () => {},
+}) => (
   <DialogContent className="sm:max-w-[425px]">
     <DialogHeader>
       <DialogTitle>Are you sure you want to delete {name}?</DialogTitle>
       <DialogDescription>
-        This will be stored as deleted, this product record can be retrieved by Admin.
+        This will be stored as deleted, this product record can be retrieved by
+        Admin.
       </DialogDescription>
     </DialogHeader>
 
@@ -179,34 +283,8 @@ export const Erase = ({ id, submitFn, closeModal }) => (
     <DialogHeader>
       <DialogTitle>Are you sure?</DialogTitle>
       <DialogDescription>
-        <strong>Note:</strong> This operation is Permenent Delete. All the data related to this branch
-        will be lost.
-      </DialogDescription>
-    </DialogHeader>
-
-    <DialogFooter>
-      <DialogClose asChild>
-        <Button variant="outline">Cancel</Button>
-      </DialogClose>
-      <Button
-        onClick={() => {
-          submitFn(id);
-          closeModal();
-        }}
-        variant="success"
-      >
-        Delete Permanently
-      </Button>
-    </DialogFooter>
-  </DialogContent>
-);
-export const Retrieve = ({ id, submitFn, closeModal }) => (
-  <DialogContent className="sm:max-w-[425px] pe-10">
-    <DialogHeader>
-      <DialogTitle>Are you sure?</DialogTitle>
-      <DialogDescription>
-        <strong>Note:</strong> this operation is retrieve All the data related to this branch will be
-        back.
+        <strong>Note:</strong> This operation is a permanent delete. All data
+        related to this product will be lost.
       </DialogDescription>
     </DialogHeader>
 
@@ -221,19 +299,48 @@ export const Retrieve = ({ id, submitFn, closeModal }) => (
         }}
         variant="destructive"
       >
+        Delete Permanently
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+);
+
+export const Retrieve = ({ id, submitFn, closeModal }) => (
+  <DialogContent className="sm:max-w-[425px] pe-10">
+    <DialogHeader>
+      <DialogTitle>Are you sure?</DialogTitle>
+      <DialogDescription>
+        <strong>Note:</strong> This will retrieve the product. All related data
+        will be restored.
+      </DialogDescription>
+    </DialogHeader>
+
+    <DialogFooter>
+      <DialogClose asChild>
+        <Button variant="outline">Cancel</Button>
+      </DialogClose>
+      <Button
+        onClick={() => {
+          submitFn(id);
+          closeModal();
+        }}
+        variant="default"
+      >
         Retrieve
       </Button>
     </DialogFooter>
   </DialogContent>
 );
+
 export const ActiveStatus = ({
-  id, 
+  id,
   status,
   submitFn,
   closeModal,
-  exported, 
+  exported,
 }) => {
-  const actionLabel = status ? 'Deactivate' : 'Activate';
+  const actionLabel = status ? "Deactivate" : "Activate";
+  const isDeactivating = Boolean(status);
 
   const onConfirm = async () => {
     await submitFn(id, {
@@ -243,26 +350,38 @@ export const ActiveStatus = ({
   };
 
   return (
-    <DialogContent className="sm:max-w-[425px] pe-10">
+    <DialogContent className="w-xl">
       <DialogHeader>
-        <DialogTitle>{actionLabel} Branch</DialogTitle>
-
+        <DialogTitle>{actionLabel} Product</DialogTitle>
         <DialogDescription>
-          {status ? (
-            <>
-              This will <strong>deactivate</strong> the Branch.
-              <br />
-              Students will no longer be able to Join this Branch.
-            </>
-          ) : (
-            <>
-              This will <strong>activate</strong> the Branch.
-              <br />
-              The Branch will become available again.
-            </>
-          )}
+          Confirm the status change for this product.
         </DialogDescription>
       </DialogHeader>
+
+      <div className="rounded-lg border p-4 my-2">
+        {isDeactivating ? (
+          <div className="space-y-1 text-sm">
+            <p>
+              This will <strong className="text-destructive">deactivate</strong>{" "}
+              the product.
+            </p>
+            <p className="text-muted-foreground">
+              It will no longer be available for use until it is activated
+              again.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-1 text-sm">
+            <p>
+              This will <strong className="text-primary">activate</strong> the
+              product.
+            </p>
+            <p className="text-muted-foreground">
+              The product will become available again.
+            </p>
+          </div>
+        )}
+      </div>
 
       <DialogFooter>
         <DialogClose asChild>
@@ -272,11 +391,13 @@ export const ActiveStatus = ({
         </DialogClose>
 
         <Button
-          variant={status ? 'destructive' : 'default'}
+          variant={isDeactivating ? "destructive" : "default"}
           onClick={onConfirm}
           disabled={exported?.loading?.edit}
+          loading={exported?.loading?.edit}
+          loadingText="Updating..."
         >
-          {exported?.loading?.edit ? 'Updating...' : actionLabel}
+          {actionLabel}
         </Button>
       </DialogFooter>
     </DialogContent>

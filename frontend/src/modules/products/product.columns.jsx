@@ -13,54 +13,64 @@ import { Hint } from "@/core/utils/tooltip.util";
 export const useProductColumns = (products) => {
   return [
     {
-      accessorKey: 'code',
-      header: () => Hint('Code', 'Auto-generated product code'),
-      cell: ({ row }) => <span>{row.getValue('code')}</span>,
+      accessorKey: "code",
+      header: () => Hint("Code", "Auto-generated product code"),
+      cell: ({ row }) => <span>{row.getValue("code")}</span>,
     },
     {
-      accessorKey: 'name',
-      header: () => Hint('Name', 'Product name'),
-      cell: ({ row }) => <span>{row.getValue('name')}</span>,
+      accessorKey: "name",
+      header: () => Hint("Name", "Product name"),
+      cell: ({ row }) => <span>{row.getValue("name")}</span>,
     },
     {
-      accessorKey: 'description',
-      header: () => Hint('Description', 'Product description'),
+      accessorKey: "description",
+      header: () => Hint("Description", "Product description"),
       cell: ({ row }) => (
         <span className="text-muted-foreground line-clamp-1">
-          {row.getValue('description') || '-'}
+          {row.getValue("description") || "-"}
         </span>
       ),
     },
     {
-      accessorKey: 'variants',
-      header: () => Hint('Variants', 'Available variant groups'),
+      accessorKey: "variants",
+      header: () => Hint("Variants", "Available variant groups"),
       cell: ({ row }) => {
-        const variants = row.getValue('variants') || {};
+        const variants = row.getValue("variants") || {};
         const keys = Object.keys(variants);
-        if (!keys.length) return <span className="text-muted-foreground">-</span>;
+        if (!keys.length)
+          return <span className="text-muted-foreground">-</span>;
         return (
           <div className="flex flex-wrap gap-1">
             {keys.map((k) => (
-              <Badge key={k} variant="secondary">{k}</Badge>
+              <Badge key={k} variant="secondary">
+                {k}{variants[k] ? ` (${variants[k]})` : ""}
+              </Badge>
+              
             ))}
           </div>
         );
       },
     },
     {
-      accessorKey: 'active',
-      header: () => Hint('Status', 'Whether the product is active'),
+      accessorKey: "active",
+      header: () => Hint("Status", "Whether the product is active"),
       cell: ({ row }) => (
-        <Badge variant={row.getValue('active') ? 'default' : 'outline'}>
-          {row.getValue('active') ? 'Active' : 'Inactive'}
+        <Badge variant={row.getValue("active") ? "default" : "outline"}>
+          {row.getValue("active") ? "Active" : "Inactive"}
         </Badge>
       ),
     },
     {
-      accessorKey: 'actions',
-      header: () => Hint('Actions', 'More actions'),
+      accessorKey: "actions",
+      header: () => Hint("Actions", "More actions"),
       cell: ({ row }) => {
         const product = row.original;
+        // Adjust this condition to match your API field
+        const isDeleted =
+          product.deleted === true ||
+          product.isDeleted === true ||
+          !!product.deletedAt;
+
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -68,16 +78,54 @@ export const useProductColumns = (products) => {
                 <MoreHorizontal className="size-4" />
               </Button>
             </DropdownMenuTrigger>
+
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => products.openEdit(product)}>
-                Edit
+              {/* Always visible */}
+              <DropdownMenuItem onClick={() => products.openView(product)}>
+                View
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
+
+              {/* Only when NOT deleted */}
+              {!isDeleted && (
+                <>
+                  <DropdownMenuItem onClick={() => products.openEdit(product)}>
+                    Edit
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    onClick={() => products.openActiveStatus(product)}
+                  >
+                    Active Status
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() =>
+                      products.openDelete(product._id, product.name)
+                    }
+                  >
+                    Delete
+                  </DropdownMenuItem>
+                </>
+              )}
+
+              {/* Only when soft-deleted */}
+              {isDeleted && (
+                <DropdownMenuItem
+                  onClick={() => products.openRetrieve(product._id)}
+                >
+                  Retrieve
+                </DropdownMenuItem>
+              )}
+
+              {/* Permanent delete – available in both states */}
               <DropdownMenuItem
                 variant="destructive"
-                onClick={() => products.openDelete(product._id, product.name)}
+                onClick={() => products.openErase(product._id)}
               >
-                Delete
+                Erase
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

@@ -11,22 +11,24 @@ export const useProductModule = (exported) => {
   const store = useProductStore();
   const { set, add, update, remove, setCurrent, setQuery } = store;
 
-  const { products } = apiurls
-
- 
-
+  const { products } = apiurls;
 
   const crud = createCrud({
-    entity: 'Product',
+    entity: "Product",
     urls: products,
     store: store,
-    getRole: () => 'super_admin'
-  })
+    getRole: () => "super_admin",
+  });
 
+  const openView = (product) => {
+    return openModal(modals.view, { product, exported });
+  };
 
-
-   const openCreate = () => {
-    return openModal(modals.create, { submitFn: (data) => crud.create(data), exported });
+  const openCreate = () => {
+    return openModal(modals.create, {
+      submitFn: (data) => crud.create(data),
+      exported,
+    });
   };
 
   const openEdit = (product) => {
@@ -41,23 +43,48 @@ export const useProductModule = (exported) => {
     return openModal(modals.delete, {
       id,
       name,
-      onConfirm: (id) => crud.erase(id),
+      onConfirm: (id) => crud.delete(id), // soft delete
       exported,
     });
   };
 
-
-  const toggleActive = (product) => {
-    return update(product.id, { active: !product.active });
+  const openErase = (id) => {
+    return openModal(modals.erase, {
+      id,
+      submitFn: (id) => crud.erase(id), // permanent delete
+      closeModal: () => {}, // will be injected by openModal usually
+      exported,
+    });
   };
 
+  const openRetrieve = (id) => {
+    return openModal(modals.retrieve, {
+      id,
+      submitFn: (id) =>
+        crud.retrieve?.(id) ?? crud.edit(id, { deleted: false }),
+      exported,
+    });
+  };
 
-  const {fetch, reset, sortByColumn, presets} = createEntityQueryActions({
+  const openActiveStatus = (product) => {
+    return openModal(modals.activeStatus, {
+      id: product._id ?? product.id,
+      status: product.active,
+      submitFn: (id, data) => crud.edit(id, data),
+      exported,
+    });
+  };
+
+  // Keep the simple toggle if you still want an immediate action without modal
+  const toggleActive = (product) => {
+    return update(product._id ?? product.id, { active: !product.active });
+  };
+
+  const { fetch, reset, sortByColumn, presets } = createEntityQueryActions({
     crud,
     getQuery: () => useProductStore.getState().query,
-    setQuery
-  })
-
+    setQuery,
+  });
 
   return {
     get state() {
@@ -81,6 +108,10 @@ export const useProductModule = (exported) => {
     openCreate,
     openEdit,
     openDelete,
+    openErase,
+    openRetrieve,
+    openView,
+    openActiveStatus,
     toggleActive,
     crud,
     fetch,
