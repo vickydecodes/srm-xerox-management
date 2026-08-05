@@ -34,6 +34,7 @@ export default function Department() {
       manualPagination={true}
       reset={departments.reset}
       loading={departments.loading.getAll}
+      page={departments.pagination.page}
       limit={departments.pagination.limit}
       pageCount={departments.pagination.pages}
       totalRows={departments.pagination.total}

@@ -45,7 +45,7 @@ export const adminRoutes = {
     element: <Product />,
 },
 {
-    path: '/super_admin/',
+    path: '/super_admin/department',
     label: 'Departments',
     title: 'Department Management',
     description: 'Manage departments, their details, and organizational structure.',

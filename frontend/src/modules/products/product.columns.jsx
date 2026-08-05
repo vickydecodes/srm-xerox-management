@@ -9,7 +9,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
 import { Hint } from "@/core/utils/tooltip.util";
-
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 export const useProductColumns = (products) => {
   return [
     {
@@ -22,7 +26,62 @@ export const useProductColumns = (products) => {
       header: () => Hint("Name", "Product name"),
       cell: ({ row }) => <span>{row.getValue("name")}</span>,
     },
+{
+  accessorKey: "variants",
+  header: () => Hint("Variants", "Available product variants"),
+  cell: ({ row }) => {
+    const variants = row.original.variants || {};
+    const entries = Object.entries(variants);
 
+    if (entries.length === 0) {
+      return (
+        <Badge variant="outline">
+          No Variants
+        </Badge>
+      );
+    }
+
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="outline" size="sm">
+            {entries.length} Variant{entries.length > 1 ? "s" : ""}
+          </Button>
+        </PopoverTrigger>
+
+        <PopoverContent className="w-80 space-y-4">
+          <div>
+            <h4 className="font-medium">Product Variants</h4>
+            <p className="text-sm text-muted-foreground">
+              Available options for this product.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {entries.map(([key, values]) => (
+              <div key={key}>
+                <p className="text-sm font-medium capitalize mb-2">
+                  {key}
+                </p>
+
+                <div className="flex flex-wrap gap-2">
+                  {values.map((value) => (
+                    <Badge
+                      key={value}
+                      variant="secondary"
+                    >
+                      {value}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </PopoverContent>
+      </Popover>
+    );
+  },
+},
     {
       accessorKey: "active",
       header: () => Hint("Status", "Whether the product is active"),

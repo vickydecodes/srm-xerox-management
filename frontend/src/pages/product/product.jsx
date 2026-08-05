@@ -37,6 +37,7 @@ export default function Product() {
       manualPagination={true}
       reset={products.reset}
       loading={products.loading.getAll}
+      page={products.pagination.page}
       limit={products.pagination.limit}
       pageCount={products.pagination.pages}
       totalRows={products.pagination.total}

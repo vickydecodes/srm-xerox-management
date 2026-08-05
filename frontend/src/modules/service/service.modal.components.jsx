@@ -260,11 +260,25 @@ export const View = ({ service } = {}) => {
                   className="flex justify-between items-center text-sm border-b pb-2 last:border-0"
                 >
                   <span className="font-mono text-xs">
-                    {item.product?._id ||
-                      item.product?.name ||
-                      item.product ||
+                    {item?.product?.product?.name ||
+                     item?.product?.product?._id ||
+                      item?.product?.product ||
                       "—"}
                   </span>
+
+                   {Object.keys(item?.product?.variant ?? {}).length > 0 && (
+    <div className="flex flex-wrap gap-1">
+      {Object.entries(item.product.variant).map(([key, value]) => (
+        <Badge
+          key={key}
+          variant="secondary"
+          className="text-[10px] font-normal capitalize"
+        >
+          {key}: {String(value)}
+        </Badge>
+      ))}
+    </div>
+  )}
                   <span className="text-muted-foreground">
                     Qty: {item.quantity ?? "—"}
                   </span>

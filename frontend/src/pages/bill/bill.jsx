@@ -32,6 +32,7 @@ export default function Bill() {
       manualPagination={true}
       reset={bills.reset}
       loading={bills.loading.getAll}
+      page={bills.pagination.page}
       limit={bills.pagination.limit}
       pageCount={bills.pagination.pages}
       totalRows={bills.pagination.total}

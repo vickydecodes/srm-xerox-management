@@ -8,9 +8,16 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from '@hookform/resolvers/zod';
 import { departmentCreateSchema, departmentEditSchema } from "./department.schema";
 import DepartmentForm from "./department.form";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { useLoader } from "@/core/hooks/useLoader";
+import { useEffect } from "react";
 
 
-export const Create = ({ submitFn = () => {}, closeModal = () => {}, data } = {}) => {
+export const Create = ({ submitFn = () => { }, closeModal = () => { }, data, exported } = {}) => {
+  const { createPreset } = useLoader();
+
+
   const form = useForm({
     resolver: zodResolver(data ? departmentEditSchema : departmentCreateSchema),
     defaultValues: data ? {
@@ -24,6 +31,8 @@ export const Create = ({ submitFn = () => {}, closeModal = () => {}, data } = {}
     },
   });
 
+  const modal = createPreset(exported.branches)
+
   const { run, loading, ErrorAlert, clearError } = useAsync(submitFn);
 
   useClearError(form, clearError);
@@ -34,6 +43,10 @@ export const Create = ({ submitFn = () => {}, closeModal = () => {}, data } = {}
     onSuccess: closeModal,
   });
 
+  useEffect(() => {
+    modal();
+  }, [])
+
   return (
     <DialogContent className="w-xl">
       <DialogHeader>
@@ -43,7 +56,7 @@ export const Create = ({ submitFn = () => {}, closeModal = () => {}, data } = {}
 
       <Form {...form}>
         <form className="grid gap-4 py-2" onSubmit={form.handleSubmit(onSubmit)}>
-          <DepartmentForm form={form} isEdit={data} />
+          <DepartmentForm form={form} isEdit={data} branches={exported.branches.state} />
           {ErrorAlert}
           <DialogFooter>
             <DialogClose asChild>
@@ -60,7 +73,7 @@ export const Create = ({ submitFn = () => {}, closeModal = () => {}, data } = {}
 };
 
 
-export const Delete = ({ id, name, submitFn = () => {}, closeModal = () => {} }) => {
+export const Delete = ({ id, name, submitFn = () => { }, closeModal = () => { } }) => {
   const { run, loading, ErrorAlert } = useAsync(submitFn);
 
   const handleDelete = async () => {
@@ -146,11 +159,11 @@ export const Retrieve = ({ id, submitFn, closeModal }) => (
   </DialogContent>
 );
 export const ActiveStatus = ({
-  id, 
+  id,
   status,
   submitFn,
   closeModal,
-  exported, 
+  exported,
 }) => {
   const actionLabel = status ? 'Deactivate' : 'Activate';
 

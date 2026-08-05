@@ -34,6 +34,7 @@ export default function Branch() {
       manualPagination={true}
       reset={branches.reset}
       loading={branches.loading.getAll}
+      page={branches.pagination.page}
       limit={branches.pagination.limit}
       pageCount={branches.pagination.pages}
       totalRows={branches.pagination.total}

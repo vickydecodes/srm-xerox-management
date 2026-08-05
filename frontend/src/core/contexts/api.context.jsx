@@ -11,6 +11,7 @@ import { useInventoryProductModule } from '@/modules/inventory-product';
 
 const ApiContext = createContext();
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useApi = () => {
     const ctx = useContext(ApiContext);
     if (!ctx) {
@@ -23,11 +24,11 @@ export const ApiProvider = ({ children }) => {
     const exported = {};
 
 
-    const departmentModule = useDepartmentModule();
+    const departmentModule = useDepartmentModule(exported);
     const serviceModule = useServiceModule(exported);  
-    const productModule = useProductModule();
-    const billModule = useBillModule();
-    const branchModule = useBranchModule();
+    const productModule = useProductModule(exported);
+    const billModule = useBillModule(exported);
+    const branchModule = useBranchModule(exported);
     const inventoryProductModule = useInventoryProductModule(exported);
 
 
