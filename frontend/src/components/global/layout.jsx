@@ -1,20 +1,28 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 'use client';
-import  { useEffect } from 'react';
+import { useEffect } from 'react';
 import { Sidebar, SidebarBody, SidebarLink } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { CommandMenu } from './globalcommand';
 import { Search } from 'lucide-react';
 import { useUI } from '@/core/contexts/ui.context';
+import { camelToTitle } from '@/core/utils/helper.utils';
 
 export default function Layout({ routes, logoutComponent }) {
-    const { setCommandOpen, sidebarOpen, setOpenLogout, setSidebarOpen, commandOpen } = useUI();
+    const {
+        setCommandOpen,
+        role,
+        sidebarOpen,
+        setOpenLogout,
+        setSidebarOpen,
+        commandOpen,
+        commands,
+    } = useUI();
     const location = useLocation();
 
     const currentRoute = routes.find((r) => location.pathname === r.path) || null;
-const commands = routes.map((r) => ({ label: r.label, path: r.path }));
- 
+
     useEffect(() => {
         setSidebarOpen(false);
     }, [location.pathname]);
@@ -27,12 +35,12 @@ const commands = routes.map((r) => ({ label: r.label, path: r.path }));
         >
             {/* Sidebar */}
             <Sidebar open={sidebarOpen} setOpen={setSidebarOpen}>
-                <SidebarBody
-                    className="justify-between gap-10"
-                    setcommand={setCommandOpen}
-                >
+                <SidebarBody className="justify-between gap-10">
                     <div className="flex flex-1 flex-col overflow-x-hidden overflow-y-auto scrollbar-none">
-                        {sidebarOpen ? <Logo /> : <LogoIcon />}
+                        {sidebarOpen ? <Logo role={role}/> : <LogoIcon />}
+
+                        
+
                         <div className="mt-8 flex flex-col gap-2">
                             {/* All routes, flat, no grouping */}
                             {routes.map((route) => (
@@ -53,9 +61,12 @@ const commands = routes.map((r) => ({ label: r.label, path: r.path }));
                 </SidebarBody>
             </Sidebar>
 
-            {commands && commands.length > 0 && (
-                <CommandMenu open={commandOpen} setOpen={setCommandOpen} commands={commands} />
-            )}
+            <CommandMenu
+                open={commandOpen}
+                setOpen={setCommandOpen}
+                commands={commands && commands.length > 0 ? commands : routes}
+                role={role}
+            />
 
             {/* Main Content */}
             <div
@@ -92,15 +103,15 @@ const commands = routes.map((r) => ({ label: r.label, path: r.path }));
     );
 }
 
-export const Logo = () => (
+export const Logo = ({role}) => (
     <SidebarLink
         link={{
-            label: 'Menu',
+            label: `${camelToTitle(role)} Menu`,
             path: '#',
             icon: (
                 <img
                     src="/logo.png"
-                    className="h-10 w-10 transition-all shrink-0 rounded-full object-cover"
+                    className="h-10 w-10 me-3 transition-all shrink-0 rounded-full object-cover"
                     width={15}
                     height={15}
                     alt="Avatar"

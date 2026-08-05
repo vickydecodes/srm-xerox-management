@@ -16,6 +16,7 @@ const InventoryProductSchema = new Schema<IInventoryProduct>(
     product: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
     variant: { type: Map, of: String, default: {} },
     quantity: { type: Number, default: 0, min: 0 },
+    price: { type: Number, default: 0, min: 0 },
     active: { type: Boolean, default: true },
   },
   { timestamps: true }

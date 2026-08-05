@@ -1,0 +1,109 @@
+.xrx-mono {
+  font-family: 'JetBrains Mono', 'Space Mono', ui-monospace, monospace;
+}
+
+/* faint grid, like a scanner platen guide */
+.xrx-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(47, 212, 215, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(47, 212, 215, 0.06) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* stacked document sheets behind the "top" sheet being scanned */
+.xrx-scanner {
+  position: relative;
+  width: 240px;
+  height: 168px;
+}
+
+.xrx-sheet {
+  position: absolute;
+  inset: 0;
+  border-radius: 4px;
+  background: #F1F3F4;
+}
+
+.xrx-sheet-3 {
+  transform: translate(10px, 10px) rotate(3deg);
+  opacity: 0.25;
+}
+
+.xrx-sheet-2 {
+  transform: translate(5px, 5px) rotate(-2deg);
+  opacity: 0.45;
+}
+
+.xrx-sheet-1 {
+  overflow: hidden;
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.5);
+}
+
+.xrx-sheet-lines {
+  position: absolute;
+  inset: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.xrx-sheet-lines span {
+  display: block;
+  height: 6px;
+  border-radius: 2px;
+  background: #C9CDD0;
+}
+
+.xrx-sheet-lines span:nth-child(1) { width: 70%; }
+.xrx-sheet-lines span:nth-child(2) { width: 90%; }
+.xrx-sheet-lines span:nth-child(3) { width: 55%; }
+.xrx-sheet-lines span:nth-child(4) { width: 80%; }
+.xrx-sheet-lines span:nth-child(5) { width: 40%; }
+
+.xrx-scanbar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #2FD4D7;
+  box-shadow: 0 0 12px 2px rgba(47, 212, 215, 0.8);
+  animation: xrx-sweep 2.6s ease-in-out infinite;
+}
+
+@keyframes xrx-sweep {
+  0%   { top: 0%; opacity: 0.9; }
+  48%  { top: 96%; opacity: 0.9; }
+  50%  { opacity: 0; }
+  52%  { top: 0%; opacity: 0; }
+  55%  { opacity: 0.9; }
+  100% { top: 0%; opacity: 0.9; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xrx-scanbar {
+    animation: none;
+    top: 40%;
+  }
+}
+
+/* perforated tear line above the footer, like a receipt tab */
+.xrx-ticket-tear {
+  position: relative;
+}
+
+.xrx-ticket-tear::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-image: linear-gradient(to right, #D9DCDD 50%, transparent 50%);
+  background-size: 8px 1px;
+}
+
+.xrx-ticket {
+  border-radius: 10px;
+}

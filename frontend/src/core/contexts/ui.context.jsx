@@ -16,6 +16,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { uiRef } from '@/core/bridge/ui.ref';
+import { adminRoutes } from '../router/admin.routes';
+import { useAuth } from './auth.context';
 
 const UIContext = createContext();
 
@@ -44,10 +46,17 @@ export const UIProvider = ({ children }) => {
     const [commandOpen, setCommandOpen] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [openLogout, setOpenLogout] = useState(false);
-
     const [modalStack, setModalStack] = useState([]);
 
-    const commands = [];
+   const { user, logout } = useAuth();
+
+
+     const roleCommands = {
+    super_admin: adminRoutes.routes,
+    
+  };
+
+  const commands = roleCommands[user?.role] || [];
 
     const idCounter = useRef(0);
 
@@ -134,7 +143,10 @@ export const UIProvider = ({ children }) => {
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            onClick={() => setOpenLogout(false)}
+                            onClick={async () => {
+                                await logout();
+                                setOpenLogout(false);
+                            }}
                         >
                             Logout
                         </AlertDialogAction>
@@ -154,6 +166,7 @@ export const UIProvider = ({ children }) => {
         closeModal,
         setOpenLogout,
         openLogout,
+        role: user?.role
     };
 
     return (

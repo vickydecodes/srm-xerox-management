@@ -38,9 +38,10 @@ export function CommandMenu({ open, setOpen, role, commands }) {
 
   const ROLE_BADGE_MAP = {
     super_admin: { variant: '', className: 'bg-blue-600 text-white' },
-    junior_admin: { variant: 'secondary', className: 'bg-blue-600 text-white' },
-    teacher: { variant: 'outline', className: 'bg-green-600 text-white' },
-    student: { variant: 'outline', className: 'bg-green-600 text-white' },
+    branch_admin: { variant: '', className: 'bg-purple-600 text-white' },
+    department_admin: { variant: '', className: 'bg-amber-600 text-white' },
+    shop_admin: { variant: '', className: 'bg-emerald-600 text-white' },
+    staff: { variant: '', className: 'bg-slate-600 text-white' },
   };
 
   return (

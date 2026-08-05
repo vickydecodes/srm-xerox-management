@@ -1,8 +1,8 @@
 import { Router } from 'express';
-// import { authMiddleware } from '@core/middlewares/auth.middleware.js';
+import { authMiddleware } from '@core/middlewares/auth.middleware.js';
 // import { accessControl } from '@core/middlewares/access.middleware.js';
-// import { zodValidate } from '@core/middlewares/zod.validator.js';
-// import { createBillSchema, updateBillSchema, setBillActiveStatusSchema } from './bill.validator.js';
+import { zodValidate } from '@core/middlewares/zod.validator.js';
+import { createBillSchema, updateBillSchema, setBillActiveStatusSchema } from './bill.validator.js';
 
 import {
   createBill,
@@ -22,7 +22,7 @@ const router = Router();
 
 // const MODULE = '-bill';
 
-router.post('/', createBill);
+router.post('/', zodValidate(createBillSchema), createBill);
 router.get('/', getAllBills);
 router.get('/:id', getBillById);
 router.put('/:id', updateBill);
