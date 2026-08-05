@@ -14,7 +14,7 @@ export const useDepartmentColumns = (departments) => {
     {
       accessorKey: "id",
       header: () => Hint("Id", "The academic year of this batch"),
-      cell: ({ row }) => <span>{row.getValue("id")}</span>,
+      cell: ({ row }) => <span>{row.getValue("_id")}</span>,
     },
     {
       accessorKey: "name",
@@ -26,6 +26,8 @@ export const useDepartmentColumns = (departments) => {
       header: () => Hint("Actions", "Edit or manage this department"),
       cell: ({ row }) => {
         const dept = row.original;
+        const isDeleted =
+          dept.deleted === true || dept.isDeleted === true || !!dept.deletedAt;
 
         return (
           <DropdownMenu>
@@ -35,9 +37,7 @@ export const useDepartmentColumns = (departments) => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => departments.openView(dept)}
-              >
+              <DropdownMenuItem onClick={() => departments.openView(dept)}>
                 View
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => departments.openEdit(dept)}>
@@ -56,7 +56,7 @@ export const useDepartmentColumns = (departments) => {
 
               <DropdownMenuItem
                 variant="destructive"
-                onClick={() => departments.openDelete(dept)}
+                onClick={() => departments.openDelete(dept._id)}
               >
                 Delete
               </DropdownMenuItem>
@@ -66,11 +66,13 @@ export const useDepartmentColumns = (departments) => {
               >
                 Erase Permanently
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => departments.openRetrieve(dept._id)}
-              >
-                Retrieve
-              </DropdownMenuItem>
+              {isDeleted && (
+                <DropdownMenuItem
+                  onClick={() => departments.openRetrieve(dept._id)}
+                >
+                  Retrieve
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         );
