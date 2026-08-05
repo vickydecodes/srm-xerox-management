@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { serviceSchema } from "../modules/service/service.validator.ts";
-export type CreateServicePayload = z.infer<typeof serviceSchema>;
+import { createServiceSchema } from "../modules/service/service.validator.ts";
 
-export type UpdateServicePayload = Partial<CreateServicePayload>;
+export type CreateServicePayload =
+  z.infer<typeof createServiceSchema>;
+
+export type UpdateServicePayload =
+  Partial<CreateServicePayload>;

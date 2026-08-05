@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const userSchema = z.object({
+export const createUserSchema = z.object({
   name: z.string().trim().min(2, 'Name is too short'),
 
   email: z.string().trim().email('Invalid email address'),
@@ -9,7 +9,9 @@ export const userSchema = z.object({
 
   address: z.string().trim().optional(),
 
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  password: z
+    .string()
+    .min(6, 'Password must be at least 6 characters'),
 
   role: z.enum([
     'super_admin',
@@ -20,4 +22,11 @@ export const userSchema = z.object({
   ]),
 
   branch: z.string().trim().optional(),
+});
+
+export const updateUserSchema =
+  createUserSchema.partial();
+
+export const setUserActiveStatusSchema = z.object({
+  active: z.boolean(),
 });

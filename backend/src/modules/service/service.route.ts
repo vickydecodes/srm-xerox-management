@@ -1,34 +1,70 @@
 import { Router } from "express";
-// import { authMiddleware } from "@core/middlewares/auth.middleware.js";
+import { authMiddleware } from "@core/middlewares/auth.middleware.js";
 // import { accessControl } from "@core/middlewares/access.middleware.js";
-// import { zodValidate } from "@core/middlewares/zod.validator.js";
-// import { serviceSchema } from "./service.validator.js";
+import { zodValidate } from "@core/middlewares/zod.validator.js";
+import {
+  createServiceSchema,
+  updateServiceSchema,
+  setServiceActiveStatusSchema,
+} from "./service.validator.js";
 
 import {
-    createService,
-    getAllServices,
-    getServiceById,
-    updateService,
-    deleteService,
-    setServiceActiveStatus,
-    retrieveService,
-    eraseService,
+  createService,
+  getAllServices,
+  getServiceById,
+  updateService,
+  deleteService,
+  setServiceActiveStatus,
+  retrieveService,
+  eraseService,
 } from "./service.controller.js";
 
 const router = Router();
 
-// router.use(authMiddleware);
+router.use(authMiddleware);
+
 // router.use(accessControl);
 
 // const MODULE = "-service";
 
-router.post("/", createService);
+router.post(
+  "/",
+  zodValidate(
+    createServiceSchema,
+    "body",
+    "CreateServiceSchema"
+  ),
+  createService
+);
+
 router.get("/", getAllServices);
+
 router.get("/:id", getServiceById);
-router.put("/:id", updateService);
+
+router.put(
+  "/:id",
+  zodValidate(
+    updateServiceSchema,
+    "body",
+    "UpdateServiceSchema"
+  ),
+  updateService
+);
+
 router.delete("/:id", deleteService);
-router.patch("/:id/active-status", setServiceActiveStatus);
+
+router.patch(
+  "/:id/active-status",
+  zodValidate(
+    setServiceActiveStatusSchema,
+    "body",
+    "SetServiceActiveStatusSchema"
+  ),
+  setServiceActiveStatus
+);
+
 router.put("/:id/retrieve", retrieveService);
+
 router.delete("/:id/erase", eraseService);
 
 export default router;

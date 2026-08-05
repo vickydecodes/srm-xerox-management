@@ -21,6 +21,7 @@
 import mongoose from 'mongoose';
 
 import { Branch } from '@db/models/branch.model.ts';
+import  Department  from '@db/models/department.model.ts';
 import User from '@db/models/user.model.ts'; // adjust to `import { User } ...` if it's a named export in your repo
 import Product from '@db/models/product.model.ts';
 import Inventory from '@db/models/inventory.model.ts';
