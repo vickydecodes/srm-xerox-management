@@ -9,18 +9,27 @@ import { camelToTitle } from '../utils/helper.utils';
 
 export const createCrud = ({ entity, urls, store, getRole }) => {
   const crud = {};
+
+  const customtoasts = {
+    setActiveStatus: (entity, res) =>
+      res?.active
+        ? `${camelToTitle(entity)} is now active`
+        : `${camelToTitle(entity)} has been deactivated`,
+  }
+
   const defaultMessages = {
     create: 'created successfully',
     edit: 'updated successfully',
     delete: 'deleted successfully',
     erase: 'deleted permanently',
     retrieve: 'retrieved successfully',
+
   };
 
   const DOWNLOAD_KEYS = ['download', 'exportCsv', 'exportXlsx', 'exportPdf', 'exportMarksheetCsv'];
   const SET_KEYS = ['getAll'];
   const ADD_KEYS = ['create'];
-  const UPDATE_KEYS = ['edit'];
+  const UPDATE_KEYS = ['edit', 'setActiveStatus', 'toggleStatus',];
   const DELETE_KEYS = ['delete'];
   const RETRIEVE_KEYS = ['retrieve'];
   const ERASE_KEYS = ['erase'];
@@ -126,7 +135,11 @@ export const createCrud = ({ entity, urls, store, getRole }) => {
 
         if (shouldToast) {
 
-          const message = defaultMessages[key]
+          const customMessage = customtoasts[key]?.(entity, res.data);
+          const message =
+            customMessage !== undefined && customMessage !== null
+              ? customMessage
+              : defaultMessages[key]
                 ? `${camelToTitle(entity)} ${defaultMessages[key]}`
                 : null;
 

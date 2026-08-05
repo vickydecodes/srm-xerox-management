@@ -23,9 +23,10 @@ export const useDepartmentColumns = (departments) => {
     },
     {
       accessorKey: 'actions',
-      header: () => Hint('Actions', 'Edit or delete this department'),
+      header: () => Hint('Actions', 'Edit or manage this department'),
       cell: ({ row }) => {
         const dept = row.original;
+
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -37,12 +38,29 @@ export const useDepartmentColumns = (departments) => {
               <DropdownMenuItem onClick={() => departments.openEdit(dept)}>
                 Edit
               </DropdownMenuItem>
+
+              <DropdownMenuItem
+                onClick={() => departments.openActiveStatus(dept._id, dept.active)}
+              >
+                {dept.active ? 'Deactivate' : 'Activate'}
+              </DropdownMenuItem>
+
               <DropdownMenuSeparator />
+
               <DropdownMenuItem
                 variant="destructive"
                 onClick={() => departments.openDelete(dept)}
               >
                 Delete
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => departments.openErase(dept._id)}
+              >
+                Erase Permanently
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => departments.openRetrieve(dept._id)}>
+                Retrieve
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

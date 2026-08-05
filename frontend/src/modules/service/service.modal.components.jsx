@@ -15,8 +15,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { serviceCreateSchema, serviceEditSchema } from "./service.schema";
 import ServiceForm from "./service.form";
+import { useLoader } from "@/core/hooks/useLoader";
+import { useEffect } from "react";
 
-export const Create = ({ submitFn = () => {}, closeModal = () => {} } = {}) => {
+export const Create = ({ submitFn = () => { }, closeModal = () => { } } = {}) => {
   const form = useForm({
     resolver: zodResolver(serviceCreateSchema),
     defaultValues: {
@@ -64,7 +66,7 @@ export const Create = ({ submitFn = () => {}, closeModal = () => {} } = {}) => {
   );
 };
 
-export const Edit = ({ service, submitFn = () => {}, closeModal = () => {} } = {}) => {
+export const Edit = ({ service, submitFn = () => { }, closeModal = () => { }, exported } = {}, ) => {
   const form = useForm({
     resolver: zodResolver(serviceEditSchema),
     defaultValues: {
@@ -77,6 +79,10 @@ export const Edit = ({ service, submitFn = () => {}, closeModal = () => {} } = {
     },
   });
 
+  const { createPreset } = useLoader();
+
+  const editModal = createPreset(exported.products)
+
   const { run, loading, ErrorAlert, clearError } = useAsync(submitFn);
 
   useClearError(form, clearError);
@@ -86,6 +92,14 @@ export const Edit = ({ service, submitFn = () => {}, closeModal = () => {} } = {
     form,
     onSuccess: closeModal,
   });
+
+  useEffect(() => {
+    editModal();
+  }, [])
+
+  const products = exported.products.state
+
+  console.log(products)
 
   return (
     <DialogContent className="w-xl max-h-[85vh] overflow-y-auto">
@@ -112,7 +126,7 @@ export const Edit = ({ service, submitFn = () => {}, closeModal = () => {} } = {
   );
 };
 
-export const Delete = ({ id, name, submitFn = () => {}, closeModal = () => {} }) => {
+export const Delete = ({ id, name, submitFn = () => { }, closeModal = () => { } }) => {
   const { run, loading, ErrorAlert } = useAsync(submitFn);
 
   const handleDelete = async () => {
@@ -137,6 +151,116 @@ export const Delete = ({ id, name, submitFn = () => {}, closeModal = () => {} })
         </DialogClose>
         <Button variant="destructive" loading={loading} onClick={handleDelete}>
           Delete
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  );
+};
+
+
+export const Erase = ({ id, submitFn, closeModal }) => (
+  <DialogContent className="sm:max-w-[425px] pe-10">
+    <DialogHeader>
+      <DialogTitle>Are you sure?</DialogTitle>
+      <DialogDescription>
+        <strong>Note:</strong> This operation is Permenent Delete. All the data related to this branch
+        will be lost.
+      </DialogDescription>
+    </DialogHeader>
+
+    <DialogFooter>
+      <DialogClose asChild>
+        <Button variant="outline">Cancel</Button>
+      </DialogClose>
+      <Button
+        onClick={() => {
+          submitFn(id);
+          closeModal();
+        }}
+        variant="success"
+      >
+        Delete Permanently
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+);
+export const Retrieve = ({ id, submitFn, closeModal }) => (
+  <DialogContent className="sm:max-w-[425px] pe-10">
+    <DialogHeader>
+      <DialogTitle>Are you sure?</DialogTitle>
+      <DialogDescription>
+        <strong>Note:</strong> this operation is retrieve All the data related to this branch will be
+        back.
+      </DialogDescription>
+    </DialogHeader>
+
+    <DialogFooter>
+      <DialogClose asChild>
+        <Button variant="outline">Cancel</Button>
+      </DialogClose>
+      <Button
+        onClick={() => {
+          submitFn(id);
+          closeModal();
+        }}
+        variant="destructive"
+      >
+        Retrieve
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+);
+export const ActiveStatus = ({
+  id,
+  status,
+  submitFn,
+  closeModal,
+  exported,
+}) => {
+  const actionLabel = status ? 'Deactivate' : 'Activate';
+
+  const onConfirm = async () => {
+    await submitFn(id, {
+      active: !status,
+    });
+    closeModal();
+  };
+
+  return (
+    <DialogContent className="sm:max-w-[425px] pe-10">
+      <DialogHeader>
+        <DialogTitle>{actionLabel} Branch</DialogTitle>
+
+        <DialogDescription>
+          {status ? (
+            <>
+              This will <strong>deactivate</strong> the Branch.
+              <br />
+              Students will no longer be able to Join this Branch.
+            </>
+          ) : (
+            <>
+              This will <strong>activate</strong> the Branch.
+              <br />
+              The Branch will become available again.
+            </>
+          )}
+        </DialogDescription>
+      </DialogHeader>
+
+      <DialogFooter>
+        <DialogClose asChild>
+          <Button variant="outline" disabled={exported?.loading?.edit}>
+            Cancel
+          </Button>
+        </DialogClose>
+
+        <Button
+          variant={status ? 'destructive' : 'default'}
+          onClick={onConfirm}
+          disabled={exported?.loading?.edit}
+        >
+          {exported?.loading?.edit ? 'Updating...' : actionLabel}
         </Button>
       </DialogFooter>
     </DialogContent>

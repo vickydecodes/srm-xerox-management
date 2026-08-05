@@ -40,6 +40,31 @@ export const useBranchModule = (exported) => {
     });
   };
 
+  const openErase = (id) => {
+    return openModal(modals.erase, {
+      id,
+      submitFn: (id) => crud.erase(id),
+      exported,
+    });
+  };
+
+  const openRetrieve = (id) => {
+    return openModal(modals.retrieve, {
+      id,
+      submitFn: (id) => crud.retrieve(id),
+      exported,
+    });
+  };
+
+  const openActiveStatus = (id, status) => {
+    return openModal(modals.activeStatus, {
+      id,
+      status,
+      submitFn: (id, data) => crud.setActiveStatus(id, data),
+      exported,
+    });
+  };
+
   const { fetch, reset, sortByColumn, presets } = createEntityQueryActions({
     crud,
     getQuery: () => useBranchStore.getState().query,
@@ -68,6 +93,9 @@ export const useBranchModule = (exported) => {
     openCreate,
     openEdit,
     openDelete,
+    openErase,
+    openRetrieve,
+    openActiveStatus,
     crud,
     fetch,
     reset,

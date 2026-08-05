@@ -57,9 +57,10 @@ export const useBillColumns = (bills) => {
     },
     {
       accessorKey: 'actions',
-      header: () => Hint('Actions', 'View or delete this bill'),
+      header: () => Hint('Actions', 'View or manage this bill'),
       cell: ({ row }) => {
         const bill = row.original;
+
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -71,13 +72,35 @@ export const useBillColumns = (bills) => {
               <DropdownMenuItem onClick={() => bills.openView(bill)}>
                 View
               </DropdownMenuItem>
+
+              <DropdownMenuItem
+                onClick={() => bills.openActiveStatus(bill._id, bill.active)}
+              >
+                {bill.active ? 'Deactivate' : 'Activate'}
+              </DropdownMenuItem>
+
               <DropdownMenuSeparator />
+
+
+              <DropdownMenuItem onClick={() => bills.openRetrieve(bill._id)}>
+                Retrieve
+              </DropdownMenuItem>
+
+
               <DropdownMenuItem
                 variant="destructive"
-                onClick={() => bills.openDelete(bill.id, bill.code)}
+                onClick={() => bills.openDelete(bill._id, bill.code)}
               >
                 Delete
               </DropdownMenuItem>
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => bills.openErase(bill._id)}
+              >
+                Erase Permanently
+              </DropdownMenuItem>
+
+
             </DropdownMenuContent>
           </DropdownMenu>
         );

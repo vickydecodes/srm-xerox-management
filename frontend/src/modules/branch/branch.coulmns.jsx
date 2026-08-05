@@ -44,6 +44,8 @@ export const useBranchColumns = (branches) => {
       header: () => Hint('Actions', 'More actions'),
       cell: ({ row }) => {
         const branch = row.original;
+        const isErased = Boolean(branch.deletedAt);
+
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -55,13 +57,35 @@ export const useBranchColumns = (branches) => {
               <DropdownMenuItem onClick={() => branches.openEdit(branch)}>
                 Edit
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
+
               <DropdownMenuItem
-                variant="destructive"
-                onClick={() => branches.openDelete(branch.id, branch.name)}
+                onClick={() => branches.openActiveStatus(branch._id, branch.active)}
               >
-                Delete
+                {branch.active ? 'Deactivate' : 'Activate'}
               </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
+              {isErased ? (
+                <DropdownMenuItem onClick={() => branches.openRetrieve(branch._id)}>
+                  Retrieve
+                </DropdownMenuItem>
+              ) : (
+                <>
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() => branches.openDelete(branch._id, branch.name)}
+                  >
+                    Delete
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() => branches.openErase(branch._id)}
+                  >
+                    Erase Permanently
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         );
