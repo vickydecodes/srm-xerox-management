@@ -19,6 +19,8 @@ import { serviceCreateSchema, serviceEditSchema } from "./service.schema";
 import ServiceForm from "./service.form";
 import { useLoader } from "@/core/hooks/useLoader";
 import { useEffect } from "react";
+import { useInventoryProductStore } from "@/modules/inventory-product/inventory-product.store";
+
 
 export const Create = ({ submitFn = () => { }, closeModal = () => { }, exported } = {}) => {
   const form = useForm({
@@ -52,7 +54,7 @@ export const Create = ({ submitFn = () => { }, closeModal = () => { }, exported 
     serviceModal();
   }, []);
 
-  const products = exported.inventoryProducts.state
+  const products = useInventoryProductStore((s) => s.list);
 
   return (
     <DialogContent className="w-xl max-h-[85vh] overflow-y-auto">
@@ -97,10 +99,13 @@ export const Edit = ({
       unit: service?.unit || "",
       price: service?.price || 0,
       active: service?.active ?? true,
-      materials: service?.materials?.map((m) => ({
-        product: typeof m.product === 'object' && m.product ? m.product._id : m.product,
-        quantity: m.quantity,
-      })) || [],
+      materials: service?.materials?.map((m) => {
+        const prodId = m.product && typeof m.product === 'object' ? (m.product._id ? String(m.product._id) : String(m.product)) : (m.product ? String(m.product) : "");
+        return {
+          product: prodId,
+          quantity: m.quantity,
+        };
+      }) || [],
     },
   });
 
@@ -122,7 +127,7 @@ export const Edit = ({
     editModal();
   }, []);
 
-  const products = exported.inventoryProducts.state
+  const products = useInventoryProductStore((s) => s.list);
 
   console.log(products);
 

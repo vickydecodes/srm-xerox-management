@@ -85,7 +85,6 @@ export default function ServiceForm({ form, isEdit = false, products }) {
                   <Select
                 value={f.value ? String(f.value) : undefined}
                 onValueChange={f.onChange}
-                disabled={isEdit}
               >
                 <SelectTrigger>
                   <SelectValue placeholder={productSelect.placeholder} />
