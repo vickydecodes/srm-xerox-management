@@ -8,16 +8,10 @@ import { Button } from "@/components/ui/button";
 import { BillForm } from "@/modules/bill/bill.form";
 import { defaultBillValues } from "@/modules/bill/bill.schema";
 
-const methodMap = {
-  'CASH': 'cash',
-  'UPI': 'gpay',
-  'CREDIT': 'credit',
-};
-
 const getFormDefaultValues = (bill) => {
   if (!bill) return defaultBillValues;
   return {
-    paymentMethod: methodMap[bill.paymentMethod] || 'cash',
+    paymentMethod: bill.paymentMethod?.toLowerCase() || 'cash',
     status: bill.status === 'PAID' ? 'paid' : 'unpaid',
     branch: typeof bill.branch === 'object' ? bill.branch?._id : bill.branch || '',
     department: typeof bill.department === 'object' ? bill.department?._id : bill.department || '',
@@ -58,7 +52,7 @@ export default function BillCreation() {
     try {
       const payload = {
         ...data,
-        paymentMethod: data.paymentMethod === 'gpay' ? 'UPI' : data.paymentMethod.toUpperCase(),
+        paymentMethod: data.paymentMethod.toUpperCase(),
         status: data.status.toUpperCase(),
       };
       

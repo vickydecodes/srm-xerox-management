@@ -154,6 +154,12 @@ const apiurls = {
       url: (id) => `${base_url}/departments/${id}/erase`,
     },
   },
+  search: {
+    products: {
+      method: "get",
+      url: () => `${base_url}/search/products`,
+    },
+  },
 };
 
 export { apiurls };

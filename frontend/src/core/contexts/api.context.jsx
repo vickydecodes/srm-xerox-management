@@ -7,6 +7,7 @@ import { useProductModule } from '@/modules/products';
 import { useBillModule } from '@/modules/bill';
 import { useBranchModule } from '@/modules/branch';
 import { useInventoryProductModule } from '@/modules/inventory-product';
+import { useSearchModule } from '@/modules/search';
 
 
 const ApiContext = createContext();
@@ -30,6 +31,7 @@ export const ApiProvider = ({ children }) => {
     const billModule = useBillModule(exported);
     const branchModule = useBranchModule(exported);
     const inventoryProductModule = useInventoryProductModule(exported);
+    const searchModule = useSearchModule(exported);
 
 
     Object.assign(exported, {
@@ -38,7 +40,8 @@ export const ApiProvider = ({ children }) => {
         products: productModule,
         bills: billModule,
         branches: branchModule,
-        inventoryProducts: inventoryProductModule
+        inventoryProducts: inventoryProductModule,
+        search: searchModule
     });
 
     

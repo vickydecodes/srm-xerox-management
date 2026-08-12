@@ -12,14 +12,14 @@ const billItemSchema = z.object({
 });
 
 export const PAYMENT_METHODS = [
-  { value: 'gpay', label: 'GPay' },
+  { value: 'upi', label: 'UPI' },
   { value: 'cash', label: 'Cash' },
   { value: 'credit', label: 'Credit' },
 ];
 
 export const createBillSchema = z
   .object({
-    paymentMethod: z.enum(['gpay', 'cash', 'credit'], {
+    paymentMethod: z.enum(['upi', 'cash', 'credit'], {
       error: 'Select a payment method',
     }),
     status: z.enum(['paid', 'unpaid']).default('paid'),
@@ -54,7 +54,7 @@ export const defaultBillValues = {
   status: 'paid',
   branch: '',
   department: '',
-  items: [{ type: 'InventoryProduct', item: '', name: '', quantity: 1, price: 0 }],
+  items: [],
   discount: 0,
   tax: 0,
 };
