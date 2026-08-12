@@ -188,8 +188,8 @@ export function BillForm({
                 return (
                   <div key={field.id} className="space-y-4">
                     {index > 0 && <Separator className="my-2" />}
-                    <div className="grid grid-cols-1 sm:grid-cols-[3.5fr_1.2fr_1.5fr_auto] gap-3 items-center">
-                      <div className="flex flex-col gap-0.5 min-w-0">
+                    <div className="grid grid-cols-1 sm:grid-cols-[3.5fr_1.2fr_1.5fr_auto] gap-3 items-start">
+                      <div className="flex flex-col gap-0.5 min-w-0 sm:pt-2">
                         <span className="font-medium text-sm text-foreground truncate">{watch(`items.${index}.name`)}</span>
                         <span className="text-[10px] text-muted-foreground uppercase font-semibold">
                           {currentType === 'InventoryProduct' ? (

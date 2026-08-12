@@ -9,6 +9,6 @@ export const enhanceInventoryProduct = (
     return enhanceDoc(
         inventoryProductModel,
         inventoryProduct,
-        []
+        ['product']
     );
 };

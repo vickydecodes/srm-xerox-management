@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { multiModelDynamicFilter } from '@core/constants/multimodelfilter.constant.ts';
 import InventoryProduct from '@db/models/inventory-product.model.ts';
 import Service from '@db/models/service.model.ts';
@@ -39,17 +40,37 @@ export const searchProducts = async (
       model: InventoryProduct,
       config: strictInventoryProductFilterConfig,
       type: 'InventoryProduct',
-      mapFn: (ip: any) => ({
-        _id: ip._id,
-        type: 'InventoryProduct',
-        name: ip.product?.name || ip.name || 'Unknown Product',
-        price: ip.price,
-        variant: ip.variant,
-        quantity: ip.quantity,
-        inventory: ip.inventory,
-        code: ip.product?.code || '',
-        details: ip,
-      }),
+      options: {
+        extras: {
+          select: 'variants',
+        },
+      },
+      mapFn: (ip: any) => {
+        let resolvedVariant = null;
+        if (ip.variant) {
+          if (mongoose.Types.ObjectId.isValid(ip.variant)) {
+            const variantObj = ip.product?.variants
+              ? ip.product.variants.find((v: any) => String(v._id) === String(ip.variant))
+              : null;
+            resolvedVariant = variantObj ? variantObj.attributes : null;
+          } else {
+            // Legacy inline variant Map/Object
+            resolvedVariant = ip.variant;
+          }
+        }
+
+        return {
+          _id: ip._id,
+          type: 'InventoryProduct',
+          name: ip.product?.name || 'Unknown Product',
+          price: ip.price,
+          variant: resolvedVariant,
+          quantity: ip.quantity,
+          inventory: ip.inventory,
+          code: ip.product?.code || '',
+          details: ip,
+        };
+      },
     });
   }
 

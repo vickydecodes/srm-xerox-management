@@ -6,6 +6,12 @@ export interface MultiModelSearchConfig {
   config: FilterConfig<any>;
   type: string;
   mapFn: (item: any) => any;
+  options?: {
+    extras?: {
+      select?: string;
+    };
+    nestedPopulate?: any[];
+  };
 }
 
 export async function multiModelDynamicFilter(
@@ -28,6 +34,7 @@ export async function multiModelDynamicFilter(
       searchParams,
       {
         visibility: options.visibility ?? 'active-only',
+        ...cfg.options,
       }
     );
 

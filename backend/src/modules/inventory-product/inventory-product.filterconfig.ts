@@ -3,7 +3,6 @@ import { IInventoryProduct } from '@db/models/inventory-product.model.ts';
 
 export const inventoryProductFilterConfig: FilterConfig<IInventoryProduct> = {
     searchable: [
-        "name",
         "inventory.name"
     ],
     searchableRefs: [
