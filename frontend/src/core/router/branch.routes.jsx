@@ -1,11 +1,12 @@
 import {
     IconBuildingCommunity,
-
+    IconKey,
     IconLogout2,
 } from '@tabler/icons-react';
 
 import Department from "@/pages/department/department";
 import DepartmentAdmin from "@/pages/department-admin/department-admin";
+import ChangePassword from "@/pages/changepassword/changepassword";
 
 
 export const branchAdminRoutes = {
@@ -27,6 +28,14 @@ export const branchAdminRoutes = {
             element: <DepartmentAdmin />,
             icon: <IconBuildingCommunity className="h-5 w-5 shrink-0" />
         },
+        {
+              path: "/branch_admin/changepassword",
+              label: "Change Password",
+              title: "Change Password",
+              description: "Update your administrator password",
+              element: <ChangePassword />,
+              icon: <IconKey className="h-5 w-5 shrink-0" />,
+            },
     ],
     logout: {
         label: 'Logout',

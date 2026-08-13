@@ -1,11 +1,13 @@
 import {
     IconReceipt,
     IconLogout2,
-    IconCalculator
+    IconCalculator,
+    IconKey,
 } from '@tabler/icons-react';
 
 import Bill from "@/pages/bill/bill";
 import BillCreation from '@/pages/bill-creation/bill-creation';
+import ChangePassword from "@/pages/changepassword/changepassword";
 
 export const shopAdminRoutes = {
     role: 'shop_admin',
@@ -26,6 +28,14 @@ export const shopAdminRoutes = {
             icon: <IconReceipt className="h-5 w-5 shrink-0" />,
             element: <Bill />,
         },
+        {
+              path: "/shop_admin/changepassword",
+              label: "Change Password",
+              title: "Change Password",
+              description: "Update your administrator password",
+              element: <ChangePassword />,
+              icon: <IconKey className="h-5 w-5 shrink-0" />,
+            },
     ],
     logout: {
         label: 'Logout',

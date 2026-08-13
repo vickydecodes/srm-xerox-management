@@ -7,6 +7,7 @@ import {
   IconLogout2,
   IconFileInvoice,
   IconPackages,
+  IconKey,
 } from "@tabler/icons-react";
 
 import Department from "@/pages/department/department";
@@ -20,6 +21,7 @@ import InventoryProduct from "@/pages/inventory-product/inventory-product";
 import ShopAdmin from "@/pages/shop-admin/shop-admin";
 import StaffAdmin from "@/pages/staff-admin/staff-admin";
 import DepartmentAdmin from "@/pages/department-admin/department-admin";
+import ChangePassword from "@/pages/changepassword/changepassword";
 
 export const adminRoutes = {
   role: "super_admin",
@@ -117,6 +119,14 @@ export const adminRoutes = {
       description: "Manage department admin and their details",
       element: <DepartmentAdmin />,
       icon: <IconBuildingCommunity className="h-5 w-5 shrink-0" />,
+    },
+    {
+      path: "/super_admin/changepassword",
+      label: "Change Password",
+      title: "Change Password",
+      description: "Update your administrator password",
+      element: <ChangePassword />,
+      icon: <IconKey className="h-5 w-5 shrink-0" />,
     },
   ],
   logout: {

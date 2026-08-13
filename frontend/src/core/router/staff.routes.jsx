@@ -3,8 +3,10 @@ import {
     IconClipboardList,
     IconReceipt,
     IconLogout2,
+    IconKey,
 } from '@tabler/icons-react';
 import Service from "@/pages/service/service";
+import ChangePassword from "@/pages/changepassword/changepassword";
 import Product from "@/pages/product/product";
 import Bill from "@/pages/bill/bill";
 
@@ -35,6 +37,14 @@ export const staffRoutes = {
             icon: <IconReceipt className="h-5 w-5 shrink-0" />,
             element: <Bill />,
         },
+        {
+              path: "/staff/changepassword",
+              label: "Change Password",
+              title: "Change Password",
+              description: "Update your administrator password",
+              element: <ChangePassword />,
+              icon: <IconKey className="h-5 w-5 shrink-0" />,
+            },
     ],
     logout: {
         label: 'Logout',
