@@ -396,11 +396,11 @@ export async function dynamicFilter<T extends Document>(
           ...(nestedPopulate && { populate: nestedPopulate.populate }),
         };
       }),
-      { strictPopulate: false }
+      // { strictPopulate: false }
     );
 
     if (options?.forcePopulate && options.forcePopulate.length > 0) {
-      data = await model.populate(data, options.forcePopulate, { strictPopulate: false });
+      data = await model.populate(data, options.forcePopulate, );
     }
   }
 

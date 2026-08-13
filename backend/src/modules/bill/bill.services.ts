@@ -1,4 +1,3 @@
-// modules/bill/bill.services.ts
 import Bill, { IBillItem } from '@db/models/bill.model.ts';
 import InventoryProduct from '@db/models/inventory-product.model.ts';
 import { dynamicFilter } from '@core/constants/dynamicfilter.constant.ts';
