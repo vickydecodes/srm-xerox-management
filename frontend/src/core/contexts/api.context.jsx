@@ -8,6 +8,7 @@ import { useBillModule } from '@/modules/bill';
 import { useBranchModule } from '@/modules/branch';
 import { useInventoryProductModule } from '@/modules/inventory-product';
 import { useBranchAdminModule } from "@/modules/branch-admin";
+import { useShopAdminModule } from "@/modules/shop-admin";
 
 
 
@@ -32,6 +33,7 @@ export const ApiProvider = ({ children }) => {
     const branchModule = useBranchModule();
     const inventoryProductModule = useInventoryProductModule(exported);
     const branchAdminModule = useBranchAdminModule(exported);
+    const shopAdminModule = useShopAdminModule(exported);
 
 
     Object.assign(exported, {
@@ -41,7 +43,8 @@ export const ApiProvider = ({ children }) => {
         bills: billModule,
         branches: branchModule,
         inventoryProducts: inventoryProductModule,
-        branchAdmins: branchAdminModule
+        branchAdmins: branchAdminModule,
+        shopAdmins: shopAdminModule,
     });
 
     
