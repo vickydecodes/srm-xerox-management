@@ -19,6 +19,7 @@ import BillCreation from "@/pages/bill-creation/bill-creation";
 import InventoryProduct from "@/pages/inventory-product/inventory-product";
 import ShopAdmin from "@/pages/shop-admin/shop-admin";
 import StaffAdmin from "@/pages/staff-admin/staff-admin";
+import DepartmentAdmin from "@/pages/department-admin/department-admin";
 
 export const adminRoutes = {
   role: "super_admin",
@@ -89,8 +90,7 @@ export const adminRoutes = {
       path: "/super_admin/branch-admin",
       label: "Branch Admin",
       title: "Branch Administrator",
-      description:
-        "Branch administrator controls and management.",
+      description: "Branch administrator controls and management.",
       icon: <IconGitBranch className="h-5 w-5 shrink-0" />,
       element: <BranchAdmin />,
     },
@@ -98,8 +98,7 @@ export const adminRoutes = {
       path: "/super_admin/shop-admin",
       label: "Shop Admin",
       title: "Shop Administrator",
-      description:
-        "Shop inventory controls and management.",
+      description: "Shop inventory controls and management.",
       icon: <IconGitBranch className="h-5 w-5 shrink-0" />,
       element: <ShopAdmin />,
     },
@@ -107,10 +106,17 @@ export const adminRoutes = {
       path: "/super_admin/staff-admin",
       label: "Staff Admin",
       title: "Staff Administrator",
-      description:
-        "Staff inventory controls and management.",
+      description: "Staff inventory controls and management.",
       icon: <IconGitBranch className="h-5 w-5 shrink-0" />,
       element: <StaffAdmin />,
+    },
+    {
+      path: "/super_admin/department-admin",
+      label: "Department Admin",
+      title: "Department admin Page",
+      description: "Manage department admin and their details",
+      element: <DepartmentAdmin />,
+      icon: <IconBuildingCommunity className="h-5 w-5 shrink-0" />,
     },
   ],
   logout: {

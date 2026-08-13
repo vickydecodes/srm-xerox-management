@@ -10,6 +10,7 @@ import { useInventoryProductModule } from '@/modules/inventory-product';
 import { useBranchAdminModule } from "@/modules/branch-admin";
 import { useShopAdminModule } from "@/modules/shop-admin";
 import { useStaffModule } from "@/modules/staff-admin";
+import { useDepartmentAdminModule } from "@/modules/department-admin";
 
 
 
@@ -36,6 +37,7 @@ export const ApiProvider = ({ children }) => {
     const branchAdminModule = useBranchAdminModule(exported);
     const shopAdminModule = useShopAdminModule(exported);
     const staffModule = useStaffModule(exported);
+    const departmentAdminModule = useDepartmentAdminModule(exported);
 
 
     Object.assign(exported, {
@@ -48,6 +50,7 @@ export const ApiProvider = ({ children }) => {
         branchAdmins: branchAdminModule,
         shopAdmins: shopAdminModule,
         staffs: staffModule,
+        departmentAdmins: departmentAdminModule,
     });
 
     
