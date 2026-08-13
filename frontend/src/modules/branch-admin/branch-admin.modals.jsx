@@ -1,4 +1,13 @@
-import { View, Create, Edit, Delete, ActiveStatus, Retrieve, Erase } from "./branch-admin.modal.components";
+import {
+  View,
+  Create,
+  Edit,
+  Delete,
+  ActiveStatus,
+  Retrieve,
+  Erase,
+  ResetPassword,
+} from "./branch-admin.modal.components";
 
 export const modals = {
   view: View,
@@ -8,4 +17,5 @@ export const modals = {
   activeStatus: ActiveStatus,
   retrieve: Retrieve,
   erase: Erase,
-}
+  resetPassword: ResetPassword,
+};

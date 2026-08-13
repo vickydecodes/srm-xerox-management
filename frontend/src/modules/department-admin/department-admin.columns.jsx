@@ -1,52 +1,52 @@
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { MoreHorizontal } from "lucide-react"
-import { Hint } from "@/core/utils/tooltip.util"
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal } from "lucide-react";
+import { Hint } from "@/core/utils/tooltip.util";
 
 export const useDepartmentAdminColumns = (departmentAdmins) => {
   return [
     {
-      accessorKey: 'login_id',
-      header: () => Hint('Login ID', 'Auto-generated login ID'),
-      cell: ({ row }) => <span>{row.getValue('login_id')}</span>,
+      accessorKey: "login_id",
+      header: () => Hint("Login ID", "Auto-generated login ID"),
+      cell: ({ row }) => <span>{row.getValue("login_id")}</span>,
     },
     {
-      accessorKey: 'name',
-      header: () => Hint('Name', 'Department admin name'),
-      cell: ({ row }) => <span>{row.getValue('name')}</span>,
+      accessorKey: "name",
+      header: () => Hint("Name", "Department admin name"),
+      cell: ({ row }) => <span>{row.getValue("name")}</span>,
     },
     {
-      accessorKey: 'email',
-      header: () => Hint('Email', 'Contact email'),
-      cell: ({ row }) => <span>{row.getValue('email')}</span>,
+      accessorKey: "email",
+      header: () => Hint("Email", "Contact email"),
+      cell: ({ row }) => <span>{row.getValue("email")}</span>,
     },
     {
-      accessorKey: 'department',
-      header: () => Hint('Department', 'Assigned department'),
+      accessorKey: "department",
+      header: () => Hint("Department", "Assigned department"),
       cell: ({ row }) => {
-        const department = row.getValue('department');
-        return <span>{department?.name || department || '-'}</span>;
+        const department = row.getValue("department");
+        return <span>{department?.name || department || "-"}</span>;
       },
     },
     {
-      accessorKey: 'active',
-      header: () => Hint('Status', 'Whether this account is active'),
+      accessorKey: "active",
+      header: () => Hint("Status", "Whether this account is active"),
       cell: ({ row }) => (
-        <Badge variant={row.getValue('active') ? 'default' : 'outline'}>
-          {row.getValue('active') ? 'Active' : 'Inactive'}
+        <Badge variant={row.getValue("active") ? "default" : "outline"}>
+          {row.getValue("active") ? "Active" : "Inactive"}
         </Badge>
       ),
     },
     {
-      accessorKey: 'actions',
-      header: () => Hint('Actions', 'Manage this department admin'),
+      accessorKey: "actions",
+      header: () => Hint("Actions", "Manage this department admin"),
       cell: ({ row }) => {
         const admin = row.original;
         const isDeleted = Boolean(admin?.deleted || admin?.deletedAt);
@@ -59,19 +59,30 @@ export const useDepartmentAdminColumns = (departmentAdmins) => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => departmentAdmins.openView(admin)}>
+              <DropdownMenuItem
+                onClick={() => departmentAdmins.openView(admin)}
+              >
                 View
               </DropdownMenuItem>
 
               {!isDeleted && (
                 <>
-                  <DropdownMenuItem onClick={() => departmentAdmins.openEdit(admin)}>
+                  <DropdownMenuItem
+                    onClick={() => departmentAdmins.openEdit(admin)}
+                  >
                     Edit
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => departmentAdmins.openActiveStatus(admin._id, admin.active)}
+                    onClick={() => departmentAdmins.openResetPassword(admin)}
                   >
-                    {admin.active ? 'Deactivate' : 'Activate'}
+                    Reset Password
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() =>
+                      departmentAdmins.openActiveStatus(admin._id, admin.active)
+                    }
+                  >
+                    {admin.active ? "Deactivate" : "Activate"}
                   </DropdownMenuItem>
                 </>
               )}
@@ -80,7 +91,9 @@ export const useDepartmentAdminColumns = (departmentAdmins) => {
 
               {isDeleted ? (
                 <>
-                  <DropdownMenuItem onClick={() => departmentAdmins.openRetrieve(admin._id)}>
+                  <DropdownMenuItem
+                    onClick={() => departmentAdmins.openRetrieve(admin._id)}
+                  >
                     Retrieve
                   </DropdownMenuItem>
                   <DropdownMenuItem
@@ -100,8 +113,8 @@ export const useDepartmentAdminColumns = (departmentAdmins) => {
               )}
             </DropdownMenuContent>
           </DropdownMenu>
-        )
-      }
-    }
-  ]
-}
+        );
+      },
+    },
+  ];
+};

@@ -5,6 +5,7 @@ import { useBranchAdminStore } from "./branch-admin.store";
 import { useUI } from "@/core/contexts/ui.context";
 import { apiurls } from "@/core/api/api.urls";
 import { createEntityQueryActions } from "@/core/utils/entity.util";
+import { useAuth } from "@/core/contexts/auth.context";
 
 const ROLE = "branch_admin";
 
@@ -18,6 +19,7 @@ export const useBranchAdminModule = (exported) => {
 
   const store = useBranchAdminStore();
   const { set, setCurrent, setQuery } = store;
+  const { adminResetPassword } = useAuth();
 
   const { users } = apiurls;
 
@@ -43,6 +45,16 @@ export const useBranchAdminModule = (exported) => {
     return openModal(modals.edit, {
       admin,
       submitFn: (formData) => crud.edit(admin._id, formData), // ← admin._id
+      exported,
+    });
+  };
+
+  const openResetPassword = (admin) => {
+    return openModal(modals.resetPassword, {
+      id: admin._id,
+      name: admin.name,
+      submitFn: (targetId, newPassword) =>
+        adminResetPassword(targetId, ROLE, newPassword),
       exported,
     });
   };
@@ -119,6 +131,7 @@ export const useBranchAdminModule = (exported) => {
     openErase,
     openRetrieve,
     openActiveStatus,
+    openResetPassword,
     crud,
     fetch,
     reset,

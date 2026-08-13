@@ -7,6 +7,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { Form } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
 import { useAsync } from "@/core/hooks/useAsync";
@@ -14,7 +16,11 @@ import { useClearError } from "@/core/hooks/useClearError";
 import { useSubmit } from "@/core/hooks/useSubmit";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { branchAdminCreateSchema, branchAdminEditSchema } from "./branch-admin.schema";
+import {
+  branchAdminCreateSchema,
+  branchAdminEditSchema,
+  resetPasswordSchema,
+} from "./branch-admin.schema";
 import BranchAdminForm from "./branch-admin.form";
 import { useLoader } from "@/core/hooks/useLoader";
 import { useEffect } from "react";
@@ -58,7 +64,11 @@ export const View = ({ admin } = {}) => (
   </DialogContent>
 );
 
-export const Create = ({ submitFn = () => {}, closeModal = () => {}, exported } = {}) => {
+export const Create = ({
+  submitFn = () => {},
+  closeModal = () => {},
+  exported,
+} = {}) => {
   const form = useForm({
     resolver: zodResolver(branchAdminCreateSchema),
     defaultValues: {
@@ -97,8 +107,14 @@ export const Create = ({ submitFn = () => {}, closeModal = () => {}, exported } 
       </DialogHeader>
 
       <Form {...form}>
-        <form className="grid gap-4 py-2" onSubmit={form.handleSubmit(onSubmit)}>
-          <BranchAdminForm form={form} branches={exported?.branches?.state || []} />
+        <form
+          className="grid gap-4 py-2"
+          onSubmit={form.handleSubmit(onSubmit)}
+        >
+          <BranchAdminForm
+            form={form}
+            branches={exported?.branches?.state || []}
+          />
           {ErrorAlert}
           <DialogFooter>
             <DialogClose asChild>
@@ -114,7 +130,101 @@ export const Create = ({ submitFn = () => {}, closeModal = () => {}, exported } 
   );
 };
 
-export const Edit = ({ admin, submitFn = () => {}, closeModal = () => {}, exported } = {}) => {
+export const ResetPassword = ({
+  id,
+  name,
+  submitFn = () => {},
+  closeModal = () => {},
+} = {}) => {
+  const form = useForm({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: {
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
+
+  const { run, loading, ErrorAlert, clearError } = useAsync((data) =>
+    submitFn(id, data.newPassword),
+  );
+
+  useClearError(form, clearError);
+
+  const onSubmit = useSubmit({
+    run,
+    form,
+    onSuccess: closeModal,
+  });
+
+  return (
+    <DialogContent className="sm:max-w-[425px]">
+      <DialogHeader>
+        <DialogTitle>Reset Password</DialogTitle>
+        <DialogDescription>Set a new password for {name}</DialogDescription>
+      </DialogHeader>
+
+      <Form {...form}>
+        <form
+          className="grid gap-4 py-2"
+          onSubmit={form.handleSubmit(onSubmit)}
+        >
+          <FormField
+            control={form.control}
+            name="newPassword"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>New Password</FormLabel>
+                <FormControl>
+                  <Input
+                    type="password"
+                    placeholder="Enter new password"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="confirmPassword"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Confirm Password</FormLabel>
+                <FormControl>
+                  <Input
+                    type="password"
+                    placeholder="Re-enter new password"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {ErrorAlert}
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button type="submit" loading={loading} loadingText="Resetting..">
+              Reset Password
+            </Button>
+          </DialogFooter>
+        </form>
+      </Form>
+    </DialogContent>
+  );
+};
+
+export const Edit = ({
+  admin,
+  submitFn = () => {},
+  closeModal = () => {},
+  exported,
+} = {}) => {
   const form = useForm({
     resolver: zodResolver(branchAdminEditSchema),
     defaultValues: {
@@ -154,8 +264,15 @@ export const Edit = ({ admin, submitFn = () => {}, closeModal = () => {}, export
       </DialogHeader>
 
       <Form {...form}>
-        <form className="grid gap-4 py-2" onSubmit={form.handleSubmit(onSubmit)}>
-          <BranchAdminForm form={form} isEdit branches={exported?.branches?.state || []} />
+        <form
+          className="grid gap-4 py-2"
+          onSubmit={form.handleSubmit(onSubmit)}
+        >
+          <BranchAdminForm
+            form={form}
+            isEdit
+            branches={exported?.branches?.state || []}
+          />
           {ErrorAlert}
           <DialogFooter>
             <DialogClose asChild>
@@ -171,7 +288,12 @@ export const Edit = ({ admin, submitFn = () => {}, closeModal = () => {}, export
   );
 };
 
-export const Delete = ({ id, name, submitFn = () => {}, closeModal = () => {} }) => {
+export const Delete = ({
+  id,
+  name,
+  submitFn = () => {},
+  closeModal = () => {},
+}) => {
   const { run, loading, ErrorAlert } = useAsync(submitFn);
 
   const handleDelete = async () => {
@@ -184,7 +306,8 @@ export const Delete = ({ id, name, submitFn = () => {}, closeModal = () => {} })
       <DialogHeader>
         <DialogTitle>Are you sure? {name}</DialogTitle>
         <DialogDescription>
-          This will be stored as deleted, this branch admin record can be retrieved by Admin.
+          This will be stored as deleted, this branch admin record can be
+          retrieved by Admin.
         </DialogDescription>
       </DialogHeader>
 
@@ -215,8 +338,8 @@ export const Erase = ({ id, submitFn, closeModal }) => {
       <DialogHeader>
         <DialogTitle>Are you sure?</DialogTitle>
         <DialogDescription>
-          <strong>Note:</strong> This operation is a permanent delete. All data related to this
-          branch admin will be lost.
+          <strong>Note:</strong> This operation is a permanent delete. All data
+          related to this branch admin will be lost.
         </DialogDescription>
       </DialogHeader>
 
@@ -247,7 +370,8 @@ export const Retrieve = ({ id, submitFn, closeModal }) => {
       <DialogHeader>
         <DialogTitle>Are you sure?</DialogTitle>
         <DialogDescription>
-          <strong>Note:</strong> This will restore the branch admin and all related data.
+          <strong>Note:</strong> This will restore the branch admin and all
+          related data.
         </DialogDescription>
       </DialogHeader>
 
@@ -265,8 +389,14 @@ export const Retrieve = ({ id, submitFn, closeModal }) => {
   );
 };
 
-export const ActiveStatus = ({ id, status, submitFn, closeModal, exported }) => {
-  const actionLabel = status ? 'Deactivate' : 'Activate';
+export const ActiveStatus = ({
+  id,
+  status,
+  submitFn,
+  closeModal,
+  exported,
+}) => {
+  const actionLabel = status ? "Deactivate" : "Activate";
 
   const onConfirm = async () => {
     await submitFn(id, { active: !status });
@@ -279,9 +409,13 @@ export const ActiveStatus = ({ id, status, submitFn, closeModal, exported }) => 
         <DialogTitle>{actionLabel} branch admin</DialogTitle>
         <DialogDescription>
           {status ? (
-            <>This will <strong>deactivate</strong> this branch admin's account.</>
+            <>
+              This will <strong>deactivate</strong> this branch admin's account.
+            </>
           ) : (
-            <>This will <strong>activate</strong> this branch admin's account.</>
+            <>
+              This will <strong>activate</strong> this branch admin's account.
+            </>
           )}
         </DialogDescription>
       </DialogHeader>
@@ -293,11 +427,11 @@ export const ActiveStatus = ({ id, status, submitFn, closeModal, exported }) => 
           </Button>
         </DialogClose>
         <Button
-          variant={status ? 'destructive' : 'default'}
+          variant={status ? "destructive" : "default"}
           onClick={onConfirm}
           disabled={exported?.loading?.edit}
         >
-          {exported?.loading?.edit ? 'Updating...' : actionLabel}
+          {exported?.loading?.edit ? "Updating..." : actionLabel}
         </Button>
       </DialogFooter>
     </DialogContent>

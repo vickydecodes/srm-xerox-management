@@ -1,4 +1,4 @@
-import { View, Create, Edit, Delete, ActiveStatus, Retrieve, Erase } from "./staff-admin.modal.component";
+import { View, Create, Edit, Delete, ActiveStatus, Retrieve, Erase,ResetPassword } from "./staff-admin.modal.component";
 
 export const modals = {
   view: View,
@@ -8,4 +8,5 @@ export const modals = {
   activeStatus: ActiveStatus,
   retrieve: Retrieve,
   erase: Erase,
+  resetPassword: ResetPassword,
 }

@@ -8,13 +8,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
+import {FormField,FormLabel,FormMessage,FormControl,FormItem} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useAsync } from "@/core/hooks/useAsync";
 import { useClearError } from "@/core/hooks/useClearError";
 import { useSubmit } from "@/core/hooks/useSubmit";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { staffCreateSchema, staffEditSchema } from "./staff-admin.schema";
+import { staffCreateSchema, staffEditSchema,resetPasswordSchema } from "./staff-admin.schema";
 import StaffForm from "./staff-admin.form";
 
 export const View = ({ staff } = {}) => (
@@ -83,7 +85,10 @@ export const Create = ({ submitFn = () => {}, closeModal = () => {} } = {}) => {
       </DialogHeader>
 
       <Form {...form}>
-        <form className="grid gap-4 py-2" onSubmit={form.handleSubmit(onSubmit)}>
+        <form
+          className="grid gap-4 py-2"
+          onSubmit={form.handleSubmit(onSubmit)}
+        >
           <StaffForm form={form} />
           {ErrorAlert}
           <DialogFooter>
@@ -100,7 +105,100 @@ export const Create = ({ submitFn = () => {}, closeModal = () => {} } = {}) => {
   );
 };
 
-export const Edit = ({ staff, submitFn = () => {}, closeModal = () => {} } = {}) => {
+export const ResetPassword = ({
+  id,
+  name,
+  submitFn = () => {},
+  closeModal = () => {},
+} = {}) => {
+  const form = useForm({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: {
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
+
+  const { run, loading, ErrorAlert, clearError } = useAsync((data) =>
+    submitFn(id, data.newPassword),
+  );
+
+  useClearError(form, clearError);
+
+  const onSubmit = useSubmit({
+    run,
+    form,
+    onSuccess: closeModal,
+  });
+
+  return (
+    <DialogContent className="sm:max-w-[425px]">
+      <DialogHeader>
+        <DialogTitle>Reset Password</DialogTitle>
+        <DialogDescription>Set a new password for {name}</DialogDescription>
+      </DialogHeader>
+
+      <Form {...form}>
+        <form
+          className="grid gap-4 py-2"
+          onSubmit={form.handleSubmit(onSubmit)}
+        >
+          <FormField
+            control={form.control}
+            name="newPassword"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>New Password</FormLabel>
+                <FormControl>
+                  <Input
+                    type="password"
+                    placeholder="Enter new password"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="confirmPassword"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Confirm Password</FormLabel>
+                <FormControl>
+                  <Input
+                    type="password"
+                    placeholder="Re-enter new password"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {ErrorAlert}
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button type="submit" loading={loading} loadingText="Resetting..">
+              Reset Password
+            </Button>
+          </DialogFooter>
+        </form>
+      </Form>
+    </DialogContent>
+  );
+};
+
+export const Edit = ({
+  staff,
+  submitFn = () => {},
+  closeModal = () => {},
+} = {}) => {
   const form = useForm({
     resolver: zodResolver(staffEditSchema),
     defaultValues: {
@@ -131,7 +229,10 @@ export const Edit = ({ staff, submitFn = () => {}, closeModal = () => {} } = {})
       </DialogHeader>
 
       <Form {...form}>
-        <form className="grid gap-4 py-2" onSubmit={form.handleSubmit(onSubmit)}>
+        <form
+          className="grid gap-4 py-2"
+          onSubmit={form.handleSubmit(onSubmit)}
+        >
           <StaffForm form={form} isEdit />
           {ErrorAlert}
           <DialogFooter>
@@ -148,7 +249,12 @@ export const Edit = ({ staff, submitFn = () => {}, closeModal = () => {} } = {})
   );
 };
 
-export const Delete = ({ id, name, submitFn = () => {}, closeModal = () => {} }) => {
+export const Delete = ({
+  id,
+  name,
+  submitFn = () => {},
+  closeModal = () => {},
+}) => {
   const { run, loading, ErrorAlert } = useAsync(submitFn);
 
   const handleDelete = async () => {
@@ -161,7 +267,8 @@ export const Delete = ({ id, name, submitFn = () => {}, closeModal = () => {} })
       <DialogHeader>
         <DialogTitle>Are you sure? {name}</DialogTitle>
         <DialogDescription>
-          This will be stored as deleted, this staff record can be retrieved by Admin.
+          This will be stored as deleted, this staff record can be retrieved by
+          Admin.
         </DialogDescription>
       </DialogHeader>
 
@@ -192,8 +299,8 @@ export const Erase = ({ id, submitFn, closeModal }) => {
       <DialogHeader>
         <DialogTitle>Are you sure?</DialogTitle>
         <DialogDescription>
-          <strong>Note:</strong> This operation is a permanent delete. All data related to this
-          staff member will be lost.
+          <strong>Note:</strong> This operation is a permanent delete. All data
+          related to this staff member will be lost.
         </DialogDescription>
       </DialogHeader>
 
@@ -224,7 +331,8 @@ export const Retrieve = ({ id, submitFn, closeModal }) => {
       <DialogHeader>
         <DialogTitle>Are you sure?</DialogTitle>
         <DialogDescription>
-          <strong>Note:</strong> This will restore the staff member and all related data.
+          <strong>Note:</strong> This will restore the staff member and all
+          related data.
         </DialogDescription>
       </DialogHeader>
 
@@ -242,8 +350,14 @@ export const Retrieve = ({ id, submitFn, closeModal }) => {
   );
 };
 
-export const ActiveStatus = ({ id, status, submitFn, closeModal, exported }) => {
-  const actionLabel = status ? 'Deactivate' : 'Activate';
+export const ActiveStatus = ({
+  id,
+  status,
+  submitFn,
+  closeModal,
+  exported,
+}) => {
+  const actionLabel = status ? "Deactivate" : "Activate";
 
   const onConfirm = async () => {
     await submitFn(id, { active: !status });
@@ -256,9 +370,13 @@ export const ActiveStatus = ({ id, status, submitFn, closeModal, exported }) => 
         <DialogTitle>{actionLabel} staff</DialogTitle>
         <DialogDescription>
           {status ? (
-            <>This will <strong>deactivate</strong> this staff member's account.</>
+            <>
+              This will <strong>deactivate</strong> this staff member's account.
+            </>
           ) : (
-            <>This will <strong>activate</strong> this staff member's account.</>
+            <>
+              This will <strong>activate</strong> this staff member's account.
+            </>
           )}
         </DialogDescription>
       </DialogHeader>
@@ -270,11 +388,11 @@ export const ActiveStatus = ({ id, status, submitFn, closeModal, exported }) => 
           </Button>
         </DialogClose>
         <Button
-          variant={status ? 'destructive' : 'default'}
+          variant={status ? "destructive" : "default"}
           onClick={onConfirm}
           disabled={exported?.loading?.edit}
         >
-          {exported?.loading?.edit ? 'Updating...' : actionLabel}
+          {exported?.loading?.edit ? "Updating..." : actionLabel}
         </Button>
       </DialogFooter>
     </DialogContent>

@@ -65,6 +65,9 @@ export const useStaffColumns = (staffs) => {
                   <DropdownMenuItem onClick={() => staffs.openEdit(staff)}>
                     Edit
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => staffs.openResetPassword(staff)}>
+                    Reset Password
+                  </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => staffs.openActiveStatus(staff._id, staff.active)}
                   >

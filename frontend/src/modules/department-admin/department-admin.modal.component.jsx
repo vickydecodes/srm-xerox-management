@@ -7,6 +7,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { Form } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
 import { useAsync } from "@/core/hooks/useAsync";
@@ -14,7 +16,7 @@ import { useClearError } from "@/core/hooks/useClearError";
 import { useSubmit } from "@/core/hooks/useSubmit";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { departmentAdminCreateSchema, departmentAdminEditSchema } from "./department-admin.schema";
+import { departmentAdminCreateSchema, departmentAdminEditSchema,resetPasswordSchema } from "./department-admin.schema";
 import DepartmentAdminForm from "./department-admin.form";
 import { useLoader } from "@/core/hooks/useLoader";
 import { useEffect } from "react";
@@ -287,6 +289,79 @@ export const Retrieve = ({ id, submitFn, closeModal }) => {
   );
 };
 
+export const ResetPassword = ({ id, name, submitFn = () => {}, closeModal = () => {} } = {}) => {
+  const form = useForm({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: {
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
+
+  const { run, loading, ErrorAlert, clearError } = useAsync((data) =>
+    submitFn(id, data.newPassword)
+  );
+
+  useClearError(form, clearError);
+
+  const onSubmit = useSubmit({
+    run,
+    form,
+    onSuccess: closeModal,
+  });
+
+  return (
+    <DialogContent className="sm:max-w-[425px]">
+      <DialogHeader>
+        <DialogTitle>Reset Password</DialogTitle>
+        <DialogDescription>Set a new password for {name}</DialogDescription>
+      </DialogHeader>
+
+      <Form {...form}>
+        <form className="grid gap-4 py-2" onSubmit={form.handleSubmit(onSubmit)}>
+          <FormField
+            control={form.control}
+            name="newPassword"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>New Password</FormLabel>
+                <FormControl>
+                  <Input type="password" placeholder="Enter new password" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="confirmPassword"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Confirm Password</FormLabel>
+                <FormControl>
+                  <Input type="password" placeholder="Re-enter new password" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {ErrorAlert}
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button type="submit" loading={loading} loadingText="Resetting..">
+              Reset Password
+            </Button>
+          </DialogFooter>
+        </form>
+      </Form>
+    </DialogContent>
+  );
+};
+
 export const ActiveStatus = ({ id, status, submitFn, closeModal, exported }) => {
   const actionLabel = status ? 'Deactivate' : 'Activate';
 
@@ -323,5 +398,7 @@ export const ActiveStatus = ({ id, status, submitFn, closeModal, exported }) => 
         </Button>
       </DialogFooter>
     </DialogContent>
+
+    
   );
 };

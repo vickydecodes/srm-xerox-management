@@ -164,7 +164,7 @@ export const AuthProvider = ({ children }) => {
         targetRole,
         newPassword,
       });
-      if (res) toast.success("Password reset successfully");
+      toast.success("Password reset successfully");
       return res;
     } catch (err) {
       handleApiError(err);

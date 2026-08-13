@@ -5,11 +5,13 @@ import { useStaffStore } from "./staff-admin.store";
 import { useUI } from "@/core/contexts/ui.context";
 import { apiurls } from "@/core/api/api.urls";
 import { createEntityQueryActions } from "@/core/utils/entity.util";
+import { useAuth } from "@/core/contexts/auth.context";
 
 const ROLE = 'staff';
 
 export const useStaffModule = (exported) => {
   const { openModal } = useUI();
+  const {adminResetPassword}=useAuth()
 
   const list = useStaffStore((s) => s.list);
   const loading = useStaffStore((s) => s.loading);
@@ -30,6 +32,14 @@ export const useStaffModule = (exported) => {
 
   const openView = (staff) => {
     return openModal(modals.view, { staff, exported });
+  };
+
+  const openResetPassword = (staff) => {
+    return openModal(modals.resetPassword, {
+      staff,
+      submitFn: (formData) => adminResetPassword(staff._id, formData),
+      exported,
+    });
   };
 
   const openCreate = () => {
@@ -109,6 +119,7 @@ export const useStaffModule = (exported) => {
     useStaffColumns,
     openView,
     openCreate,
+    openResetPassword,
     openEdit,
     openDelete,
     openErase,

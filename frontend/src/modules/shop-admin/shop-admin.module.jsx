@@ -5,6 +5,7 @@ import { useShopAdminStore } from "./shop-admin.store";
 import { useUI } from "@/core/contexts/ui.context";
 import { apiurls } from "@/core/api/api.urls";
 import { createEntityQueryActions } from "@/core/utils/entity.util";
+import { useAuth } from "@/core/contexts/auth.context";
 
 const ROLE = 'shop_admin';
 
@@ -18,6 +19,7 @@ export const useShopAdminModule = (exported) => {
 
   const store = useShopAdminStore();
   const { set, setCurrent, setQuery } = store;
+  const { adminResetPassword } = useAuth();
 
   const { users } = apiurls;
 
@@ -44,6 +46,16 @@ export const useShopAdminModule = (exported) => {
     return openModal(modals.edit, {
       admin,
       submitFn: (formData) => crud.edit(admin._id, formData),
+      exported,
+    });
+  };
+
+  const openResetPassword = (admin) => {
+    return openModal(modals.resetPassword, {
+      id: admin._id,
+      name: admin.name,
+      submitFn: (targetId, newPassword) =>
+        adminResetPassword(targetId, ROLE, newPassword),
       exported,
     });
   };
@@ -114,6 +126,7 @@ export const useShopAdminModule = (exported) => {
     openErase,
     openRetrieve,
     openActiveStatus,
+    openResetPassword,
     crud,
     fetch,
     reset,

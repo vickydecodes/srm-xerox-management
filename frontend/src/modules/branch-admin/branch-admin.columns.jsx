@@ -1,52 +1,52 @@
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { MoreHorizontal } from "lucide-react"
-import { Hint } from "@/core/utils/tooltip.util"
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal } from "lucide-react";
+import { Hint } from "@/core/utils/tooltip.util";
 
 export const useBranchAdminColumns = (branchAdmins) => {
   return [
     {
-      accessorKey: 'login_id',
-      header: () => Hint('Login ID', 'Auto-generated login ID'),
-      cell: ({ row }) => <span>{row.getValue('login_id')}</span>,
+      accessorKey: "login_id",
+      header: () => Hint("Login ID", "Auto-generated login ID"),
+      cell: ({ row }) => <span>{row.getValue("login_id")}</span>,
     },
     {
-      accessorKey: 'name',
-      header: () => Hint('Name', 'Branch admin name'),
-      cell: ({ row }) => <span>{row.getValue('name')}</span>,
+      accessorKey: "name",
+      header: () => Hint("Name", "Branch admin name"),
+      cell: ({ row }) => <span>{row.getValue("name")}</span>,
     },
     {
-      accessorKey: 'email',
-      header: () => Hint('Email', 'Contact email'),
-      cell: ({ row }) => <span>{row.getValue('email')}</span>,
+      accessorKey: "email",
+      header: () => Hint("Email", "Contact email"),
+      cell: ({ row }) => <span>{row.getValue("email")}</span>,
     },
     {
-      accessorKey: 'branch',
-      header: () => Hint('Branch', 'Assigned branch'),
+      accessorKey: "branch",
+      header: () => Hint("Branch", "Assigned branch"),
       cell: ({ row }) => {
-        const branch = row.getValue('branch');
-        return <span>{branch?.name || branch || '-'}</span>;
+        const branch = row.getValue("branch");
+        return <span>{branch?.name || branch || "-"}</span>;
       },
     },
     {
-      accessorKey: 'active',
-      header: () => Hint('Status', 'Whether this account is active'),
+      accessorKey: "active",
+      header: () => Hint("Status", "Whether this account is active"),
       cell: ({ row }) => (
-        <Badge variant={row.getValue('active') ? 'default' : 'outline'}>
-          {row.getValue('active') ? 'Active' : 'Inactive'}
+        <Badge variant={row.getValue("active") ? "default" : "outline"}>
+          {row.getValue("active") ? "Active" : "Inactive"}
         </Badge>
       ),
     },
     {
-      accessorKey: 'actions',
-      header: () => Hint('Actions', 'Manage this branch admin'),
+      accessorKey: "actions",
+      header: () => Hint("Actions", "Manage this branch admin"),
       cell: ({ row }) => {
         const admin = row.original;
         const isDeleted = Boolean(admin?.deleted || admin?.deletedAt);
@@ -65,13 +65,22 @@ export const useBranchAdminColumns = (branchAdmins) => {
 
               {!isDeleted && (
                 <>
-                  <DropdownMenuItem onClick={() => branchAdmins.openEdit(admin)}>
+                  <DropdownMenuItem
+                    onClick={() => branchAdmins.openEdit(admin)}
+                  >
                     Edit
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => branchAdmins.openActiveStatus(admin._id, admin.active)}
+                    onClick={() => branchAdmins.openResetPassword(admin)}
                   >
-                    {admin.active ? 'Deactivate' : 'Activate'}
+                    Reset Password
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() =>
+                      branchAdmins.openActiveStatus(admin._id, admin.active)
+                    }
+                  >
+                    {admin.active ? "Deactivate" : "Activate"}
                   </DropdownMenuItem>
                 </>
               )}
@@ -80,7 +89,9 @@ export const useBranchAdminColumns = (branchAdmins) => {
 
               {isDeleted ? (
                 <>
-                  <DropdownMenuItem onClick={() => branchAdmins.openRetrieve(admin._id)}>
+                  <DropdownMenuItem
+                    onClick={() => branchAdmins.openRetrieve(admin._id)}
+                  >
                     Retrieve
                   </DropdownMenuItem>
                   <DropdownMenuItem
@@ -100,8 +111,8 @@ export const useBranchAdminColumns = (branchAdmins) => {
               )}
             </DropdownMenuContent>
           </DropdownMenu>
-        )
-      }
-    }
-  ]
-}
+        );
+      },
+    },
+  ];
+};

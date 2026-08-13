@@ -5,8 +5,9 @@ import { useDepartmentAdminStore } from "./department-admin.store";
 import { useUI } from "@/core/contexts/ui.context";
 import { apiurls } from "@/core/api/api.urls";
 import { createEntityQueryActions } from "@/core/utils/entity.util";
+import { useAuth } from "@/core/contexts/auth.context";
 
-const ROLE = 'department_admin';
+const ROLE = "department_admin";
 
 export const useDepartmentAdminModule = (exported) => {
   const { openModal } = useUI();
@@ -22,11 +23,23 @@ export const useDepartmentAdminModule = (exported) => {
   const { users } = apiurls;
 
   const crud = createCrud({
-    entity: 'Department Admin',
+    entity: "Department Admin",
     urls: users,
     store: store,
-    getRole: () => 'super_admin',
+    getRole: () => "super_admin",
   });
+
+  const { adminResetPassword } = useAuth();
+
+  const openResetPassword = (admin) => {
+    return openModal(modals.resetPassword, {
+      id: admin._id,
+      name: admin.name,
+      submitFn: (targetId, newPassword) =>
+        adminResetPassword(targetId, ROLE, newPassword),
+      exported,
+    });
+  };
 
   const openView = (admin) => {
     return openModal(modals.view, { admin, exported });
@@ -82,7 +95,12 @@ export const useDepartmentAdminModule = (exported) => {
     });
   };
 
-  const { fetch: baseFetch, reset: baseReset, sortByColumn, presets } = createEntityQueryActions({
+  const {
+    fetch: baseFetch,
+    reset: baseReset,
+    sortByColumn,
+    presets,
+  } = createEntityQueryActions({
     crud,
     getQuery: () => useDepartmentAdminStore.getState().query,
     setQuery,
@@ -113,6 +131,7 @@ export const useDepartmentAdminModule = (exported) => {
     openDelete,
     openErase,
     openRetrieve,
+    openResetPassword,
     openActiveStatus,
     crud,
     fetch,

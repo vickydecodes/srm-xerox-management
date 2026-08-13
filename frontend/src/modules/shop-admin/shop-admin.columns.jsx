@@ -66,6 +66,11 @@ export const useShopAdminColumns = (shopAdmins) => {
                     Edit
                   </DropdownMenuItem>
                   <DropdownMenuItem
+                    onClick={() => shopAdmins.openResetPassword(admin)}
+                  >
+                    Reset Password
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
                     onClick={() => shopAdmins.openActiveStatus(admin._id, admin.active)}
                   >
                     {admin.active ? 'Deactivate' : 'Activate'}
