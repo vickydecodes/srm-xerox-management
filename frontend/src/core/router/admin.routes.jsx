@@ -18,6 +18,7 @@ import BranchAdmin from "@/pages/branch-admin/branch-admin";
 import BillCreation from "@/pages/bill-creation/bill-creation";
 import InventoryProduct from "@/pages/inventory-product/inventory-product";
 import ShopAdmin from "@/pages/shop-admin/shop-admin";
+import StaffAdmin from "@/pages/staff-admin/staff-admin";
 
 export const adminRoutes = {
   role: "super_admin",
@@ -101,6 +102,15 @@ export const adminRoutes = {
         "Shop inventory controls and management.",
       icon: <IconGitBranch className="h-5 w-5 shrink-0" />,
       element: <ShopAdmin />,
+    },
+    {
+      path: "/super_admin/staff-admin",
+      label: "Staff Admin",
+      title: "Staff Administrator",
+      description:
+        "Staff inventory controls and management.",
+      icon: <IconGitBranch className="h-5 w-5 shrink-0" />,
+      element: <StaffAdmin />,
     },
   ],
   logout: {
