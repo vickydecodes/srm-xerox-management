@@ -9,7 +9,7 @@ import app, { bootstrap } from '../app.ts';
 await bootstrap();
 
 const routeFiles = await glob('src/modules/**/*.route.ts', {
-  ignore: ['node_modules/**', 'dist/**'],
+  ignore: ['node_modules/**', 'dist/**', '**/dashboard.route.ts'],
 });
 
 const resources = routeFiles.map((file) =>

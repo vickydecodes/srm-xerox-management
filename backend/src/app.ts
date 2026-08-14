@@ -26,7 +26,8 @@ export const bootstrap = async (): Promise<void> => {
   applySecurityMiddlewares(app);
   app.use(maintenanceMode);
 
-  await loadRoutes(app);
+  await loadRoutes(app); // Reload trigger: new routes registered
+
 
   app.use(unallocatedHandler);
   app.use(errorHandler);

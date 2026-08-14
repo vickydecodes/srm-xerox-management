@@ -1,9 +1,19 @@
-import { IconKey, IconLogout2 } from "@tabler/icons-react";
+import { IconKey, IconLogout2, IconUser, IconLayoutDashboard } from "@tabler/icons-react";
 import ChangePassword from "@/pages/changepassword/changepassword";
+import Profile from "@/pages/profile/profile";
+import Dashboard from "@/pages/dashboard/dashboard";
 
 export const departmentAdminRoutes = {
   role: "department_admin",
   routes: [
+    {
+      path: "/department_admin/",
+      label: "Dashboard",
+      title: "Dashboard",
+      description: "Overview of department billing and operations.",
+      element: <Dashboard />,
+      icon: <IconLayoutDashboard className="h-5 w-5 shrink-0" />,
+    },
     {
       path: "/department_admin/changepassword",
       label: "Change Password",
@@ -11,6 +21,14 @@ export const departmentAdminRoutes = {
       description: "Update your administrator password",
       element: <ChangePassword />,
       icon: <IconKey className="h-5 w-5 shrink-0" />,
+    },
+    {
+      path: "/department_admin/profile",
+      label: "Profile",
+      title: "User Profile",
+      description: "View and manage your profile details",
+      element: <Profile />,
+      icon: <IconUser className="h-5 w-5 shrink-0" />,
     },
   ],
   logout: {

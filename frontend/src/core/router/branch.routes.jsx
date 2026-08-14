@@ -2,11 +2,15 @@ import {
     IconBuildingCommunity,
     IconKey,
     IconLogout2,
+    IconUser,
+    IconLayoutDashboard,
 } from '@tabler/icons-react';
 
 import Department from "@/pages/department/department";
 import DepartmentAdmin from "@/pages/department-admin/department-admin";
 import ChangePassword from "@/pages/changepassword/changepassword";
+import Profile from "@/pages/profile/profile";
+import Dashboard from "@/pages/dashboard/dashboard";
 
 
 export const branchAdminRoutes = {
@@ -14,6 +18,14 @@ export const branchAdminRoutes = {
     routes: [
         {
             path: '/branch_admin/',
+            label: 'Dashboard',
+            title: 'Dashboard',
+            description: 'Overview of branch billing and operations.',
+            element: <Dashboard />,
+            icon: <IconLayoutDashboard className="h-5 w-5 shrink-0" />
+        },
+        {
+            path: '/branch_admin/department',
             label: 'Department',
             title: 'Department Page',
             description: 'Manage departments and their details',
@@ -35,6 +47,14 @@ export const branchAdminRoutes = {
               description: "Update your administrator password",
               element: <ChangePassword />,
               icon: <IconKey className="h-5 w-5 shrink-0" />,
+            },
+            {
+              path: "/branch_admin/profile",
+              label: "Profile",
+              title: "User Profile",
+              description: "View and manage your profile details",
+              element: <Profile />,
+              icon: <IconUser className="h-5 w-5 shrink-0" />,
             },
     ],
     logout: {

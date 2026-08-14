@@ -157,10 +157,10 @@ async function seedInventoryAndStock(products: any[]) {
   const inventory = inventories[0];
 
   const stockEntries = [
-    { inventory: inventory._id, product: products[0]._id, variant: new Map([['color', 'Blue']]), quantity: 100 },
-    { inventory: inventory._id, product: products[0]._id, variant: new Map([['color', 'Red']]), quantity: 80 },
-    { inventory: inventory._id, product: products[1]._id, variant: new Map([['size', 'M']]), quantity: 40 },
-    { inventory: inventory._id, product: products[2]._id, variant: new Map(), quantity: 25 },
+    { inventory: inventory._id, product: products[0]._id, variant: new Map([['color', 'Blue']]), quantity: 100, price: 35 },
+    { inventory: inventory._id, product: products[0]._id, variant: new Map([['color', 'Red']]), quantity: 80, price: 35 },
+    { inventory: inventory._id, product: products[1]._id, variant: new Map([['size', 'M']]), quantity: 40, price: 250 },
+    { inventory: inventory._id, product: products[2]._id, variant: new Map(), quantity: 25, price: 950 },
   ];
 
   const inventoryProducts = await InventoryProduct.insertMany(stockEntries);
@@ -201,55 +201,193 @@ async function seedServices(inventoryProducts: any[]) {
   return services;
 }
 
-async function seedBills(products: any[], services: any[], createdBy: any) {
+async function seedBills(
+  branches: any[],
+  departments: any[],
+  users: any[],
+  products: any[],
+  services: any[]
+) {
+  const staffUser = users[4]; // Staff - Chennai
+  const shopAdmin = users[3]; // Shop Admin - Chennai
+
   const billsData = [
+    // Month 8: August (Current Month)
     {
       items: [
-        {
-          type: BillItemType.PRODUCT,
-          item: products[0]._id,
-          name: products[0].name,
-          quantity: 3,
-          price: 40,
-        },
-        {
-          type: BillItemType.SERVICE,
-          item: services[0]._id,
-          name: services[0].name,
-          quantity: 1,
-          price: services[0].price,
-        },
+        { type: BillItemType.PRODUCT, item: products[0]._id, name: products[0].name, quantity: 3, price: 40 },
+        { type: BillItemType.SERVICE, item: services[0]._id, name: services[0].name, quantity: 1, price: services[0].price },
       ],
       discount: 10,
       tax: 5,
-      createdBy: createdBy._id,
+      createdBy: staffUser._id,
+      branch: branches[0]._id,
+      department: departments[0]._id,
+      paymentMethod: 'UPI' as const,
       status: 'PAID' as const,
+      date: new Date(2026, 7, 14), // August 14
     },
     {
-      items: [
-        {
-          type: BillItemType.PRODUCT,
-          item: products[2]._id,
-          name: products[2].name,
-          quantity: 1,
-          price: 900,
-        },
-      ],
+      items: [{ type: BillItemType.PRODUCT, item: products[2]._id, name: products[2].name, quantity: 1, price: 900 }],
       discount: 0,
       tax: 45,
-      createdBy: createdBy._id,
-      status: 'UNPAID' as const,
+      createdBy: staffUser._id,
+      branch: branches[0]._id,
+      department: departments[0]._id,
+      paymentMethod: 'CASH' as const,
+      status: 'PAID' as const,
+      date: new Date(2026, 7, 10), // August 10
+    },
+    {
+      items: [{ type: BillItemType.SERVICE, item: services[1]._id, name: services[1].name, quantity: 2, price: services[1].price }],
+      discount: 20,
+      tax: 15,
+      createdBy: shopAdmin._id,
+      branch: branches[1]._id,
+      department: departments[1]._id,
+      paymentMethod: 'UPI' as const,
+      status: 'PAID' as const,
+      date: new Date(2026, 7, 12), // August 12
+    },
+    
+    // Month 7: July
+    {
+      items: [{ type: BillItemType.PRODUCT, item: products[0]._id, name: products[0].name, quantity: 5, price: 40 }],
+      discount: 5,
+      tax: 10,
+      createdBy: staffUser._id,
+      branch: branches[0]._id,
+      department: departments[0]._id,
+      paymentMethod: 'UPI' as const,
+      status: 'PAID' as const,
+      date: new Date(2026, 6, 15), // July 15
+    },
+    {
+      items: [{ type: BillItemType.PRODUCT, item: products[1]._id, name: products[1].name, quantity: 2, price: 300 }],
+      discount: 30,
+      tax: 25,
+      createdBy: staffUser._id,
+      branch: branches[1]._id,
+      department: departments[1]._id,
+      paymentMethod: 'CASH' as const,
+      status: 'PAID' as const,
+      date: new Date(2026, 6, 20), // July 20
+    },
+
+    // Month 6: June
+    {
+      items: [{ type: BillItemType.SERVICE, item: services[0]._id, name: services[0].name, quantity: 4, price: 20 }],
+      discount: 0,
+      tax: 4,
+      createdBy: staffUser._id,
+      branch: branches[0]._id,
+      department: departments[0]._id,
+      paymentMethod: 'CREDIT' as const,
+      status: 'PAID' as const,
+      date: new Date(2026, 5, 10), // June 10
+    },
+    {
+      items: [{ type: BillItemType.PRODUCT, item: products[2]._id, name: products[2].name, quantity: 1, price: 900 }],
+      discount: 50,
+      tax: 40,
+      createdBy: staffUser._id,
+      branch: branches[1]._id,
+      department: departments[1]._id,
+      paymentMethod: 'UPI' as const,
+      status: 'PAID' as const,
+      date: new Date(2026, 5, 25), // June 25
+    },
+
+    // Month 5: May
+    {
+      items: [{ type: BillItemType.PRODUCT, item: products[0]._id, name: products[0].name, quantity: 10, price: 40 }],
+      discount: 20,
+      tax: 18,
+      createdBy: staffUser._id,
+      branch: branches[0]._id,
+      department: departments[0]._id,
+      paymentMethod: 'CASH' as const,
+      status: 'PAID' as const,
+      date: new Date(2026, 4, 18), // May 18
+    },
+    {
+      items: [{ type: BillItemType.SERVICE, item: services[0]._id, name: services[0].name, quantity: 5, price: 20 }],
+      discount: 0,
+      tax: 5,
+      createdBy: staffUser._id,
+      branch: branches[1]._id,
+      department: departments[1]._id,
+      paymentMethod: 'UPI' as const,
+      status: 'PAID' as const,
+      date: new Date(2026, 4, 5), // May 5
+    },
+
+    // Month 4: April
+    {
+      items: [{ type: BillItemType.PRODUCT, item: products[2]._id, name: products[2].name, quantity: 1, price: 900 }],
+      discount: 0,
+      tax: 45,
+      createdBy: staffUser._id,
+      branch: branches[0]._id,
+      department: departments[0]._id,
+      paymentMethod: 'UPI' as const,
+      status: 'PAID' as const,
+      date: new Date(2026, 3, 22), // April 22
+    },
+    {
+      items: [{ type: BillItemType.PRODUCT, item: products[1]._id, name: products[1].name, quantity: 3, price: 300 }],
+      discount: 100,
+      tax: 40,
+      createdBy: staffUser._id,
+      branch: branches[1]._id,
+      department: departments[1]._id,
+      paymentMethod: 'CREDIT' as const,
+      status: 'PAID' as const,
+      date: new Date(2026, 3, 4), // April 4
+    },
+
+    // Month 3: March
+    {
+      items: [{ type: BillItemType.PRODUCT, item: products[0]._id, name: products[0].name, quantity: 12, price: 40 }],
+      discount: 30,
+      tax: 20,
+      createdBy: staffUser._id,
+      branch: branches[0]._id,
+      department: departments[0]._id,
+      paymentMethod: 'CASH' as const,
+      status: 'PAID' as const,
+      date: new Date(2026, 2, 12), // March 12
+    },
+    {
+      items: [{ type: BillItemType.PRODUCT, item: products[2]._id, name: products[2].name, quantity: 2, price: 900 }],
+      discount: 100,
+      tax: 80,
+      createdBy: staffUser._id,
+      branch: branches[1]._id,
+      department: departments[1]._id,
+      paymentMethod: 'UPI' as const,
+      status: 'PAID' as const,
+      date: new Date(2026, 2, 28), // March 28
     },
   ];
 
   const bills = [];
   for (const data of billsData) {
-    const bill = new Bill(data);
+    const { date, ...billFields } = data;
+    const bill = new Bill(billFields);
     await bill.save();
-    bills.push(bill);
+
+    // Override the automatically generated createdAt timestamp with historical date using raw mongodb driver
+    await Bill.collection.updateOne({ _id: bill._id }, { $set: { createdAt: date } });
+    
+    // Refresh document in list for logging
+    const updatedBill = await Bill.findById(bill._id);
+    if (updatedBill) {
+      bills.push(updatedBill);
+    }
   }
 
-  console.log(`Seeded ${bills.length} bills:`, bills.map((b: any) => `${b.code} (total: ${b.total})`).join(', '));
+  console.log(`Seeded ${bills.length} bills across historical months.`);
   return bills;
 }
 
@@ -260,12 +398,12 @@ async function seed() {
   try {
     await clearCollections();
 
-    const { branches } = await seedBranchesAndDepartments();
+    const { branches, departments } = await seedBranchesAndDepartments();
     const users = await seedUsers(branches);
     const products = await seedProducts();
     const { inventoryProducts } = await seedInventoryAndStock(products);
     const services = await seedServices(inventoryProducts);
-    await seedBills(products, services, users[0]);
+    await seedBills(branches, departments, users, products, services);
 
     console.log('\nSeed complete ✅');
   } catch (err) {
