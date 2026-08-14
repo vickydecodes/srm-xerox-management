@@ -7,6 +7,11 @@ import { useProductModule } from '@/modules/products';
 import { useBillModule } from '@/modules/bill';
 import { useBranchModule } from '@/modules/branch';
 import { useInventoryProductModule } from '@/modules/inventory-product';
+import { useBranchAdminModule } from "@/modules/branch-admin";
+import { useShopAdminModule } from "@/modules/shop-admin";
+import { useStaffModule } from "@/modules/staff-admin";
+import { useDepartmentAdminModule } from "@/modules/department-admin";
+
 
 
 const ApiContext = createContext();
@@ -29,6 +34,10 @@ export const ApiProvider = ({ children }) => {
     const billModule = useBillModule();
     const branchModule = useBranchModule();
     const inventoryProductModule = useInventoryProductModule(exported);
+    const branchAdminModule = useBranchAdminModule(exported);
+    const shopAdminModule = useShopAdminModule(exported);
+    const staffModule = useStaffModule(exported);
+    const departmentAdminModule = useDepartmentAdminModule(exported);
 
 
     Object.assign(exported, {
@@ -37,7 +46,11 @@ export const ApiProvider = ({ children }) => {
         products: productModule,
         bills: billModule,
         branches: branchModule,
-        inventoryProducts: inventoryProductModule
+        inventoryProducts: inventoryProductModule,
+        branchAdmins: branchAdminModule,
+        shopAdmins: shopAdminModule,
+        staffs: staffModule,
+        departmentAdmins: departmentAdminModule,
     });
 
     
