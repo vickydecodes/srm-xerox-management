@@ -14,6 +14,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+
 export const useProductColumns = (products) => {
   return [
     {
@@ -26,62 +27,63 @@ export const useProductColumns = (products) => {
       header: () => Hint("Name", "Product name"),
       cell: ({ row }) => <span>{row.getValue("name")}</span>,
     },
-{
-  accessorKey: "variants",
-  header: () => Hint("Variants", "Available product variants"),
-  cell: ({ row }) => {
-    const variants = row.original.variants || {};
-    const entries = Object.entries(variants);
+    {
+      accessorKey: "variants",
+      header: () => Hint("Variants", "Available product variants"),
+      cell: ({ row }) => {
+        const variants = row.original.variants || {};
+        const entries = Object.entries(variants);
 
-    if (entries.length === 0) {
-      return (
-        <Badge variant="outline">
-          No Variants
-        </Badge>
-      );
-    }
+        if (entries.length === 0) {
+          return <Badge variant="outline">No Variants</Badge>;
+        }
 
-    return (
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button variant="outline" size="sm">
-            {entries.length} Variant{entries.length > 1 ? "s" : ""}
-          </Button>
-        </PopoverTrigger>
+        return (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm">
+                {entries.length} Variant{entries.length > 1 ? "s" : ""}
+              </Button>
+            </PopoverTrigger>
 
-        <PopoverContent className="w-80 space-y-4">
-          <div>
-            <h4 className="font-medium">Product Variants</h4>
-            <p className="text-sm text-muted-foreground">
-              Available options for this product.
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            {entries.map(([key, values]) => (
-              <div key={key}>
-                <p className="text-sm font-medium capitalize mb-2">
-                  {key}
+            <PopoverContent className="w-80 space-y-4">
+              <div>
+                <h4 className="font-medium">Product Variants</h4>
+                <p className="text-sm text-muted-foreground">
+                  Available options for this product.
                 </p>
-
-                <div className="flex flex-wrap gap-2">
-                  {values.map((value) => (
-                    <Badge
-                      key={value}
-                      variant="secondary"
-                    >
-                      {value}
-                    </Badge>
-                  ))}
-                </div>
               </div>
-            ))}
-          </div>
-        </PopoverContent>
-      </Popover>
-    );
-  },
-},
+
+              <div className="space-y-3">
+                {entries.map(([key, values]) => {
+                  // Safely turn any value into an array
+                  const valueList = Array.isArray(values)
+                    ? values
+                    : values != null
+                    ? [values]
+                    : [];
+
+                  return (
+                    <div key={key}>
+                      <p className="text-sm font-medium capitalize mb-2">
+                        {key}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {valueList.map((value) => (
+                          <Badge key={String(value)} variant="secondary">
+                            {String(value)}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </PopoverContent>
+          </Popover>
+        );
+      },
+    },
     {
       accessorKey: "active",
       header: () => Hint("Status", "Whether the product is active"),
@@ -96,7 +98,6 @@ export const useProductColumns = (products) => {
       header: () => Hint("Actions", "More actions"),
       cell: ({ row }) => {
         const product = row.original;
-        // Adjust this condition to match your API field
         const isDeleted =
           product.deleted === true ||
           product.isDeleted === true ||
@@ -111,12 +112,10 @@ export const useProductColumns = (products) => {
             </DropdownMenuTrigger>
 
             <DropdownMenuContent align="end">
-              {/* Always visible */}
               <DropdownMenuItem onClick={() => products.openView(product)}>
                 View
               </DropdownMenuItem>
 
-              {/* Only when NOT deleted */}
               {!isDeleted && (
                 <>
                   <DropdownMenuItem onClick={() => products.openEdit(product)}>
@@ -142,7 +141,6 @@ export const useProductColumns = (products) => {
                 </>
               )}
 
-              {/* Only when soft-deleted */}
               {isDeleted && (
                 <DropdownMenuItem
                   onClick={() => products.openRetrieve(product._id)}
@@ -151,7 +149,6 @@ export const useProductColumns = (products) => {
                 </DropdownMenuItem>
               )}
 
-              {/* Permanent delete – available in both states */}
               <DropdownMenuItem
                 variant="destructive"
                 onClick={() => products.openErase(product._id)}
