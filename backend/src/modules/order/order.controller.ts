@@ -145,6 +145,36 @@ const controllers = {
       'order'
     );
   },
+
+  submitOrder: async (
+    req: AuthRequest & { params: { id: string } },
+    res: Response
+  ) => {
+    const { id } = req.params;
+    const order = await service.submitOrder(id, req.user!.id);
+    if (!order) return sendResponse.notFound(res, 'order');
+    return sendResponse.updated(res, 'order', order);
+  },
+
+  branchApproveOrder: async (
+    req: AuthRequest & { params: { id: string }; body: { status: 'approved' | 'rejected'; remarks?: string } },
+    res: Response
+  ) => {
+    const { id } = req.params;
+    const order = await service.branchApproveOrder(id, req.user!.id, req.body);
+    if (!order) return sendResponse.notFound(res, 'order');
+    return sendResponse.updated(res, 'order', order);
+  },
+
+  vpApproveOrder: async (
+    req: AuthRequest & { params: { id: string }; body: { status: 'approved' | 'rejected'; remarks?: string } },
+    res: Response
+  ) => {
+    const { id } = req.params;
+    const order = await service.vpApproveOrder(id, req.user!.id, req.body);
+    if (!order) return sendResponse.notFound(res, 'order');
+    return sendResponse.updated(res, 'order', order);
+  },
 };
 
 
@@ -156,4 +186,7 @@ export const {
   deleteOrder,
   retrieveOrder,
   eraseOrder,
+  submitOrder,
+  branchApproveOrder,
+  vpApproveOrder,
 } = wrapControllers(controllers);

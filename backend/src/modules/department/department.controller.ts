@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { AuthRequest } from '@core/middlewares/auth.middleware.ts';
 
 import * as service from './department.services.ts';
 
@@ -132,6 +133,19 @@ const controllers = {
       'department'
     );
   },
+
+  clearCredit: async (
+    req: AuthRequest & {
+      params: { id: string };
+      body: { amount: number; paymentMethod: 'CASH' | 'UPI'; remarks?: string };
+    },
+    res: Response
+  ) => {
+    const { id } = req.params;
+    const result = await service.clearCredit(id, req.user!.id, req.body);
+    if (!result) return sendResponse.notFound(res, 'department');
+    return sendResponse.updated(res, 'department', result);
+  },
 };
 
 export const {
@@ -143,4 +157,5 @@ export const {
   setDepartmentActiveStatus,
   retrieveDepartment,
   eraseDepartment,
+  clearCredit,
 } = wrapControllers(controllers);

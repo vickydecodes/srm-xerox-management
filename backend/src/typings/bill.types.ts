@@ -17,6 +17,7 @@ export interface CreateBillPayload {
   paymentMethod: 'CASH' | 'UPI' | 'CREDIT';
   branch?: string;
   department?: string;
+  order?: string;
 }
 
 export interface UpdateBillPayload {
@@ -26,5 +27,6 @@ export interface UpdateBillPayload {
   paymentMethod?: 'CASH' | 'UPI' | 'CREDIT';
   branch?: string;
   department?: string;
+  order?: string;
   status?: 'UNPAID' | 'PAID' | 'CANCELLED';
 }

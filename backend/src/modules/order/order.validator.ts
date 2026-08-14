@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+const approvalSchema = z.object({
+  status: z.enum(['pending', 'approved', 'rejected']),
+  remarks: z.string().trim().optional(),
+});
+
 export const createOrderSchema = z.object({
   department: z
     .string()
@@ -63,6 +68,9 @@ export const createOrderSchema = z.object({
     )
     .optional()
     .default([]),
+
+  branchAdminApproval: approvalSchema.optional(),
+  vpApproval: approvalSchema.optional(),
 
   status: z
     .enum([

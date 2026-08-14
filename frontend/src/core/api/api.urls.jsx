@@ -115,6 +115,8 @@ const apiurls = {
       url: (id) => `${base_url}/bills/${id}/retrieve`,
     },
     erase: { method: "delete", url: (id) => `${base_url}/bills/${id}/erase` },
+    approveCredit: { method: "patch", url: (id) => `${base_url}/bills/${id}/approve-credit` },
+    rejectCredit: { method: "patch", url: (id) => `${base_url}/bills/${id}/reject-credit` },
   },
   branches: {
     create: { method: "post", url: () => `${base_url}/branches` },
@@ -153,6 +155,44 @@ const apiurls = {
       method: "delete",
       url: (id) => `${base_url}/departments/${id}/erase`,
     },
+    clearCredit: {
+      method: "post",
+      url: (id) => `${base_url}/departments/${id}/clear-credit`,
+    },
+  },
+  orders: {
+    create: { method: "post", url: () => `${base_url}/orders` },
+    getAll: { method: "get", url: () => `${base_url}/orders` },
+    getOne: { method: "get", url: (id) => `${base_url}/orders/${id}` },
+    edit: { method: "put", url: (id) => `${base_url}/orders/${id}` },
+    delete: { method: "delete", url: (id) => `${base_url}/orders/${id}` },
+    setActiveStatus: {
+      method: "patch",
+      url: (id) => `${base_url}/orders/${id}/active-status`,
+    },
+    retrieve: {
+      method: "put",
+      url: (id) => `${base_url}/orders/${id}/retrieve`,
+    },
+    erase: {
+      method: "delete",
+      url: (id) => `${base_url}/orders/${id}/erase`,
+    },
+    submit: {
+      method: "patch",
+      url: (id) => `${base_url}/orders/${id}/submit`,
+    },
+    branchApprove: {
+      method: "patch",
+      url: (id) => `${base_url}/orders/${id}/branch-approve`,
+    },
+    vpApprove: {
+      method: "patch",
+      url: (id) => `${base_url}/orders/${id}/vp-approve`,
+    },
+  },
+  search: {
+    products: { method: "get", url: () => `${base_url}/search/products` },
   },
   dashboard: {
     superAdmin: { method: "get", url: () => `${base_url}/dashboard/super-admin` },

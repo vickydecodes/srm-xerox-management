@@ -120,3 +120,24 @@ export const setDepartmentActiveStatus = async (
     { new: true }
   );
 };
+
+export const clearCredit = async (
+  id: string,
+  userId: string,
+  data: { amount: number; paymentMethod: 'CASH' | 'UPI'; remarks?: string }
+) => {
+  const department = await Department.findById(id);
+  if (!department) return null;
+
+  department.outstandingCredit = Math.max(0, department.outstandingCredit - data.amount);
+  department.creditPayments.push({
+    amount: data.amount,
+    paymentMethod: data.paymentMethod,
+    paidBy: toObjectId(userId) as any,
+    date: new Date(),
+    remarks: data.remarks || '',
+  });
+
+  await department.save();
+  return enhanceDepartment(department);
+};

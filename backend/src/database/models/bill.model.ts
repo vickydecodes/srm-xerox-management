@@ -37,14 +37,17 @@ export interface IBill extends Document {
   paymentMethod: 'CASH' | 'UPI' | 'CREDIT';
   branch?: Types.ObjectId;
   department?: Types.ObjectId;
+  order?: Types.ObjectId;
   status: 'UNPAID' | 'PAID' | 'CANCELLED';
+  approvalStatus: 'pending' | 'approved' | 'rejected';
+  approvedBy?: Types.ObjectId;
+  approvedAt?: Date;
+  remarks?: string;
   createdBy: Types.ObjectId;
-  // Soft-delete & status fields used by the services
-  deleted?: boolean;
-  deletedAt?: Date | null;
-  active?: boolean;
   createdAt: Date;
   updatedAt: Date;
+  deleted: Boolean;
+  deletedAt: Date;
 }
 
 const BillSchema = new Schema<IBill>(
@@ -58,13 +61,21 @@ const BillSchema = new Schema<IBill>(
     paymentMethod: { type: String, enum: ['CASH', 'UPI', 'CREDIT'] },
     branch: { type: Schema.Types.ObjectId, ref: 'Branch' },
     department: { type: Schema.Types.ObjectId, ref: 'Department' },
+    order: { type: Schema.Types.ObjectId, ref: 'Order', default: null },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     status: { type: String, enum: ['UNPAID', 'PAID', 'CANCELLED'], default: 'UNPAID' },
+    approvalStatus: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'approved',
+    },
+    approvedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+    approvedAt: { type: Date, default: null },
+    remarks: { type: String, trim: true },
 
     // Soft-delete & status fields
     deleted: { type: Boolean, default: false },
-    deletedAt: { type: Date, default: null },
-    active: { type: Boolean, default: true },
+    deletedAt: { type: Date },
   },
   { timestamps: true }
 );

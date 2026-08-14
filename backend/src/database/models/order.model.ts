@@ -164,4 +164,10 @@ OrderSchema.pre('save', function () {
   }
 });
 
+OrderSchema.pre('save', function () {
+  if (this.bill) {
+    this.status = 'completed';
+  }
+});
+
 export default mongoose.model<IOrder>('Order', OrderSchema);

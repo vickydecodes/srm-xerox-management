@@ -17,6 +17,8 @@ import {
   setBillActiveStatus,
   retrieveBill,
   eraseBill,
+  approveCreditBill,
+  rejectCreditBill,
 } from './bill.controller.js';
 
 const router = Router();
@@ -54,5 +56,8 @@ router.patch(
 router.put('/:id/retrieve', retrieveBill);
 
 router.delete('/:id/erase', eraseBill);
+
+router.patch('/:id/approve-credit', approveCreditBill);
+router.patch('/:id/reject-credit', rejectCreditBill);
 
 export default router;

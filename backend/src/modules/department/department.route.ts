@@ -17,6 +17,7 @@ import {
   setDepartmentActiveStatus,
   retrieveDepartment,
   eraseDepartment,
+  clearCredit,
 } from './department.controller.js';
 
 const router = Router();
@@ -66,5 +67,7 @@ router.patch(
 router.put('/:id/retrieve', retrieveDepartment);
 
 router.delete('/:id/erase', eraseDepartment);
+
+router.post('/:id/clear-credit', clearCredit);
 
 export default router;

@@ -59,6 +59,28 @@ const controllers = {
     if (!bill) return sendResponse.notFound(res, 'bill');
     return sendResponse.deleted(res, 'bill');
   },
+
+  approveCreditBill: async (req: AccessRequest<{ id: string }, {}, { remarks?: string }>, res: Response) => {
+    if (!req.user) {
+      return sendResponse.unauthorized?.(res) ?? res.status(401).json({ message: 'Unauthorized' });
+    }
+    const { id } = req.params;
+    const userId = String(req.user.id ?? (req.user as any)._id);
+    const bill = await service.approveCreditBill(id, userId, req.body.remarks);
+    if (!bill) return sendResponse.notFound(res, 'bill');
+    return sendResponse.updated(res, 'bill', bill);
+  },
+
+  rejectCreditBill: async (req: AccessRequest<{ id: string }, {}, { remarks?: string }>, res: Response) => {
+    if (!req.user) {
+      return sendResponse.unauthorized?.(res) ?? res.status(401).json({ message: 'Unauthorized' });
+    }
+    const { id } = req.params;
+    const userId = String(req.user.id ?? (req.user as any)._id);
+    const bill = await service.rejectCreditBill(id, userId, req.body.remarks);
+    if (!bill) return sendResponse.notFound(res, 'bill');
+    return sendResponse.updated(res, 'bill', bill);
+  },
 };
 
 export const {
@@ -70,4 +92,6 @@ export const {
   setBillActiveStatus,
   retrieveBill,
   eraseBill,
+  approveCreditBill,
+  rejectCreditBill,
 } = wrapControllers(controllers);

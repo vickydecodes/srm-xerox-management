@@ -112,3 +112,54 @@ export const eraseOrder = async (
 
   return enhanceOrder(erased);
 };
+
+export const submitOrder = async (id: string, userId: string) => {
+  const order = await Order.findById(id);
+  if (!order) return null;
+  if (order.status !== 'draft') {
+    throw new Error('Order is not in draft status');
+  }
+  order.status = 'pending';
+  await order.save();
+  return enhanceOrder(order);
+};
+
+export const branchApproveOrder = async (
+  id: string,
+  branchAdminId: string,
+  approvalData: { status: 'approved' | 'rejected'; remarks?: string }
+) => {
+  const order = await Order.findById(id);
+  if (!order) return null;
+  if (order.status !== 'pending') {
+    throw new Error('Order is not pending branch admin approval');
+  }
+  order.branchAdminApproval = {
+    status: approvalData.status,
+    approver: toObjectId(branchAdminId) as any,
+    date: new Date(),
+    remarks: approvalData.remarks || '',
+  };
+  await order.save();
+  return enhanceOrder(order);
+};
+
+export const vpApproveOrder = async (
+  id: string,
+  vpId: string,
+  approvalData: { status: 'approved' | 'rejected'; remarks?: string }
+) => {
+  const order = await Order.findById(id);
+  if (!order) return null;
+  if (order.branchAdminApproval.status !== 'approved') {
+    throw new Error('Order must be approved by branch admin first');
+  }
+  order.vpApproval = {
+    status: approvalData.status,
+    approver: toObjectId(vpId) as any,
+    date: new Date(),
+    remarks: approvalData.remarks || '',
+  };
+  await order.save();
+  return enhanceOrder(order);
+};
