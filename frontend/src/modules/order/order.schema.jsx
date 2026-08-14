@@ -1,28 +1,30 @@
 import { z } from "zod";
 
-export const createOrderSchema = z.object({
-  department: z.string().min(1, "Department is required"),
-  branch: z.string().min(1, "Branch is required"),
-  purpose: z.string().optional().default(""),
-  managementAmount: z.number().min(0, "Management amount cannot be negative").default(0),
-  sponsors: z
-    .array(
-      z.object({
-        name: z.string().min(1, "Sponsor name is required"),
-        amount: z.number().min(0, "Amount cannot be negative"),
-      })
-    )
-    .default([]),
-  items: z
-    .array(
-      z.object({
-        type: z.enum(["InventoryProduct", "Service"]),
-        item: z.string().min(1, "Item reference is required"),
-        name: z.string().min(1, "Item name is required"),
-        quantity: z.number().min(1, "Quantity must be at least 1"),
-        price: z.number().min(0, "Price cannot be negative"),
-      })
-    )
-    .min(1, "At least one item is required"),
-  status: z.enum(["draft", "pending", "in_progress", "completed", "rejected"]).default("draft"),
+const orderItemSchema = z.object({
+  type: z.enum(['InventoryProduct', 'Service'], { error: 'Select item type' }),
+  item: z.string().min(1, { error: 'Please select a product or service' }),
+  name: z.string().min(1, { error: 'Item name is required' }),
+  quantity: z.coerce.number().min(1, { error: 'Quantity must be at least 1' }),
+  price: z.coerce.number().min(0, { error: 'Price cannot be negative' }),
+});
+
+const sponsorSchema = z.object({
+  name: z.string().min(1, { error: 'Sponsor name is required' }),
+  amount: z.coerce.number().min(0, { error: 'Amount cannot be negative' }),
+});
+
+export const orderCreateSchema = z.object({
+  department: z.string().min(1, { error: 'Please select a department' }),
+  branch: z.string().min(1, { error: 'Please select a branch' }),
+  purpose: z.string().optional(),
+  managementAmount: z.coerce.number().min(0).optional(),
+  sponsors: z.array(sponsorSchema).default([]),
+  items: z.array(orderItemSchema).min(1, { error: 'Add at least one item' }),
+});
+
+export const orderEditSchema = orderCreateSchema;
+
+export const approvalSchema = z.object({
+  status: z.enum(['approved', 'rejected'], { error: 'Select approve or reject' }),
+  remarks: z.string().optional(),
 });

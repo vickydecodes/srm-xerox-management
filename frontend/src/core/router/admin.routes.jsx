@@ -26,6 +26,7 @@ import DepartmentAdmin from "@/pages/department-admin/department-admin";
 import ChangePassword from "@/pages/changepassword/changepassword";
 import Profile from "@/pages/profile/profile";
 import Dashboard from "@/pages/dashboard/dashboard";
+import Order from "@/pages/order/order";
 
 export const adminRoutes = {
   role: "super_admin",
@@ -146,6 +147,14 @@ export const adminRoutes = {
       title: "User Profile",
       description: "View and manage your profile details",
       element: <Profile />,
+      icon: <IconUser className="h-5 w-5 shrink-0" />,
+    },
+     {
+      path: "/super_admin/order",
+      label: "Order",
+      title: "Order Management",
+      description: "View and manage department orders",
+      element: <Order />,
       icon: <IconUser className="h-5 w-5 shrink-0" />,
     },
   ],

@@ -2,6 +2,7 @@ import { IconKey, IconLogout2, IconUser, IconLayoutDashboard } from "@tabler/ico
 import ChangePassword from "@/pages/changepassword/changepassword";
 import Profile from "@/pages/profile/profile";
 import Dashboard from "@/pages/dashboard/dashboard";
+import Order from "@/pages/order/order";
 
 export const departmentAdminRoutes = {
   role: "department_admin",
@@ -28,6 +29,14 @@ export const departmentAdminRoutes = {
       title: "User Profile",
       description: "View and manage your profile details",
       element: <Profile />,
+      icon: <IconUser className="h-5 w-5 shrink-0" />,
+    },
+    {
+      path: "/department_admin/order",
+      label: "Order",
+      title: "Order Management",
+      description: "View and manage department orders",
+      element: <Order />,
       icon: <IconUser className="h-5 w-5 shrink-0" />,
     },
   ],

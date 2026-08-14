@@ -29,7 +29,7 @@ export const createCrud = ({ entity, urls, store, getRole }) => {
   const DOWNLOAD_KEYS = ['download', 'exportCsv', 'exportXlsx', 'exportPdf', 'exportMarksheetCsv'];
   const SET_KEYS = ['getAll'];
   const ADD_KEYS = ['create'];
-  const UPDATE_KEYS = ['edit', 'setActiveStatus', 'toggleStatus',];
+  const UPDATE_KEYS = ['edit', 'setActiveStatus', 'toggleStatus', 'branchAdminApprove', 'vpApprove'];
   const DELETE_KEYS = ['delete'];
   const RETRIEVE_KEYS = ['retrieve'];
   const ERASE_KEYS = ['erase'];
