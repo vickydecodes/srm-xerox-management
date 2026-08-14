@@ -26,7 +26,7 @@ export const useBranchModule = (exported) => {
   const openEdit = (branch) => {
     return openModal(modals.edit, {
       branch,
-      submitFn: (data) => crud.edit(branch.id, data),
+      submitFn: (data) => crud.edit(branch._id, data),
       exported,
     });
   };

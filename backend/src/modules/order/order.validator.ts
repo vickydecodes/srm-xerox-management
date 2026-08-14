@@ -1,0 +1,79 @@
+import { z } from 'zod';
+
+export const createOrderSchema = z.object({
+  department: z
+    .string()
+    .trim()
+    .min(1, 'Department is required'),
+
+  branch: z
+    .string()
+    .trim()
+    .min(1, 'Branch is required'),
+
+  purpose: z
+    .string()
+    .trim()
+    .optional(),
+
+  managementAmount: z
+    .number()
+    .min(0, 'Management amount cannot be negative')
+    .optional(),
+
+  sponsors: z
+    .array(
+      z.object({
+        name: z
+          .string()
+          .trim()
+          .min(1, 'Sponsor name is required'),
+
+        amount: z
+          .number()
+          .min(0, 'Sponsor amount cannot be negative'),
+      })
+    )
+    .optional()
+    .default([]),
+
+  items: z
+    .array(
+      z.object({
+        type: z.enum(['InventoryProduct', 'Service']),
+
+        item: z
+          .string()
+          .trim()
+          .min(1, 'Item is required'),
+
+        name: z
+          .string()
+          .trim()
+          .min(1, 'Item name is required'),
+
+        quantity: z
+          .number()
+          .min(0, 'Quantity cannot be negative'),
+
+        price: z
+          .number()
+          .min(0, 'Price cannot be negative'),
+      })
+    )
+    .optional()
+    .default([]),
+
+  status: z
+    .enum([
+      'draft',
+      'pending',
+      'in_progress',
+      'completed',
+      'rejected',
+    ])
+    .optional(),
+});
+
+export const updateOrderSchema =
+  createOrderSchema.partial();

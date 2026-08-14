@@ -4,7 +4,7 @@ export const createInventoryProductSchema = z.object({
   inventory: z
     .string()
     .trim()
-    .min(1, "Inventory is required"),
+    .optional(),
 
   product: z
     .string()

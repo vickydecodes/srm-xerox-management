@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Trash2, Wallet, Banknote, CreditCard, ShoppingBag, Receipt, Percent } from 'lucide-react';
+import { Check, ChevronsUpDown, Loader2, Plus, Trash2, Wallet, Banknote, CreditCard, ShoppingBag, Receipt, Percent } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 
 import {
@@ -14,13 +14,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import {
@@ -32,7 +25,10 @@ import {
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 
+import { useApi } from '@/core/contexts/api.context';
+import { cn } from '@/lib/utils';
 import { useSelectItems } from '@/core/hooks/useSelect';
+
 import {
   createBillSchema,
   defaultBillValues,
@@ -56,6 +52,9 @@ export function BillForm({
   defaultValues,
   isEdit = false,
 }) {
+  const { search } = useApi();
+  const { BillingItemSearchCombobox } = search;
+
   const form = useForm({
     resolver: zodResolver(createBillSchema),
     defaultValues: defaultValues || defaultBillValues,
@@ -74,21 +73,7 @@ export function BillForm({
     name: 'items',
   });
 
-  const inventoryProductSelect = useSelectItems(inventoryProducts, {
-    emptyText: 'No products in inventory',
-    placeholder: 'Select product',
-    getLabel: (ip) => ip.product?.name || 'Unknown Product',
-    badge: {
-      need: true,
-      getBadge: (ip) => formatVariant(ip.variant) || null,
-    },
-  });
-
-  const serviceSelect = useSelectItems(services, {
-    emptyText: 'No services available',
-    placeholder: 'Select service',
-    getLabel: (s) => s.name,
-  });
+  // Selected items will be fetched dynamically via ItemSearchCombobox
 
   const branchItems = useSelectItems(branches, {
     emptyText: 'No branches available',
@@ -111,35 +96,6 @@ export function BillForm({
   );
   const total = Math.max(subtotal - discount + tax, 0);
 
-  const handleTypeChange = (index, value) => {
-    setValue(`items.${index}.type`, value, { shouldValidate: true });
-    setValue(`items.${index}.item`, '', { shouldValidate: true });
-    setValue(`items.${index}.name`, '', { shouldValidate: true });
-    setValue(`items.${index}.price`, 0, { shouldValidate: true });
-    setValue(`items.${index}.quantity`, 1, { shouldValidate: true });
-  };
-
-  const handleItemChange = (index, itemId, type) => {
-    setValue(`items.${index}.item`, itemId, { shouldValidate: true });
-    if (type === 'InventoryProduct') {
-      const ip = inventoryProducts.find((p) => String(p._id) === itemId);
-      if (ip) {
-        const variantStr = formatVariant(ip.variant);
-        const name = variantStr 
-          ? `${ip.product?.name || 'Unknown Product'} (${variantStr})`
-          : (ip.product?.name || 'Unknown Product');
-        setValue(`items.${index}.name`, name.trim(), { shouldValidate: true });
-        setValue(`items.${index}.price`, ip.price, { shouldValidate: true });
-      }
-    } else {
-      const s = services.find((srv) => String(srv._id) === itemId);
-      if (s) {
-        setValue(`items.${index}.name`, s.name, { shouldValidate: true });
-        setValue(`items.${index}.price`, s.price, { shouldValidate: true });
-      }
-    }
-  };
-
   const handlePaymentMethodChange = (value) => {
     setValue('paymentMethod', value, { shouldValidate: true });
     if (value === 'credit') {
@@ -158,7 +114,7 @@ export function BillForm({
 
   const getPaymentIcon = (method) => {
     switch (method) {
-      case 'gpay':
+      case 'upi':
         return <Wallet className="size-4 text-violet-500 animate-pulse" />;
       case 'cash':
         return <Banknote className="size-4 text-emerald-500 animate-bounce" />;
@@ -176,90 +132,73 @@ export function BillForm({
         <div className="lg:col-span-2 space-y-6">
           {}
           <Card className="shadow-sm border-border/85 bg-card">
-            <CardHeader className="flex flex-row items-center justify-between border-b pb-4">
+            <CardHeader className="border-b pb-4">
               <CardTitle className="flex items-center gap-2 text-lg font-bold">
                 <ShoppingBag className="size-5 text-primary" />
                 Billing Items
               </CardTitle>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => append({ type: 'InventoryProduct', item: '', name: '', quantity: 1, price: 0 })}
-                className="gap-1.5 h-9"
-              >
-                <Plus className="size-4" />
-                Add Item
-              </Button>
             </CardHeader>
             <CardContent className="pt-6 space-y-4">
+              {/* POS Item Search and Add Combobox */}
+              <div className="space-y-2 mb-6">
+                <Label className="text-sm font-semibold">Search and Add Products / Services</Label>
+                <BillingItemSearchCombobox
+                  value=""
+                  currentItemName=""
+                  onSelect={(selectedItem) => {
+                    // Check if item already exists in the list to increment its quantity
+                    const existingIndex = fields.findIndex((f) => String(f.item) === String(selectedItem._id));
+                    if (existingIndex > -1) {
+                      const currentQty = watch(`items.${existingIndex}.quantity`) || 1;
+                      setValue(`items.${existingIndex}.quantity`, currentQty + 1, { shouldValidate: true });
+                    } else {
+                      append({
+                        type: selectedItem.type,
+                        item: selectedItem._id,
+                        name: selectedItem.name,
+                        quantity: 1,
+                        price: selectedItem.price,
+                        variant: selectedItem.variant,
+                      });
+                    }
+                  }}
+                  placeholder="Search by product or service name..."
+                />
+              </div>
+
+              {fields.length > 0 && (
+                <>
+                  <Separator className="my-4" />
+                  <div className="hidden sm:grid sm:grid-cols-[3.5fr_1.2fr_1.5fr_auto] gap-3 text-xs font-semibold text-muted-foreground mb-2 px-1">
+                    <div>Item Description</div>
+                    <div>Quantity</div>
+                    <div>Unit Price</div>
+                    <div></div>
+                  </div>
+                </>
+              )}
+
               {fields.map((field, index) => {
                 const currentType = watch(`items.${index}.type`) || 'InventoryProduct';
                 const currentItem = watch(`items.${index}.item`);
+                const currentVariant = watch(`items.${index}.variant`);
                 const selectedIp = currentType === 'InventoryProduct' ? inventoryProducts.find((p) => String(p._id) === currentItem) : null;
                 const maxQty = selectedIp ? selectedIp.quantity : undefined;
 
                 return (
                   <div key={field.id} className="space-y-4">
                     {index > 0 && <Separator className="my-2" />}
-                    <div className="grid grid-cols-1 sm:grid-cols-[1.5fr_2.5fr_1fr_1.2fr_auto] gap-3 items-start">
-                      <FormField
-                        control={control}
-                        name={`items.${index}.type`}
-                        render={({ field: typeField }) => (
-                          <FormItem>
-                            <FormLabel className="sm:hidden">Type</FormLabel>
-                            <Select
-                              onValueChange={(val) => handleTypeChange(index, val)}
-                              value={typeField.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger className="w-full bg-background">
-                                  <SelectValue placeholder="Select type" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="InventoryProduct">Product</SelectItem>
-                                <SelectItem value="Service">Service</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={control}
-                        name={`items.${index}.item`}
-                        render={({ field: itemField }) => (
-                          <FormItem>
-                            <FormLabel className="sm:hidden">Item</FormLabel>
-                            <Select
-                              key={currentType === 'InventoryProduct' ? (inventoryProductSelect.hasItems ? 'loaded' : 'loading') : (serviceSelect.hasItems ? 'loaded' : 'loading')}
-                              onValueChange={(val) => handleItemChange(index, val, currentType)}
-                              value={itemField.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger className="w-full bg-background">
-                                  <SelectValue
-                                    placeholder={
-                                      currentType === 'InventoryProduct'
-                                        ? inventoryProductSelect.placeholder
-                                        : serviceSelect.placeholder
-                                    }
-                                  />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {currentType === 'InventoryProduct'
-                                  ? inventoryProductSelect.items
-                                  : serviceSelect.items}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                    <div className="grid grid-cols-1 sm:grid-cols-[3.5fr_1.2fr_1.5fr_auto] gap-3 items-center">
+                      <div className="flex flex-col gap-0.5 min-w-0">
+                        <span className="font-medium text-sm text-foreground truncate">{watch(`items.${index}.name`)}</span>
+                        <span className="text-[10px] text-muted-foreground uppercase font-semibold">
+                          {currentType === 'InventoryProduct' ? (
+                            <>Product {currentVariant && `• ${formatVariant(currentVariant)}`}</>
+                          ) : (
+                            'Service'
+                          )}
+                        </span>
+                      </div>
 
                       <FormField
                         control={control}
@@ -274,7 +213,7 @@ export function BillForm({
                                 max={maxQty}
                                 {...qtyField}
                                 onChange={(e) => qtyField.onChange(Number(e.target.value))}
-                                className="bg-background"
+                                className="bg-background h-9"
                               />
                             </FormControl>
                             {maxQty !== undefined && (
@@ -295,14 +234,14 @@ export function BillForm({
                             <FormLabel className="sm:hidden">Price</FormLabel>
                             <FormControl>
                               <div className="relative">
-                                <span className="absolute left-2.5 top-2.5 text-xs text-muted-foreground">₹</span>
+                                <span className="absolute left-2.5 top-2 text-xs text-muted-foreground">₹</span>
                                 <Input
                                   type="number"
                                   min={0}
                                   step="0.01"
                                   {...priceField}
                                   onChange={(e) => priceField.onChange(Number(e.target.value))}
-                                  className="pl-6 bg-background"
+                                  className="pl-6 bg-background h-9"
                                 />
                               </div>
                             </FormControl>
@@ -315,7 +254,6 @@ export function BillForm({
                         type="button"
                         variant="ghost"
                         size="icon"
-                        disabled={fields.length === 1}
                         onClick={() => remove(index)}
                         className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                       >

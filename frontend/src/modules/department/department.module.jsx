@@ -40,7 +40,7 @@ export const useDepartmentModule = (exported) => {
   const openEdit = (dept) => {
     setCurrent(dept);
     return openModal(modals.create, {
-      submitFn: (formData) => crud.edit(dept.id, formData),
+      submitFn: (formData) => crud.edit(dept._id, formData),
       exported,
       data: dept,
     });

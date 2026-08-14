@@ -44,6 +44,13 @@ export const zodValidate =
       console.log('────────────────────────────────────');
     }
 
-    req[property] = result.data;
+    if (property === 'query') {
+      for (const key in req.query) {
+        delete req.query[key];
+      }
+      Object.assign(req.query, result.data);
+    } else {
+      req[property] = result.data;
+    }
     next();
   };

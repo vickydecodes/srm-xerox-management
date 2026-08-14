@@ -1,5 +1,6 @@
 import Bill, { IBillItem } from '@db/models/bill.model.ts';
 import InventoryProduct from '@db/models/inventory-product.model.ts';
+import Service from '@db/models/service.model.ts';
 import { dynamicFilter } from '@core/constants/dynamicfilter.constant.ts';
 import { CreateBillPayload, UpdateBillPayload } from '@typings/bill.types.ts';
 import { Role } from '@typings/auth.types.js';
@@ -11,11 +12,36 @@ export const adjustStockForBill = async (
   oldItems: IBillItem[],
   newItems: IBillItem[]
 ) => {
+  const serviceIds = new Set<string>();
+  for (const item of [...oldItems, ...newItems]) {
+    if (item.type === 'Service' && item.item) {
+      serviceIds.add(item.item.toString());
+    }
+  }
+
+  const serviceMap = new Map<string, any>();
+  if (serviceIds.size > 0) {
+    const services = await Service.find({ _id: { $in: Array.from(serviceIds) } });
+    for (const s of services) {
+      serviceMap.set(s._id.toString(), s);
+    }
+  }
+
   const oldMap = new Map<string, number>();
   for (const item of oldItems) {
     if (item.type === 'InventoryProduct') {
       const idStr = item.item.toString();
       oldMap.set(idStr, (oldMap.get(idStr) || 0) + item.quantity);
+    } else if (item.type === 'Service') {
+      const idStr = item.item.toString();
+      const svc = serviceMap.get(idStr);
+      if (svc && svc.materials) {
+        for (const m of svc.materials) {
+          const mIdStr = m.product.toString();
+          const totalQty = item.quantity * m.quantity;
+          oldMap.set(mIdStr, (oldMap.get(mIdStr) || 0) + totalQty);
+        }
+      }
     }
   }
 
@@ -24,6 +50,16 @@ export const adjustStockForBill = async (
     if (item.type === 'InventoryProduct') {
       const idStr = item.item.toString();
       newMap.set(idStr, (newMap.get(idStr) || 0) + item.quantity);
+    } else if (item.type === 'Service') {
+      const idStr = item.item.toString();
+      const svc = serviceMap.get(idStr);
+      if (svc && svc.materials) {
+        for (const m of svc.materials) {
+          const mIdStr = m.product.toString();
+          const totalQty = item.quantity * m.quantity;
+          newMap.set(mIdStr, (newMap.get(mIdStr) || 0) + totalQty);
+        }
+      }
     }
   }
 

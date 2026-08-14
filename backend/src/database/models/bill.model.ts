@@ -45,6 +45,8 @@ export interface IBill extends Document {
   active?: boolean;
   createdAt: Date;
   updatedAt: Date;
+  deleted: Boolean;
+  deletedAt: Date;
 }
 
 const BillSchema = new Schema<IBill>(
@@ -58,7 +60,7 @@ const BillSchema = new Schema<IBill>(
     paymentMethod: { type: String, enum: ['CASH', 'UPI', 'CREDIT'] },
     branch: { type: Schema.Types.ObjectId, ref: 'Branch' },
     department: { type: Schema.Types.ObjectId, ref: 'Department' },
-    createdBy: { type: Schema.Types.ObjectId, refPath: 'User', required: true },
+    createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     status: { type: String, enum: ['UNPAID', 'PAID', 'CANCELLED'], default: 'UNPAID' },
 
     // Soft-delete & status fields

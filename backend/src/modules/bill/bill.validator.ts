@@ -21,6 +21,7 @@ export const createBillSchema = z.object({
   items: z.array(billItemSchema).min(1, 'at least one item is required'),
   discount: z.number().min(0).optional(),
   tax: z.number().min(0).optional(),
+  status: z.enum(['UNPAID', 'PAID', 'CANCELLED']).optional(),
 });
 
 export const updateBillSchema = z
