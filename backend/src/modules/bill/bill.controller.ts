@@ -1,4 +1,3 @@
-// modules/bill/bill.controller.ts
 import { Request, Response } from 'express';
 import * as service from './bill.services.ts';
 import { CreateBillPayload, UpdateBillPayload } from '@typings/bill.types.ts';
@@ -19,13 +18,14 @@ const billStatus = createStatusControllers(
 
 const controllers = {
   createBill: async (req: AccessRequest<{}, {}, CreateBillPayload>, res: Response) => {
-    
-    if(!req.user){
-      return sendResponse.badRequest(res, 'User not authenticated')
+    if (!req.user) {
+      return sendResponse.unauthorized?.(res) ?? res.status(401).json({ message: 'Unauthorized' });
     }
-    
-    
-    const bill = await service.createBill(req.body, req?.user?.id);
+
+    // Use the correct property from your AuthUser type (most common: id or _id)
+    const createdBy = String(req.user.id ?? (req.user as any)._id);
+
+    const bill = await service.createBill(req.body, createdBy);
     return sendResponse.created(res, 'Bill', bill);
   },
 

@@ -39,6 +39,10 @@ export interface IBill extends Document {
   department?: Types.ObjectId;
   status: 'UNPAID' | 'PAID' | 'CANCELLED';
   createdBy: Types.ObjectId;
+  // Soft-delete & status fields used by the services
+  deleted?: boolean;
+  deletedAt?: Date | null;
+  active?: boolean;
   createdAt: Date;
   updatedAt: Date;
   deleted: Boolean;
@@ -58,8 +62,11 @@ const BillSchema = new Schema<IBill>(
     department: { type: Schema.Types.ObjectId, ref: 'Department' },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     status: { type: String, enum: ['UNPAID', 'PAID', 'CANCELLED'], default: 'UNPAID' },
+
+    // Soft-delete & status fields
     deleted: { type: Boolean, default: false },
-    deletedAt: { type: Date },
+    deletedAt: { type: Date, default: null },
+    active: { type: Boolean, default: true },
   },
   { timestamps: true }
 );
