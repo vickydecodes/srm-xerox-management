@@ -8,6 +8,8 @@ import {
   IconFileInvoice,
   IconPackages,
   IconKey,
+  IconUser,
+  IconLayoutDashboard,
 } from "@tabler/icons-react";
 
 import Department from "@/pages/department/department";
@@ -22,6 +24,8 @@ import ShopAdmin from "@/pages/shop-admin/shop-admin";
 import StaffAdmin from "@/pages/staff-admin/staff-admin";
 import DepartmentAdmin from "@/pages/department-admin/department-admin";
 import ChangePassword from "@/pages/changepassword/changepassword";
+import Profile from "@/pages/profile/profile";
+import Dashboard from "@/pages/dashboard/dashboard";
 
 export const adminRoutes = {
   role: "super_admin",
@@ -55,6 +59,14 @@ export const adminRoutes = {
     },
     {
       path: "/super_admin/",
+      label: "Dashboard",
+      title: "Dashboard",
+      description: "Overview of Xerox billing metrics and system operations.",
+      icon: <IconLayoutDashboard className="h-5 w-5 shrink-0" />,
+      element: <Dashboard />,
+    },
+    {
+      path: "/super_admin/department",
       label: "Departments",
       title: "Department Management",
       description:
@@ -127,6 +139,14 @@ export const adminRoutes = {
       description: "Update your administrator password",
       element: <ChangePassword />,
       icon: <IconKey className="h-5 w-5 shrink-0" />,
+    },
+    {
+      path: "/super_admin/profile",
+      label: "Profile",
+      title: "User Profile",
+      description: "View and manage your profile details",
+      element: <Profile />,
+      icon: <IconUser className="h-5 w-5 shrink-0" />,
     },
   ],
   logout: {

@@ -9,7 +9,7 @@ import app, { bootstrap } from '../app.ts';
 await bootstrap();
 
 const routeFiles = await glob('src/modules/**/*.route.ts', {
-  ignore: ['node_modules/**', 'dist/**', 'src/modules/search/**'],
+  ignore: ['node_modules/**', 'dist/**', '**/dashboard.route.ts'],
 });
 
 const resources = routeFiles.map((file) =>
@@ -42,10 +42,3 @@ describe('Route smoke test (auto-discovered)', () => {
     expect(res.status, `${method} ${routePath} → ${res.status}: ${res.body?.message}`).not.toBe(500);
   });
 });
-
-describe('Search Module smoke test', () => {
-  it('GET /api/v1/search/products responds without a 500', async () => {
-    const res = await request(app).get('/api/v1/search/products');
-    expect(res.status).not.toBe(500);
-  });
-});

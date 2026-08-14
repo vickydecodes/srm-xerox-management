@@ -154,11 +154,12 @@ const apiurls = {
       url: (id) => `${base_url}/departments/${id}/erase`,
     },
   },
-  search: {
-    products: {
-      method: "get",
-      url: () => `${base_url}/search/products`,
-    },
+  dashboard: {
+    superAdmin: { method: "get", url: () => `${base_url}/dashboard/super-admin` },
+    branchAdmin: { method: "get", url: () => `${base_url}/dashboard/branch-admin` },
+    departmentAdmin: { method: "get", url: () => `${base_url}/dashboard/department-admin` },
+    shopAdmin: { method: "get", url: () => `${base_url}/dashboard/shop-admin` },
+    staff: { method: "get", url: () => `${base_url}/dashboard/staff` },
   },
 };
 
