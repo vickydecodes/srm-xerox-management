@@ -264,7 +264,21 @@ async function seedUsers(branches: any[], departments: any[]) {
   const users: any[] = [];
   const defaultPassword = 'Password@123';
 
-  // Super Admin
+  // Ensure unique names within each branch to prevent compound unique index violations (branch_1_name_1)
+  const branchNamesUsed = new Set<string>();
+  const getUniqueNameForBranch = (branchId: any) => {
+    const branchIdStr = String(branchId || 'global');
+    while (true) {
+      const name = randomName();
+      const key = `${branchIdStr}:${name}`;
+      if (!branchNamesUsed.has(key)) {
+        branchNamesUsed.add(key);
+        return name;
+      }
+    }
+  };
+
+  // Super Admin (no branch)
   {
     const user = new User({
       name: 'Super Admin',
@@ -289,7 +303,7 @@ async function seedUsers(branches: any[], departments: any[]) {
 
     // Branch Admin
     {
-      const name = randomName();
+      const name = getUniqueNameForBranch(branch._id);
       const user = new User({
         name,
         email: randomEmail(name, 'branchadmin', campusHint),
@@ -304,7 +318,7 @@ async function seedUsers(branches: any[], departments: any[]) {
 
     // Shop Admin
     {
-      const name = randomName();
+      const name = getUniqueNameForBranch(branch._id);
       const user = new User({
         name,
         email: randomEmail(name, 'shopadmin', campusHint),
@@ -319,7 +333,7 @@ async function seedUsers(branches: any[], departments: any[]) {
 
     // Five Staff
     for (let i = 0; i < 5; i++) {
-      const name = randomName();
+      const name = getUniqueNameForBranch(branch._id);
       const user = new User({
         name,
         email: randomEmail(name, `staff${i + 1}`, campusHint),
@@ -346,7 +360,7 @@ async function seedUsers(branches: any[], departments: any[]) {
             : 'fsh'
       : 'srm';
 
-    const name = randomName();
+    const name = getUniqueNameForBranch(dept.branch);
     const user = new User({
       name,
       email: randomEmail(name, 'deptadmin', campusHint),
@@ -517,10 +531,29 @@ async function seedProducts() {
       }
     }
 
+    const variantsArray: any[] = [];
+    if (variantsMap.size > 0) {
+      const keys = Array.from(variantsMap.keys());
+      const valueLists = keys.map((k) => variantsMap.get(k) || []);
+      
+      const cartesian = (arrays: string[][]): string[][] =>
+        arrays.reduce(
+          (acc, curr) => acc.flatMap((a) => curr.map((c) => [...a, c])),
+          [[]] as string[][]
+        );
+
+      for (const combo of cartesian(valueLists)) {
+        const attrMap = new Map();
+        keys.forEach((k, i) => attrMap.set(k, combo[i]));
+        variantsArray.push({ attributes: attrMap });
+      }
+    }
+
     const product = new Product({
       name: def.name,
       description: def.description,
-      variants: variantsMap,
+      attributes: variantsMap,
+      variants: variantsArray,
     });
     await product.save();
     products.push(product);
@@ -535,19 +568,13 @@ async function seedProducts() {
 /*  Inventory – single location                                        */
 /* ------------------------------------------------------------------ */
 
-async function seedInventory() {
+async function seedInventory(products: any[]) {
   console.log('Seeding Inventory (single location)...');
 
   const inventories = await Inventory.insertMany([
     { name: 'Main Store', active: true },
   ]);
-
-  const stockEntries = [
-    { inventory: inventory._id, product: products[0]._id, variant: new Map([['color', 'Blue']]), quantity: 100, price: 35 },
-    { inventory: inventory._id, product: products[0]._id, variant: new Map([['color', 'Red']]), quantity: 80, price: 35 },
-    { inventory: inventory._id, product: products[1]._id, variant: new Map([['size', 'M']]), quantity: 40, price: 250 },
-    { inventory: inventory._id, product: products[2]._id, variant: new Map(), quantity: 25, price: 950 },
-  ];
+  const inventory = inventories[0];
 
   // Realistic base prices by rough category keyword
   function basePrice(productName: string): number {
@@ -567,36 +594,25 @@ async function seedInventory() {
   const stockEntries: any[] = [];
 
   for (const product of products) {
-    const variantCombos: Map<string, string>[] = [];
-
-    if (product.variants && product.variants.size > 0) {
-      const keys = Array.from(product.variants.keys()) as string[];
-      const valueLists = keys.map((k) => product.variants.get(k) as string[]);
-
-      const cartesian = (arrays: string[][]): string[][] =>
-        arrays.reduce(
-          (acc, curr) => acc.flatMap((a) => curr.map((c) => [...a, c])),
-          [[]] as string[][],
-        );
-
-      for (const combo of cartesian(valueLists)) {
-        const entries: [string, string][] = keys.map((k, i) => [k, combo[i]]);
-        variantCombos.push(sortedVariant(entries));
+    const price = basePrice(product.name);
+    if (product.variants && product.variants.length > 0) {
+      for (const v of product.variants) {
+        stockEntries.push({
+          inventory: inventory._id,
+          product: product._id,
+          variant: v._id,
+          quantity: randomInt(20, 500),
+          price,
+          active: true,
+        });
       }
     } else {
-      variantCombos.push(new Map());
-    }
-
-    const price = basePrice(product.name);
-
-    for (const variant of variantCombos) {
       stockEntries.push({
         inventory: inventory._id,
         product: product._id,
-        name: product.name,           // pre-save would set this; we set it because insertMany skips hooks
-        variant,
+        variant: null,
         quantity: randomInt(20, 500),
-        price,                        // required by schema
+        price,
         active: true,
       });
     }
@@ -873,11 +889,11 @@ async function seed() {
   try {
     await clearCollections();
 
-    const { branches, departments } = await seedBranchesAndDepartments();
-    const users = await seedUsers(branches);
+    const branches = await seedBranches();
+    const departments = await seedDepartments(branches);
+    const users = await seedUsers(branches, departments);
     const products = await seedProducts();
-    const inventory = await seedInventory();
-    const inventoryProducts = await seedInventoryProducts(products, inventory);
+    const inventoryProducts = await seedInventory(products);
     const services = await seedServices(inventoryProducts);
     await seedBills(branches, departments, users, products, services);
 

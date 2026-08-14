@@ -50,7 +50,7 @@ export const ApiProvider = ({ children }) => {
         bills: billModule,
         branches: branchModule,
         inventoryProducts: inventoryProductModule,
-        search: searchModule
+        search: searchModule,
         branchAdmins: branchAdminModule,
         shopAdmins: shopAdminModule,
         staffs: staffModule,

@@ -45,8 +45,6 @@ export interface IBill extends Document {
   active?: boolean;
   createdAt: Date;
   updatedAt: Date;
-  deleted: Boolean;
-  deletedAt: Date;
 }
 
 const BillSchema = new Schema<IBill>(
