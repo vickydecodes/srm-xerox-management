@@ -4,7 +4,6 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { useApi } from '@/core/contexts/api.context';
 
 const formatVariant = (variant) => {
   if (!variant) return '';
@@ -24,12 +23,13 @@ export function BillingItemSearchCombobox({
   showPrice = true,
   showStock = true,
   queryParams = {},
+  // NEW: pass the search function so we don't need useApi inside
+  searchProducts,
 }) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
-  const { search } = useApi();
 
   useEffect(() => {
     let active = true;
@@ -39,9 +39,14 @@ export function BillingItemSearchCombobox({
         setItems([]);
         return;
       }
+      if (!searchProducts) {
+        console.warn('BillingItemSearchCombobox: searchProducts prop is missing');
+        return;
+      }
+
       setLoading(true);
       try {
-        const results = await search.searchProducts(searchQuery, queryParams);
+        const results = await searchProducts(searchQuery, queryParams);
         if (active) {
           setItems(results || []);
         }
@@ -63,7 +68,7 @@ export function BillingItemSearchCombobox({
       clearTimeout(timer);
       setLoading(false);
     };
-  }, [searchQuery, JSON.stringify(queryParams)]);
+  }, [searchQuery,]);
 
   const selectedItem = items.find((item) => item._id === value);
 

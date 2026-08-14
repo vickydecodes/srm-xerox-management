@@ -156,8 +156,6 @@ export const Create = ({
   const { createPreset } = useLoader();
   const loadBranches = createPreset(exported?.branches);
   const loadDepartments = createPreset(exported?.departments);
-  const loadInventoryProducts = createPreset(exported?.inventoryProducts);
-  const loadServices = createPreset(exported?.services);
 
   const { run, loading, ErrorAlert, clearError } = useAsync(submitFn);
 
@@ -168,8 +166,6 @@ export const Create = ({
   useEffect(() => {
     if (exported?.branches) loadBranches();
     if (exported?.departments) loadDepartments();
-    if (exported?.inventoryProducts) loadInventoryProducts();
-    if (exported?.services) loadServices();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -189,8 +185,10 @@ export const Create = ({
             form={form}
             branches={exported?.branches?.state || []}
             departments={exported?.departments?.state || []}
-            inventoryProducts={exported?.inventoryProducts?.state || []}
-            services={exported?.services?.state || []}
+            BillingItemSearchCombobox={
+              exported?.search?.BillingItemSearchCombobox
+            }
+            searchProducts={exported?.search?.searchProducts}
           />
           {ErrorAlert}
           <DialogFooter>
@@ -228,6 +226,7 @@ export const Edit = ({
           name: i.name,
           quantity: i.quantity,
           price: i.price,
+          variant: i.variant,
         })) || [],
     },
   });
@@ -235,8 +234,6 @@ export const Edit = ({
   const { createPreset } = useLoader();
   const loadBranches = createPreset(exported?.branches);
   const loadDepartments = createPreset(exported?.departments);
-  const loadInventoryProducts = createPreset(exported?.inventoryProducts);
-  const loadServices = createPreset(exported?.services);
 
   const { run, loading, ErrorAlert, clearError } = useAsync(submitFn);
 
@@ -247,8 +244,6 @@ export const Edit = ({
   useEffect(() => {
     if (exported?.branches) loadBranches();
     if (exported?.departments) loadDepartments();
-    if (exported?.inventoryProducts) loadInventoryProducts();
-    if (exported?.services) loadServices();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -268,8 +263,10 @@ export const Edit = ({
             form={form}
             branches={exported?.branches?.state || []}
             departments={exported?.departments?.state || []}
-            inventoryProducts={exported?.inventoryProducts?.state || []}
-            services={exported?.services?.state || []}
+            BillingItemSearchCombobox={
+              exported?.search?.BillingItemSearchCombobox
+            }
+            searchProducts={exported?.search?.searchProducts}
           />
           {ErrorAlert}
           <DialogFooter>
@@ -323,7 +320,7 @@ export const Delete = ({
 };
 
 export const Erase = ({ id, submitFn, closeModal }) => {
-  const { run, loading, ErrorAlert } = useAsync(submitFn);
+  const { run, loading, ErrorAlert } = useAsync(useAsync(submitFn));
   const handleErase = async () => {
     await run(id);
     closeModal();

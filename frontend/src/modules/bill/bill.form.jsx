@@ -1,8 +1,20 @@
-import { useEffect, useState } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Check, ChevronsUpDown, Loader2, Plus, Trash2, Wallet, Banknote, CreditCard, ShoppingBag, Receipt, Percent } from 'lucide-react';
-import { Switch } from '@/components/ui/switch';
+import { useEffect, useState } from "react";
+import { useForm, useFieldArray } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Check,
+  ChevronsUpDown,
+  Loader2,
+  Plus,
+  Trash2,
+  Wallet,
+  Banknote,
+  CreditCard,
+  ShoppingBag,
+  Receipt,
+  Percent,
+} from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 import {
   Form,
@@ -11,42 +23,45 @@ import {
   FormLabel,
   FormControl,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import {
   Card,
   CardHeader,
   CardTitle,
   CardContent,
   CardFooter,
-} from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 
-import { useApi } from '@/core/contexts/api.context';
-import { cn } from '@/lib/utils';
-import { useSelectItems } from '@/core/hooks/useSelect';
+import { useApi } from "@/core/contexts/api.context";
+import { cn } from "@/lib/utils";
+import { useSelectItems } from "@/core/hooks/useSelect";
 
 import {
   createBillSchema,
   defaultBillValues,
   PAYMENT_METHODS,
-} from './bill.schema';
+} from "./bill.schema";
 
 const formatVariant = (variant) => {
-  if (!variant) return '';
-  const entries = typeof variant.entries === 'function' ? [...variant.entries()] : Object.entries(variant);
-  if (entries.length === 0) return '';
-  return `${entries.map(([k, v]) => `${k}: ${v}`).join(', ')}`;
+  if (!variant) return "";
+  const entries =
+    typeof variant.entries === "function"
+      ? [...variant.entries()]
+      : Object.entries(variant);
+  if (entries.length === 0) return "";
+  return `${entries.map(([k, v]) => `${k}: ${v}`).join(", ")}`;
 };
 
 export function BillForm({
@@ -60,8 +75,7 @@ export function BillForm({
   isEdit = false,
 }) {
   const { search } = useApi();
-  const { BillingItemSearchCombobox } = search;
-
+  const { BillingItemSearchCombobox, searchProducts } = search;
   const form = useForm({
     resolver: zodResolver(createBillSchema),
     defaultValues: defaultValues || defaultBillValues,
@@ -77,40 +91,40 @@ export function BillForm({
 
   const { fields, append, remove } = useFieldArray({
     control,
-    name: 'items',
+    name: "items",
   });
 
   // Selected items will be fetched dynamically via ItemSearchCombobox
 
   const branchItems = useSelectItems(branches, {
-    emptyText: 'No branches available',
-    placeholder: 'Select branch',
+    emptyText: "No branches available",
+    placeholder: "Select branch",
   });
   const departmentItems = useSelectItems(departments, {
-    emptyText: 'No departments available',
-    placeholder: 'Select department',
+    emptyText: "No departments available",
+    placeholder: "Select department",
   });
 
-  const items = watch('items') || [];
-  const discount = watch('discount') || 0;
-  const tax = watch('tax') || 0;
-  const paymentMethod = watch('paymentMethod');
-  const isCredit = paymentMethod === 'credit';
+  const items = watch("items") || [];
+  const discount = watch("discount") || 0;
+  const tax = watch("tax") || 0;
+  const paymentMethod = watch("paymentMethod");
+  const isCredit = paymentMethod === "credit";
 
   const subtotal = items.reduce(
     (sum, row) => sum + (Number(row.quantity) || 0) * (Number(row.price) || 0),
-    0
+    0,
   );
   const total = Math.max(subtotal - discount + tax, 0);
 
   const handlePaymentMethodChange = (value) => {
-    setValue('paymentMethod', value, { shouldValidate: true });
-    if (value === 'credit') {
-      setValue('status', 'unpaid', { shouldValidate: true });
+    setValue("paymentMethod", value, { shouldValidate: true });
+    if (value === "credit") {
+      setValue("status", "unpaid", { shouldValidate: true });
     } else {
-      setValue('status', 'paid', { shouldValidate: true });
-      setValue('branch', '', { shouldValidate: true });
-      setValue('department', '', { shouldValidate: true });
+      setValue("status", "paid", { shouldValidate: true });
+      setValue("branch", "", { shouldValidate: true });
+      setValue("department", "", { shouldValidate: true });
     }
   };
 
@@ -121,11 +135,11 @@ export function BillForm({
 
   const getPaymentIcon = (method) => {
     switch (method) {
-      case 'upi':
+      case "upi":
         return <Wallet className="size-4 text-violet-500 animate-pulse" />;
-      case 'cash':
+      case "cash":
         return <Banknote className="size-4 text-emerald-500 animate-bounce" />;
-      case 'credit':
+      case "credit":
         return <CreditCard className="size-4 text-blue-500" />;
       default:
         return null;
@@ -134,7 +148,10 @@ export function BillForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={handleSubmit(submit)} className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start w-full">
+      <form
+        onSubmit={handleSubmit(submit)}
+        className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start w-full"
+      >
         {}
         <div className="lg:col-span-2 space-y-6">
           {}
@@ -148,16 +165,26 @@ export function BillForm({
             <CardContent className="pt-6 space-y-4">
               {/* POS Item Search and Add Combobox */}
               <div className="space-y-2 mb-6">
-                <Label className="text-sm font-semibold">Search and Add Products / Services</Label>
+                <Label className="text-sm font-semibold">
+                  Search and Add Products / Services
+                </Label>
                 <BillingItemSearchCombobox
                   value=""
                   currentItemName=""
                   onSelect={(selectedItem) => {
-                    // Check if item already exists in the list to increment its quantity
-                    const existingIndex = fields.findIndex((f) => String(f.item) === String(selectedItem._id));
+                    const existingIndex = fields.findIndex(
+                      (f) => String(f.item) === String(selectedItem._id),
+                    );
                     if (existingIndex > -1) {
-                      const currentQty = watch(`items.${existingIndex}.quantity`) || 1;
-                      setValue(`items.${existingIndex}.quantity`, currentQty + 1, { shouldValidate: true });
+                      const currentQty =
+                        watch(`items.${existingIndex}.quantity`) || 1;
+                      setValue(
+                        `items.${existingIndex}.quantity`,
+                        currentQty + 1,
+                        {
+                          shouldValidate: true,
+                        },
+                      );
                     } else {
                       append({
                         type: selectedItem.type,
@@ -170,6 +197,7 @@ export function BillForm({
                     }
                   }}
                   placeholder="Search by product or service name..."
+                  searchProducts={searchProducts} // ← ADD THIS LINE
                 />
               </div>
 
@@ -186,10 +214,16 @@ export function BillForm({
               )}
 
               {fields.map((field, index) => {
-                const currentType = watch(`items.${index}.type`) || 'InventoryProduct';
+                const currentType =
+                  watch(`items.${index}.type`) || "InventoryProduct";
                 const currentItem = watch(`items.${index}.item`);
                 const currentVariant = watch(`items.${index}.variant`);
-                const selectedIp = currentType === 'InventoryProduct' ? inventoryProducts.find((p) => String(p._id) === currentItem) : null;
+                const selectedIp =
+                  currentType === "InventoryProduct"
+                    ? inventoryProducts.find(
+                        (p) => String(p._id) === currentItem,
+                      )
+                    : null;
                 const maxQty = selectedIp ? selectedIp.quantity : undefined;
 
                 return (
@@ -197,12 +231,18 @@ export function BillForm({
                     {index > 0 && <Separator className="my-2" />}
                     <div className="grid grid-cols-1 sm:grid-cols-[3.5fr_1.2fr_1.5fr_auto] gap-3 items-start">
                       <div className="flex flex-col gap-0.5 min-w-0 sm:pt-2">
-                        <span className="font-medium text-sm text-foreground truncate">{watch(`items.${index}.name`)}</span>
+                        <span className="font-medium text-sm text-foreground truncate">
+                          {watch(`items.${index}.name`)}
+                        </span>
                         <span className="text-[10px] text-muted-foreground uppercase font-semibold">
-                          {currentType === 'InventoryProduct' ? (
-                            <>Product {currentVariant && `• ${formatVariant(currentVariant)}`}</>
+                          {currentType === "InventoryProduct" ? (
+                            <>
+                              Product{" "}
+                              {currentVariant &&
+                                `• ${formatVariant(currentVariant)}`}
+                            </>
                           ) : (
-                            'Service'
+                            "Service"
                           )}
                         </span>
                       </div>
@@ -212,14 +252,18 @@ export function BillForm({
                         name={`items.${index}.quantity`}
                         render={({ field: qtyField }) => (
                           <FormItem>
-                            <FormLabel className="sm:hidden">Quantity</FormLabel>
+                            <FormLabel className="sm:hidden">
+                              Quantity
+                            </FormLabel>
                             <FormControl>
                               <Input
                                 type="number"
                                 min={1}
                                 max={maxQty}
                                 {...qtyField}
-                                onChange={(e) => qtyField.onChange(Number(e.target.value))}
+                                onChange={(e) =>
+                                  qtyField.onChange(Number(e.target.value))
+                                }
                                 className="bg-background h-9"
                               />
                             </FormControl>
@@ -241,13 +285,17 @@ export function BillForm({
                             <FormLabel className="sm:hidden">Price</FormLabel>
                             <FormControl>
                               <div className="relative">
-                                <span className="absolute left-2.5 top-2 text-xs text-muted-foreground">₹</span>
+                                <span className="absolute left-2.5 top-2 text-xs text-muted-foreground">
+                                  ₹
+                                </span>
                                 <Input
                                   type="number"
                                   min={0}
                                   step="0.01"
                                   {...priceField}
-                                  onChange={(e) => priceField.onChange(Number(e.target.value))}
+                                  onChange={(e) =>
+                                    priceField.onChange(Number(e.target.value))
+                                  }
                                   className="pl-6 bg-background h-9"
                                 />
                               </div>
@@ -304,7 +352,9 @@ export function BillForm({
                               className="sr-only"
                             />
                             {getPaymentIcon(method.value)}
-                            <span className="font-semibold text-sm">{method.label}</span>
+                            <span className="font-semibold text-sm">
+                              {method.label}
+                            </span>
                           </Label>
                         </FormControl>
                       ))}
@@ -320,19 +370,25 @@ export function BillForm({
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 bg-background/50">
                     <div className="space-y-0.5">
-                      <FormLabel className="text-sm font-semibold">Payment Status</FormLabel>
+                      <FormLabel className="text-sm font-semibold">
+                        Payment Status
+                      </FormLabel>
                       <div className="text-xs text-muted-foreground">
                         Toggle between Paid and Unpaid status
                       </div>
                     </div>
                     <FormControl>
                       <div className="flex items-center gap-2">
-                        <span className={`text-xs font-semibold uppercase px-2 py-0.5 rounded ${field.value === 'paid' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
+                        <span
+                          className={`text-xs font-semibold uppercase px-2 py-0.5 rounded ${field.value === "paid" ? "bg-emerald-500/10 text-emerald-500" : "bg-amber-500/10 text-amber-500"}`}
+                        >
                           {field.value}
                         </span>
                         <Switch
-                          checked={field.value === 'paid'}
-                          onCheckedChange={(checked) => field.onChange(checked ? 'paid' : 'unpaid')}
+                          checked={field.value === "paid"}
+                          onCheckedChange={(checked) =>
+                            field.onChange(checked ? "paid" : "unpaid")
+                          }
                         />
                       </div>
                     </FormControl>
@@ -347,15 +403,19 @@ export function BillForm({
                     name="branch"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="font-medium text-xs">Branch</FormLabel>
+                        <FormLabel className="font-medium text-xs">
+                          Branch
+                        </FormLabel>
                         <Select
-                          key={branchItems.hasItems ? 'loaded' : 'loading'}
+                          key={branchItems.hasItems ? "loaded" : "loading"}
                           onValueChange={field.onChange}
                           value={field.value}
                         >
                           <FormControl>
                             <SelectTrigger className="w-full bg-background">
-                              <SelectValue placeholder={branchItems.placeholder} />
+                              <SelectValue
+                                placeholder={branchItems.placeholder}
+                              />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>{branchItems.items}</SelectContent>
@@ -370,15 +430,19 @@ export function BillForm({
                     name="department"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="font-medium text-xs">Department</FormLabel>
+                        <FormLabel className="font-medium text-xs">
+                          Department
+                        </FormLabel>
                         <Select
-                          key={departmentItems.hasItems ? 'loaded' : 'loading'}
+                          key={departmentItems.hasItems ? "loaded" : "loading"}
                           onValueChange={field.onChange}
                           value={field.value}
                         >
                           <FormControl>
                             <SelectTrigger className="w-full bg-background">
-                              <SelectValue placeholder={departmentItems.placeholder} />
+                              <SelectValue
+                                placeholder={departmentItems.placeholder}
+                              />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>{departmentItems.items}</SelectContent>
@@ -415,13 +479,17 @@ export function BillForm({
                       </FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <span className="absolute left-2.5 top-2.5 text-xs text-muted-foreground">₹</span>
+                          <span className="absolute left-2.5 top-2.5 text-xs text-muted-foreground">
+                            ₹
+                          </span>
                           <Input
                             type="number"
                             min={0}
                             step="0.01"
                             {...field}
-                            onChange={(e) => field.onChange(Number(e.target.value))}
+                            onChange={(e) =>
+                              field.onChange(Number(e.target.value))
+                            }
                             className="pl-6 bg-background/50 focus:bg-background"
                           />
                         </div>
@@ -442,13 +510,17 @@ export function BillForm({
                       </FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <span className="absolute left-2.5 top-2.5 text-xs text-muted-foreground">₹</span>
+                          <span className="absolute left-2.5 top-2.5 text-xs text-muted-foreground">
+                            ₹
+                          </span>
                           <Input
                             type="number"
                             min={0}
                             step="0.01"
                             {...field}
-                            onChange={(e) => field.onChange(Number(e.target.value))}
+                            onChange={(e) =>
+                              field.onChange(Number(e.target.value))
+                            }
                             className="pl-6 bg-background/50 focus:bg-background"
                           />
                         </div>
@@ -481,15 +553,25 @@ export function BillForm({
                 <Separator className="my-2" />
                 <div className="flex justify-between items-baseline">
                   <span className="text-sm font-bold">Total Amount</span>
-                  <span className="text-2xl font-extrabold text-primary">₹{total.toFixed(2)}</span>
+                  <span className="text-2xl font-extrabold text-primary">
+                    ₹{total.toFixed(2)}
+                  </span>
                 </div>
               </div>
             </CardContent>
             <CardFooter className="bg-primary/[0.02] border-t border-primary/5 p-6">
-              <Button type="submit" disabled={loading} className="w-full h-11 text-sm font-semibold tracking-wide shadow-sm hover:shadow transition-all duration-200">
-                {loading 
-                  ? (isEdit ? 'Updating Invoice...' : 'Creating Invoice...') 
-                  : (isEdit ? 'Update Invoice' : 'Generate Invoice')}
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full h-11 text-sm font-semibold tracking-wide shadow-sm hover:shadow transition-all duration-200"
+              >
+                {loading
+                  ? isEdit
+                    ? "Updating Invoice..."
+                    : "Creating Invoice..."
+                  : isEdit
+                    ? "Update Invoice"
+                    : "Generate Invoice"}
               </Button>
             </CardFooter>
           </Card>

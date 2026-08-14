@@ -20,13 +20,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+
+const formatVariant = (variant) => {
+  if (!variant) return "";
+  const entries =
+    typeof variant.entries === "function"
+      ? [...variant.entries()]
+      : Object.entries(variant);
+  if (entries.length === 0) return "";
+  return entries.map(([k, v]) => `${k}: ${v}`).join(", ");
+};
 
 export default function OrderForm({
   form,
   branches = [],
   departments = [],
-  inventoryProducts  = [],
-  services = [],
+  BillingItemSearchCombobox, 
+  searchProducts 
 }) {
   const selectedBranch = useWatch({ control: form.control, name: "branch" });
 
@@ -36,58 +47,74 @@ export default function OrderForm({
 
   useEffect(() => {
     const currentDept = form.getValues("department");
-    if (currentDept && !filteredDepartments.some((d) => d._id === currentDept)) {
+    if (
+      currentDept &&
+      !filteredDepartments.some((d) => d._id === currentDept)
+    ) {
       form.setValue("department", "");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedBranch]);
 
-  const { fields: itemFields, append: appendItem, remove: removeItem } = useFieldArray({
+  const {
+    fields: itemFields,
+    append: appendItem,
+    remove: removeItem,
+  } = useFieldArray({
     control: form.control,
     name: "items",
   });
 
-  const { fields: sponsorFields, append: appendSponsor, remove: removeSponsor } = useFieldArray({
+  const {
+    fields: sponsorFields,
+    append: appendSponsor,
+    remove: removeSponsor,
+  } = useFieldArray({
     control: form.control,
     name: "sponsors",
   });
 
   const items = useWatch({ control: form.control, name: "items" }) || [];
   const sponsors = useWatch({ control: form.control, name: "sponsors" }) || [];
-  const managementAmount = useWatch({ control: form.control, name: "managementAmount" }) || 0;
+  const managementAmount =
+    useWatch({ control: form.control, name: "managementAmount" }) || 0;
 
   const totalCost = items.reduce(
     (sum, i) => sum + (Number(i?.quantity) || 0) * (Number(i?.price) || 0),
     0
   );
-  const totalSponsorship = sponsors.reduce((sum, s) => sum + (Number(s?.amount) || 0), 0);
+  const totalSponsorship = sponsors.reduce(
+    (sum, s) => sum + (Number(s?.amount) || 0),
+    0
+  );
   const totalAvailable = Number(managementAmount || 0) + totalSponsorship;
   const overBudget = totalCost > totalAvailable;
 
-  // pick the right catalog list based on the item's selected type
-  const getCatalog = (type) => (type === 'Service' ? services : inventoryProducts);
+  const handleSelectItem = (selectedItem) => {
+    const existingIndex = items.findIndex(
+      (i) => String(i.item) === String(selectedItem._id)
+    );
 
-  const handleItemSelect = (index, catalogId) => {
-    const type = form.getValues(`items.${index}.type`);
-    const catalog = getCatalog(type);
-    const selected = catalog.find((c) => c._id === catalogId);
-    if (!selected) return;
-
-    form.setValue(`items.${index}.item`, selected._id);
-    form.setValue(`items.${index}.name`, selected.name);
-    form.setValue(`items.${index}.price`, selected.price ?? 0);
-  };
-
-  const handleTypeChange = (index, type) => {
-    form.setValue(`items.${index}.type`, type);
-    // reset dependent fields since the catalog changed
-    form.setValue(`items.${index}.item`, "");
-    form.setValue(`items.${index}.name`, "");
-    form.setValue(`items.${index}.price`, 0);
+    if (existingIndex > -1) {
+      const currentQty = form.getValues(`items.${existingIndex}.quantity`) || 1;
+      form.setValue(`items.${existingIndex}.quantity`, currentQty + 1, {
+        shouldValidate: true,
+      });
+    } else {
+      appendItem({
+        type: selectedItem.type,
+        item: selectedItem._id,
+        name: selectedItem.name,
+        quantity: 1,
+        price: selectedItem.price ?? 0,
+        variant: selectedItem.variant,
+      });
+    }
   };
 
   return (
     <>
+      {/* Branch */}
       <FormField
         control={form.control}
         name="branch"
@@ -113,17 +140,26 @@ export default function OrderForm({
         )}
       />
 
+      {/* Department */}
       <FormField
         control={form.control}
         name="department"
         render={({ field: f }) => (
           <FormItem>
             <FormLabel>Department</FormLabel>
-            <Select onValueChange={f.onChange} value={f.value} disabled={!selectedBranch}>
+            <Select
+              onValueChange={f.onChange}
+              value={f.value}
+              disabled={!selectedBranch}
+            >
               <FormControl>
                 <SelectTrigger className="w-full">
                   <SelectValue
-                    placeholder={selectedBranch ? "Select a department" : "Select a branch first"}
+                    placeholder={
+                      selectedBranch
+                        ? "Select a department"
+                        : "Select a branch first"
+                    }
                   />
                 </SelectTrigger>
               </FormControl>
@@ -140,6 +176,7 @@ export default function OrderForm({
         )}
       />
 
+      {/* Purpose */}
       <FormField
         control={form.control}
         name="purpose"
@@ -154,6 +191,7 @@ export default function OrderForm({
         )}
       />
 
+      {/* Management Amount */}
       <FormField
         control={form.control}
         name="managementAmount"
@@ -161,7 +199,13 @@ export default function OrderForm({
           <FormItem>
             <FormLabel>Management Amount</FormLabel>
             <FormControl>
-              <Input type="number" min={0} step="0.01" placeholder="0.00" {...field} />
+              <Input
+                type="number"
+                min={0}
+                step="0.01"
+                placeholder="0.00"
+                {...field}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -170,6 +214,7 @@ export default function OrderForm({
 
       <Separator className="my-2" />
 
+      {/* Sponsors */}
       <div className="flex items-center justify-between">
         <FormLabel>Sponsors</FormLabel>
         <Button
@@ -202,13 +247,23 @@ export default function OrderForm({
             render={({ field }) => (
               <FormItem className="w-32">
                 <FormControl>
-                  <Input type="number" min={0} step="0.01" placeholder="Amount" {...field} />
+                  <Input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    placeholder="Amount"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-          <Button type="button" variant="destructive" onClick={() => removeSponsor(index)}>
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={() => removeSponsor(index)}
+          >
             Remove
           </Button>
         </div>
@@ -216,130 +271,148 @@ export default function OrderForm({
 
       <Separator className="my-2" />
 
-      <div className="flex items-center justify-between">
+      {/* Items – search & add */}
+      <div className="space-y-3">
         <FormLabel>Items</FormLabel>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          onClick={() =>
-            appendItem({ type: "InventoryProduct", item: "", name: "", quantity: 1, price: 0 })
-          }
-        >
-          Add Item
-        </Button>
-      </div>
 
-      {itemFields.map((fieldItem, index) => {
-        const currentType = items[index]?.type || 'InventoryProduct';
-        const catalog = getCatalog(currentType);
-        const qty = Number(items[index]?.quantity) || 0;
-        const price = Number(items[index]?.price) || 0;
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">
+            Search and Add Products / Services
+          </Label>
 
-        return (
-          <div key={fieldItem.id} className="grid grid-cols-12 gap-2 items-start">
-            <FormField
-              control={form.control}
-              name={`items.${index}.type`}
-              render={({ field }) => (
-                <FormItem className="col-span-3">
-                  <Select
-                    value={field.value}
-                    onValueChange={(val) => handleTypeChange(index, val)}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="InventoryProduct">Product</SelectItem>
-                      <SelectItem value="Service">Service</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
+          {BillingItemSearchCombobox ? (
+            <BillingItemSearchCombobox
+              value=""
+              currentItemName=""
+              onSelect={handleSelectItem}
+              placeholder="Search by product or service name..."
+              searchProducts={searchProducts}
             />
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Search component not available
+            </p>
+          )}
+        </div>
 
-            <FormField
-              control={form.control}
-              name={`items.${index}.item`}
-              render={({ field }) => (
-                <FormItem className="col-span-4">
-                  <Select
-                    value={field.value}
-                    onValueChange={(val) => {
-                      field.onChange(val);
-                      handleItemSelect(index, val);
-                    }}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue
-                          placeholder={currentType === 'Service' ? 'Select a service' : 'Select a product'}
-                        />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {catalog.map((c) => (
-                        <SelectItem key={c._id} value={c._id}>
-                          {c.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name={`items.${index}.quantity`}
-              render={({ field }) => (
-                <FormItem className="col-span-2">
-                  <FormControl>
-                    <Input type="number" min={1} placeholder="Qty" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name={`items.${index}.price`}
-              render={({ field }) => (
-                <FormItem className="col-span-2">
-                  <FormControl>
-                    <Input type="number" placeholder="Price" {...field} disabled readOnly />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="col-span-1 flex items-center gap-1 pt-2">
-              <span className="text-xs text-muted-foreground">{(qty * price).toFixed(2)}</span>
-              <Button type="button" size="icon" variant="ghost" onClick={() => removeItem(index)}>
-                ✕
-              </Button>
+        {itemFields.length > 0 && (
+          <>
+            <div className="hidden sm:grid sm:grid-cols-[3fr_1fr_1.2fr_auto] gap-3 text-xs font-semibold text-muted-foreground px-1">
+              <div>Item</div>
+              <div>Qty</div>
+              <div>Price</div>
+              <div></div>
             </div>
-          </div>
-        );
-      })}
+
+            {itemFields.map((fieldItem, index) => {
+              const currentType = items[index]?.type || "InventoryProduct";
+              const currentVariant = items[index]?.variant;
+              const qty = Number(items[index]?.quantity) || 0;
+              const price = Number(items[index]?.price) || 0;
+
+              return (
+                <div
+                  key={fieldItem.id}
+                  className="grid grid-cols-1 sm:grid-cols-[3fr_1fr_1.2fr_auto] gap-3 items-start border-b pb-3 last:border-0"
+                >
+                  {/* Name + type/variant */}
+                  <div className="flex flex-col gap-0.5 min-w-0 sm:pt-2">
+                    <span className="font-medium text-sm truncate">
+                      {items[index]?.name}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground uppercase font-semibold">
+                      {currentType === "InventoryProduct" ? (
+                        <>
+                          Product
+                          {currentVariant &&
+                            ` • ${formatVariant(currentVariant)}`}
+                        </>
+                      ) : (
+                        "Service"
+                      )}
+                    </span>
+                  </div>
+
+                  {/* Quantity */}
+                  <FormField
+                    control={form.control}
+                    name={`items.${index}.quantity`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="sm:hidden">Quantity</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min={1}
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(Number(e.target.value))
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Price (read-only) */}
+                  <FormField
+                    control={form.control}
+                    name={`items.${index}.price`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="sm:hidden">Price</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <span className="absolute left-2.5 top-2 text-xs text-muted-foreground">
+                              ₹
+                            </span>
+                            <Input
+                              type="number"
+                              className="pl-6"
+                              {...field}
+                              disabled
+                              readOnly
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Line total + remove */}
+                  <div className="flex items-center gap-2 pt-2">
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      ₹{(qty * price).toFixed(2)}
+                    </span>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => removeItem(index)}
+                    >
+                      ✕
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </>
+        )}
+      </div>
 
       <Separator className="my-2" />
 
+      {/* Summary */}
       <div className="flex flex-col items-end gap-1 text-sm">
         <div className="flex justify-between w-56">
           <span className="text-muted-foreground">Total Cost</span>
-          <span>{totalCost.toFixed(2)}</span>
+          <span>₹{totalCost.toFixed(2)}</span>
         </div>
         <div className="flex justify-between w-56">
           <span className="text-muted-foreground">Total Available</span>
-          <span>{totalAvailable.toFixed(2)}</span>
+          <span>₹{totalAvailable.toFixed(2)}</span>
         </div>
         {overBudget && (
           <span className="text-destructive text-xs">
