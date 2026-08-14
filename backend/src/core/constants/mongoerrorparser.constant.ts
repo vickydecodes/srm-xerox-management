@@ -5,7 +5,18 @@ const { ValidationError, CastError } = Error;
 
 export const parseMongoError = (err: any) => {
   if (err instanceof MongoServerError && err.code === 11000) {
-    const key = Object.keys(err.keyValue)[0];
+    const keys = Object.keys(err.keyValue);
+
+    if (keys.includes('inventory') && keys.includes('product')) {
+      return {
+        message: 'Product already exists in this inventory',
+        code: 'DUPLICATE_KEY',
+        status: 409,
+        field: 'product',
+      };
+    }
+
+    const key = keys[0];
     return {
       message: `${key.charAt(0).toUpperCase() + key.slice(1)} already exists`,
       code: 'DUPLICATE_KEY',

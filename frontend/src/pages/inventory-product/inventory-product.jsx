@@ -36,6 +36,7 @@ export default function InventoryProduct() {
       manualPagination={true}
       reset={inventoryProducts.reset}
       loading={inventoryProducts.loading.getAll}
+      page={inventoryProducts.pagination.page}
       limit={inventoryProducts.pagination.limit}
       pageCount={inventoryProducts.pagination.pages}
       totalRows={inventoryProducts.pagination.total}

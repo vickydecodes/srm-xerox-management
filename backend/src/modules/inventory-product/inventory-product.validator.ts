@@ -12,8 +12,11 @@ export const createInventoryProductSchema = z.object({
     .min(1, "Product is required"),
 
   variant: z
-    .record(z.string(), z.string())
-    .default({}),
+    .string()
+    .trim()
+    .optional()
+    .nullable()
+    .default(null),
 
   quantity: z
     .number()

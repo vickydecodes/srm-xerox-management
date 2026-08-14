@@ -11,20 +11,29 @@ import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
-  SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useApi } from "@/core/contexts/api.context";
 import { useSelectItems } from "@/core/hooks/useSelect";
 
-export default function DepartmentForm({ form, isEdit = false }) {
-  const { branches } = useApi();
+export default function DepartmentForm({
+  form,
+  isEdit = false,
+  branches,
+}) {
   const fields = ["name", "code", "branch"];
 
-  const branchItems = useSelectItems(branches?.state || [], {
-    emptyText: 'No branches available',
-    badge: { need: true, label: 'code', variant: 'secondary' }
+  const {
+    items: branchItems,
+    disabled: branchDisabled,
+    placeholder: branchPlaceholder,
+  } = useSelectItems(branches || [], {
+    emptyText: "No branches available",
+    placeholder: "Select a branch",
+    badge: {
+      need: true,
+      getBadge: (branch) => branch.code,
+    },
   });
 
   return (
@@ -39,19 +48,24 @@ export default function DepartmentForm({ form, isEdit = false }) {
               render={({ field: f }) => (
                 <FormItem>
                   <FormLabel>Branch</FormLabel>
+
                   <Select
-                    onValueChange={f.onChange}
-                    defaultValue={f.value}
                     value={f.value}
-                    disabled={isEdit}
+                    defaultValue={f.value}
+                    onValueChange={f.onChange}
+                    disabled={isEdit || branchDisabled}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a branch" />
+                        <SelectValue placeholder={branchPlaceholder} />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>{branchItems}</SelectContent>
+
+                    <SelectContent>
+                      {branchItems}
+                    </SelectContent>
                   </Select>
+
                   <FormMessage />
                 </FormItem>
               )}
@@ -66,14 +80,18 @@ export default function DepartmentForm({ form, isEdit = false }) {
             name={field}
             render={({ field: f }) => (
               <FormItem>
-                <FormLabel>{field.charAt(0).toUpperCase() + field.slice(1)}</FormLabel>
+                <FormLabel>
+                  {field.charAt(0).toUpperCase() + field.slice(1)}
+                </FormLabel>
+
                 <FormControl>
                   <Input
+                    {...f}
                     placeholder={`Enter ${field}`}
                     disabled={isEdit && field === "code"}
-                    {...f}
                   />
                 </FormControl>
+
                 <FormMessage />
               </FormItem>
             )}

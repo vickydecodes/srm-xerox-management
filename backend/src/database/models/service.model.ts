@@ -35,6 +35,9 @@ const ServiceSchema = new Schema<IService>(
     description: { type: String, trim: true },
     unit: { type: String, required: true, trim: true },
     price: { type: Number, required: true, min: 0 },
+    // NOTE: Consuming materials for a service should go through the adjustInventoryQuantity 
+    // helper service (type: 'consumption' or 'sale') rather than direct document writes to 
+    // InventoryProduct, to ensure atomic updates and maintain audit consistency.
     materials: { type: [ServiceMaterialSchema], default: [] },
     active: { type: Boolean, default: true },
     deleted: { type: Boolean, default: false },

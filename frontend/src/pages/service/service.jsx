@@ -34,6 +34,7 @@ export default function Service() {
       manualPagination={true}
       reset={services.reset}
       loading={services.loading.getAll}
+      page={services.pagination.page}
       limit={services.pagination.limit}
       pageCount={services.pagination.pages}
       totalRows={services.pagination.total}

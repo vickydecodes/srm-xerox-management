@@ -7,6 +7,7 @@ import { useProductModule } from '@/modules/products';
 import { useBillModule } from '@/modules/bill';
 import { useBranchModule } from '@/modules/branch';
 import { useInventoryProductModule } from '@/modules/inventory-product';
+import { useSearchModule } from '@/modules/search';
 import { useBranchAdminModule } from "@/modules/branch-admin";
 import { useShopAdminModule } from "@/modules/shop-admin";
 import { useStaffModule } from "@/modules/staff-admin";
@@ -16,6 +17,7 @@ import { useDepartmentAdminModule } from "@/modules/department-admin";
 
 const ApiContext = createContext();
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useApi = () => {
     const ctx = useContext(ApiContext);
     if (!ctx) {
@@ -28,12 +30,13 @@ export const ApiProvider = ({ children }) => {
     const exported = {};
 
 
-    const departmentModule = useDepartmentModule();
+    const departmentModule = useDepartmentModule(exported);
     const serviceModule = useServiceModule(exported);  
-    const productModule = useProductModule();
-    const billModule = useBillModule();
-    const branchModule = useBranchModule();
+    const productModule = useProductModule(exported);
+    const billModule = useBillModule(exported);
+    const branchModule = useBranchModule(exported);
     const inventoryProductModule = useInventoryProductModule(exported);
+    const searchModule = useSearchModule(exported);
     const branchAdminModule = useBranchAdminModule(exported);
     const shopAdminModule = useShopAdminModule(exported);
     const staffModule = useStaffModule(exported);
@@ -47,6 +50,7 @@ export const ApiProvider = ({ children }) => {
         bills: billModule,
         branches: branchModule,
         inventoryProducts: inventoryProductModule,
+        search: searchModule
         branchAdmins: branchAdminModule,
         shopAdmins: shopAdminModule,
         staffs: staffModule,
