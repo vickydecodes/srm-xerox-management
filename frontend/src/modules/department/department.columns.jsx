@@ -48,6 +48,22 @@ export const useDepartmentColumns = (departments) => {
       ),
     },
     {
+      accessorKey: 'outstandingCredit',
+      header: () => Hint('Outstanding Credit', 'Accumulated credit total'),
+      cell: ({ row }) => {
+        const amt = row.original.outstandingCredit || 0;
+        return <span className="font-semibold text-amber-700 dark:text-amber-400">{amt.toLocaleString()} INR</span>;
+      },
+    },
+    {
+      accessorKey: 'creditLimit',
+      header: () => Hint('Credit Limit', 'Maximum credit allocation'),
+      cell: ({ row }) => {
+        const amt = row.original.creditLimit || 0;
+        return <span>{amt.toLocaleString()} INR</span>;
+      },
+    },
+    {
       accessorKey: 'actions',
       header: () => Hint('Actions', 'Edit or manage this department'),
       cell: ({ row }) => {
@@ -68,6 +84,9 @@ export const useDepartmentColumns = (departments) => {
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => departments.openEdit(dept)}>
                 Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => departments.openManageCredit(dept)}>
+                Manage Credit
               </DropdownMenuItem>
 
               <DropdownMenuItem

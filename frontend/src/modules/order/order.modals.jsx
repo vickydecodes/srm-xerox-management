@@ -6,7 +6,7 @@ import {
   Retrieve,
   Erase,
   BranchAdminApproval,
-  VpApproval,
+  SuperAdminApproval,
 } from "./order.modal.component";
 
 export const modals = {
@@ -17,5 +17,5 @@ export const modals = {
   retrieve: Retrieve,
   erase: Erase,
   branchAdminApproval: BranchAdminApproval,
-  vpApproval: VpApproval,
+  superAdminApproval: SuperAdminApproval,
 }

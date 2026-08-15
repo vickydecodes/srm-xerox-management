@@ -1,4 +1,4 @@
-import { IconKey, IconLogout2, IconUser, IconLayoutDashboard } from "@tabler/icons-react";
+import { IconKey, IconLogout2, IconUser, IconLayoutDashboard, IconClipboardList } from "@tabler/icons-react";
 import ChangePassword from "@/pages/changepassword/changepassword";
 import Profile from "@/pages/profile/profile";
 import Dashboard from "@/pages/dashboard/dashboard";
@@ -37,7 +37,7 @@ export const departmentAdminRoutes = {
       title: "Order Management",
       description: "View and manage department orders",
       element: <Order />,
-      icon: <IconUser className="h-5 w-5 shrink-0" />,
+      icon: <IconClipboardList className="h-5 w-5 shrink-0" />,
     },
   ],
   logout: {

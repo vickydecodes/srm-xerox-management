@@ -67,12 +67,11 @@ const formatVariant = (variant) => {
 export function BillForm({
   inventoryProducts = [],
   services = [],
-  branches = [],
-  departments = [],
   onSubmit,
   loading = false,
   defaultValues,
   isEdit = false,
+  orderContext = null,
 }) {
   const { search } = useApi();
   const { BillingItemSearchCombobox, searchProducts } = search;
@@ -96,18 +95,12 @@ export function BillForm({
 
   // Selected items will be fetched dynamically via ItemSearchCombobox
 
-  const branchItems = useSelectItems(branches, {
-    emptyText: "No branches available",
-    placeholder: "Select branch",
-  });
-  const departmentItems = useSelectItems(departments, {
-    emptyText: "No departments available",
-    placeholder: "Select department",
-  });
-
   const items = watch("items") || [];
   const discount = watch("discount") || 0;
   const tax = watch("tax") || 0;
+  const filteredPaymentMethods = defaultValues?.order
+    ? PAYMENT_METHODS.filter((m) => m.value === "credit")
+    : PAYMENT_METHODS.filter((m) => m.value !== "credit");
   const paymentMethod = watch("paymentMethod");
   const isCredit = paymentMethod === "credit";
 
@@ -340,7 +333,7 @@ export function BillForm({
                       onValueChange={handlePaymentMethodChange}
                       className="grid grid-cols-3 gap-4"
                     >
-                      {PAYMENT_METHODS.map((method) => (
+                      {filteredPaymentMethods.map((method) => (
                         <FormControl key={method.value}>
                           <Label
                             htmlFor={`payment-${method.value}`}
@@ -396,61 +389,25 @@ export function BillForm({
                 )}
               />
 
-              {isCredit && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 animate-in fade-in-50 slide-in-from-top-2 duration-200">
-                  <FormField
-                    control={control}
-                    name="branch"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-medium text-xs">
-                          Branch
-                        </FormLabel>
-                        <Select
-                          key={branchItems.hasItems ? "loaded" : "loading"}
-                          onValueChange={field.onChange}
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="w-full bg-background">
-                              <SelectValue
-                                placeholder={branchItems.placeholder}
-                              />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>{branchItems.items}</SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={control}
-                    name="department"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-medium text-xs">
-                          Department
-                        </FormLabel>
-                        <Select
-                          key={departmentItems.hasItems ? "loaded" : "loading"}
-                          onValueChange={field.onChange}
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="w-full bg-background">
-                              <SelectValue
-                                placeholder={departmentItems.placeholder}
-                              />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>{departmentItems.items}</SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              {isCredit && orderContext && (
+                <div className="bg-muted/40 border rounded-lg p-4 space-y-2 mt-4 text-sm animate-in fade-in-50 slide-in-from-top-2 duration-200">
+                  <div className="font-semibold text-xs text-muted-foreground uppercase tracking-wider">
+                    Associated Entity Information
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-muted-foreground block text-[10px] uppercase font-bold">Branch</span>
+                      <span className="font-medium text-foreground">
+                        {orderContext.branchName || "-"}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block text-[10px] uppercase font-bold">Department</span>
+                      <span className="font-medium text-foreground">
+                        {orderContext.departmentName || "-"}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               )}
             </CardContent>

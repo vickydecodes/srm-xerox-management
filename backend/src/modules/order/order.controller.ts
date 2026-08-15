@@ -166,12 +166,12 @@ const controllers = {
     return sendResponse.updated(res, 'order', order);
   },
 
-  vpApproveOrder: async (
+  superAdminApproveOrder: async (
     req: AuthRequest & { params: { id: string }; body: { status: 'approved' | 'rejected'; remarks?: string } },
     res: Response
   ) => {
     const { id } = req.params;
-    const order = await service.vpApproveOrder(id, req.user!.id, req.body);
+    const order = await service.superAdminApproveOrder(id, req.user!.id, req.body);
     if (!order) return sendResponse.notFound(res, 'order');
     return sendResponse.updated(res, 'order', order);
   },
@@ -188,5 +188,5 @@ export const {
   eraseOrder,
   submitOrder,
   branchApproveOrder,
-  vpApproveOrder,
+  superAdminApproveOrder,
 } = wrapControllers(controllers);

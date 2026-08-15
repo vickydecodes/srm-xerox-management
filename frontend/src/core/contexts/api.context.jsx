@@ -12,7 +12,7 @@ import { useBranchAdminModule } from "@/modules/branch-admin";
 import { useShopAdminModule } from "@/modules/shop-admin";
 import { useStaffModule } from "@/modules/staff-admin";
 import { useDepartmentAdminModule } from "@/modules/department-admin";
-import { useOrderModule } from "@/modules/order";
+import { useOrderModule } from "@/modules/order/order.module";
 
 
 

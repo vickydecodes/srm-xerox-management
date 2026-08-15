@@ -1,4 +1,6 @@
 import Order from '@db/models/order.model.ts';
+import User from '@db/models/user.model.ts';
+import Department from '@db/models/department.model.ts';
 import { dynamicFilter } from '@core/constants/dynamicfilter.constant.ts';
 
 import {
@@ -22,9 +24,38 @@ export const createOrder = async (
   data: CreateOrderPayload,
   createdBy: string
 ) => {
+  const userObj = await User.findById(createdBy);
+  if (!userObj) {
+    throw new Error('User not found');
+  }
+
+  let branch = userObj.branch;
+  let department = userObj.department;
+
+  // Fallback for users without explicit branch/dept (like super_admin)
+  if (!branch || !department) {
+    const firstDept = await Department.findOne({ active: true, deleted: false });
+    if (firstDept) {
+      if (!branch) branch = firstDept.branch;
+      if (!department) department = firstDept._id as any;
+    }
+  }
+
+  if (!branch || !department) {
+    throw new Error('Could not resolve branch or department for the order creator.');
+  }
+
   const order = await new Order({
     ...data,
+    branch,
+    department,
     createdBy: toObjectId(createdBy),
+    approvalHistory: [{
+      status: 'draft',
+      approver: toObjectId(createdBy) as any,
+      date: new Date(),
+      remarks: 'Order draft created',
+    }],
   }).save();
 
   return enhanceOrder(order);
@@ -53,7 +84,7 @@ export const getAllOrders = async (
 export const getOrderById = async (
   id: string
 ) => {
-  return Order.findById(id);
+  return Order.findById(id).populate('branch department createdBy branchAdminApproval.approver superAdminApproval.approver approvalHistory.approver');
 };
 
 
@@ -120,6 +151,15 @@ export const submitOrder = async (id: string, userId: string) => {
     throw new Error('Order is not in draft status');
   }
   order.status = 'pending';
+  if (!order.approvalHistory) {
+    order.approvalHistory = [];
+  }
+  order.approvalHistory.push({
+    status: 'submitted',
+    approver: toObjectId(userId) as any,
+    date: new Date(),
+    remarks: 'Submitted for approval',
+  });
   await order.save();
   return enhanceOrder(order);
 };
@@ -131,8 +171,8 @@ export const branchApproveOrder = async (
 ) => {
   const order = await Order.findById(id);
   if (!order) return null;
-  if (order.status !== 'pending') {
-    throw new Error('Order is not pending branch admin approval');
+  if (order.status === 'draft' || order.status === 'completed') {
+    throw new Error('Order cannot be approved in its current status');
   }
   order.branchAdminApproval = {
     status: approvalData.status,
@@ -140,26 +180,47 @@ export const branchApproveOrder = async (
     date: new Date(),
     remarks: approvalData.remarks || '',
   };
+  if (!order.approvalHistory) {
+    order.approvalHistory = [];
+  }
+  order.approvalHistory.push({
+    status: approvalData.status,
+    approver: toObjectId(branchAdminId) as any,
+    date: new Date(),
+    remarks: approvalData.remarks || '',
+  });
   await order.save();
   return enhanceOrder(order);
 };
 
-export const vpApproveOrder = async (
+export const superAdminApproveOrder = async (
   id: string,
-  vpId: string,
+  superAdminId: string,
   approvalData: { status: 'approved' | 'rejected'; remarks?: string }
 ) => {
   const order = await Order.findById(id);
   if (!order) return null;
+  if (order.status === 'completed') {
+    throw new Error('Order is already completed');
+  }
   if (order.branchAdminApproval.status !== 'approved') {
     throw new Error('Order must be approved by branch admin first');
   }
-  order.vpApproval = {
+  order.superAdminApproval = {
     status: approvalData.status,
-    approver: toObjectId(vpId) as any,
+    approver: toObjectId(superAdminId) as any,
     date: new Date(),
     remarks: approvalData.remarks || '',
   };
+  if (!order.approvalHistory) {
+    order.approvalHistory = [];
+  }
+  order.approvalHistory.push({
+    status: approvalData.status,
+    approver: toObjectId(superAdminId) as any,
+    date: new Date(),
+    remarks: approvalData.remarks || '',
+  });
   await order.save();
   return enhanceOrder(order);
 };

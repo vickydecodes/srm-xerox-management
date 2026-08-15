@@ -186,9 +186,9 @@ const apiurls = {
       method: "patch",
       url: (id) => `${base_url}/orders/${id}/branch-approve`,
     },
-    vpApprove: {
+    superAdminApprove: {
       method: "patch",
-      url: (id) => `${base_url}/orders/${id}/vp-approve`,
+      url: (id) => `${base_url}/orders/${id}/super-admin-approve`,
     },
   },
   search: {

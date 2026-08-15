@@ -1,3 +1,4 @@
+import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -5,12 +6,14 @@ import { useNavigate } from "react-router-dom";
 import { apiRequest } from "@/core/api/api.request";
 import { apiurls } from "@/core/api/api.urls";
 import { toast } from "sonner";
+import { useAuth } from "@/core/contexts/auth.context";
 import {
   IconBuildingCommunity,
   IconUsers,
   IconReceipt,
   IconCoin,
   IconClipboardList,
+  IconCreditCard,
 } from "@tabler/icons-react";
 import {
   ResponsiveContainer,
@@ -30,36 +33,52 @@ import {
 
 export default function DaDashboard({ data, refreshData }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const stats = data?.stats || {};
   const methods = data?.paymentMethods || [];
   const list = data?.departmentRevenue || [];
   const bills = data?.recentBills || [];
   const monthlyRevenue = data?.monthlyRevenue || [];
+  
+  const [deptCredit, setDeptCredit] = useState(null);
+
+  useEffect(() => {
+    if (user?.department) {
+      const deptId = typeof user.department === "object" ? user.department._id : user.department;
+      apiRequest("get", apiurls.departments.getOne.url(deptId))
+        .then((res) => {
+          if (res.success) {
+            setDeptCredit(res.data);
+          }
+        })
+        .catch((err) => console.error("Error fetching department credit", err));
+    }
+  }, [user]);
 
   const currencyFormatter = (val) =>
     new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(val);
 
   const kpis = [
     {
-      title: "Department Revenue Scope",
-      value: currencyFormatter(stats.totalRevenue),
-      description: "Total completed sales",
-      icon: <IconCoin className="w-6 h-6 text-emerald-500" />,
-      bgColor: "bg-emerald-500/10",
+      title: "Outstanding Credit",
+      value: currencyFormatter(deptCredit?.outstandingCredit || 0),
+      description: `Limit: ${currencyFormatter(deptCredit?.creditLimit || 50000)}`,
+      icon: <IconCreditCard className="w-6 h-6 text-amber-600" />,
+      bgColor: "bg-amber-500/10",
     },
     {
-      title: "Active Sub-units",
-      value: stats.departments,
-      description: "Departments in branch",
-      icon: <IconBuildingCommunity className="w-6 h-6 text-primary" />,
-      bgColor: "bg-primary/10",
+      title: "Remaining Credit",
+      value: currencyFormatter((deptCredit?.creditLimit || 50000) - (deptCredit?.outstandingCredit || 0)),
+      description: "Available credit limit",
+      icon: <IconCoin className="w-6 h-6 text-emerald-500" />,
+      bgColor: "bg-emerald-500/10",
     },
     {
       title: "Active Operators",
       value: stats.users,
       description: "Branch personnel",
-      icon: <IconUsers className="w-6 h-6 text-amber-500" />,
-      bgColor: "bg-amber-500/10",
+      icon: <IconUsers className="w-6 h-6 text-blue-500" />,
+      bgColor: "bg-blue-500/10",
     },
     {
       title: "Transactions",

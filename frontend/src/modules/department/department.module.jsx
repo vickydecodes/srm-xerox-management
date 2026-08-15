@@ -30,6 +30,10 @@ export const useDepartmentModule = (exported) => {
     return openModal(modals.view, { department, exported });
   };
 
+  const openManageCredit = (department) => {
+    return openModal(modals.manageCredit, { department, exported });
+  };
+
   const openCreate = () => {
     return openModal(modals.create, {
       submitFn: (data) => crud.create(data),
@@ -101,6 +105,7 @@ export const useDepartmentModule = (exported) => {
     openEdit,
     openDelete,
     openView,
+    openManageCredit,
     openErase,
     openRetrieve,
     openActiveStatus,

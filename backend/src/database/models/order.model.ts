@@ -44,6 +44,23 @@ const ApprovalSchema = new Schema<IApproval>(
   { _id: false }
 );
 
+export interface IApprovalHistory {
+  status: 'draft' | 'submitted' | 'approved' | 'rejected';
+  approver: Types.ObjectId;
+  date: Date;
+  remarks?: string;
+}
+
+const ApprovalHistorySchema = new Schema<IApprovalHistory>(
+  {
+    status: { type: String, enum: ['draft', 'submitted', 'approved', 'rejected'], required: true },
+    approver: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    date: { type: Date, default: Date.now },
+    remarks: { type: String, trim: true },
+  },
+  { _id: false }
+);
+
 export interface ISponsor {
   name: string;
   amount: number;
@@ -71,7 +88,8 @@ export interface IOrder extends Document {
   items: IOrderItem[];
 
   branchAdminApproval: IApproval;
-  vpApproval: IApproval;
+  superAdminApproval: IApproval;
+  approvalHistory: IApprovalHistory[];
 
   status: 'draft' | 'pending' | 'in_progress' | 'completed' | 'rejected';
 
@@ -101,7 +119,8 @@ const OrderSchema = new Schema<IOrder>(
     items: { type: [OrderItemSchema], default: [] },
 
     branchAdminApproval: { type: ApprovalSchema, default: () => ({}) },
-    vpApproval: { type: ApprovalSchema, default: () => ({}) },
+    superAdminApproval: { type: ApprovalSchema, default: () => ({}) },
+    approvalHistory: { type: [ApprovalHistorySchema], default: [] },
 
     status: {
       type: String,
@@ -151,12 +170,12 @@ OrderSchema.pre('save', function () {
 OrderSchema.pre('save', function () {
   if (this.status === 'draft') return;
 
-  if (this.isModified('branchAdminApproval') || this.isModified('vpApproval')) {
-    if (this.branchAdminApproval.status === 'pending' && this.vpApproval.status !== 'pending') {
-      throw new Error('vpApproval cannot be resolved before branchAdminApproval');
+  if (this.isModified('branchAdminApproval') || this.isModified('superAdminApproval')) {
+    if (this.branchAdminApproval.status === 'pending' && this.superAdminApproval.status !== 'pending') {
+      throw new Error('superAdminApproval cannot be resolved before branchAdminApproval');
     }
 
-    if (this.branchAdminApproval.status === 'rejected' || this.vpApproval.status === 'rejected') {
+    if (this.branchAdminApproval.status === 'rejected' || this.superAdminApproval.status === 'rejected') {
       this.status = 'rejected';
     } else if (this.branchAdminApproval.status === 'approved') {
       this.status = 'in_progress';

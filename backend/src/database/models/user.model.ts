@@ -13,6 +13,7 @@ export interface IUser extends Document {
   password: string;
   role: 'super_admin' | 'branch_admin' | 'department_admin' | 'shop_admin' | 'staff';
   branch?: mongoose.Types.ObjectId;
+  department?: mongoose.Types.ObjectId;
 
   active: boolean;
   deleted: boolean;
@@ -36,6 +37,7 @@ const UserSchema = new Schema(
       required: true,
     },
     branch: { type: Schema.Types.ObjectId, ref: 'Branch' },
+    department: { type: Schema.Types.ObjectId, ref: 'Department' },
     active: { type: Boolean, default: true },
     deleted: { type: Boolean, default: false },
     deletedAt: { type: Date, default: null },

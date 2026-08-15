@@ -155,7 +155,7 @@ export const adminRoutes = {
       title: "Order Management",
       description: "View and manage department orders",
       element: <Order />,
-      icon: <IconUser className="h-5 w-5 shrink-0" />,
+      icon: <IconClipboardList className="h-5 w-5 shrink-0" />,
     },
   ],
   logout: {

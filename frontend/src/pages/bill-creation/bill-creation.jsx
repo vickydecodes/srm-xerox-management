@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useApi } from "@/core/contexts/api.context";
 import { useLoader } from "@/core/hooks/useLoader";
 import { useAuth } from "@/core/contexts/auth.context";
@@ -7,6 +7,9 @@ import { useAction } from "@/core/hooks/useAction";
 import { Button } from "@/components/ui/button";
 import { BillForm } from "@/modules/bill/bill.form";
 import { defaultBillValues } from "@/modules/bill/bill.schema";
+import { apiurls } from "@/core/api/api.urls";
+import { apiRequest } from "@/core/api/api.request";
+import { useBillStore } from "@/modules/bill/bill.store";
 
 const getFormDefaultValues = (bill) => {
   if (!bill) return defaultBillValues;
@@ -29,24 +32,100 @@ const getFormDefaultValues = (bill) => {
 
 export default function BillCreation() {
   const navigate = useNavigate();
+  const { search } = useLocation();
   const { user } = useAuth();
   const { usePageAction } = useAction();
-  const { inventoryProducts, services, departments, branches, bills } = useApi();
+  const { inventoryProducts, services, bills } = useApi();
   const { createPreset } = useLoader();
 
   const [editingBill, setEditingBill] = useState(null);
+  const [prefilledValues, setPrefilledValues] = useState(null);
+  const [orderContext, setOrderContext] = useState(null);
+  const currentEntity = useBillStore((state) => state.current);
+
+  const queryParams = new URLSearchParams(search);
+  const orderId = queryParams.get("orderId");
 
   usePageAction({
     edit: (bill) => {
       setEditingBill(bill);
+      setOrderContext({
+        code: bill.order?.code || "",
+        purpose: bill.order?.purpose || "",
+        branchName: typeof bill.branch === "object" ? bill.branch?.name : "",
+        departmentName: typeof bill.department === "object" ? bill.department?.name : "",
+      });
     },
   });
 
-  const loadPageModules = createPreset(inventoryProducts, services, departments, branches);
+  const loadPageModules = createPreset(inventoryProducts, services);
 
   useEffect(() => {
     loadPageModules();
   }, []);
+
+  useEffect(() => {
+    if (currentEntity && !currentEntity.paymentMethod && !editingBill) {
+      setPrefilledValues({
+        paymentMethod: "credit",
+        status: "unpaid",
+        branch: typeof currentEntity.branch === "object" ? currentEntity.branch?._id : currentEntity.branch || "",
+        department: typeof currentEntity.department === "object" ? currentEntity.department?._id : currentEntity.department || "",
+        discount: 0,
+        tax: 0,
+        order: currentEntity._id,
+        items: currentEntity.items.map((item) => ({
+          type: item.type,
+          item: typeof item.item === "object" ? item.item?._id : item.item,
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+      });
+      setOrderContext({
+        code: currentEntity.code || "",
+        purpose: currentEntity.purpose || "",
+        branchName: typeof currentEntity.branch === "object" ? currentEntity.branch?.name : "",
+        departmentName: typeof currentEntity.department === "object" ? currentEntity.department?.name : "",
+      });
+      useBillStore.getState().clearCurrent();
+    } else if (orderId) {
+      const fetchOrder = async () => {
+        try {
+          const config = apiurls.orders.getOne;
+          const order = await apiRequest({
+            ...config,
+            url: config.url(orderId),
+          });
+          setPrefilledValues({
+            paymentMethod: "credit",
+            status: "unpaid",
+            branch: typeof order.branch === "object" ? order.branch?._id : order.branch || "",
+            department: typeof order.department === "object" ? order.department?._id : order.department || "",
+            discount: 0,
+            tax: 0,
+            order: order._id,
+            items: order.items.map((item) => ({
+              type: item.type,
+              item: typeof item.item === "object" ? item.item?._id : item.item,
+              name: item.name,
+              quantity: item.quantity,
+              price: item.price,
+            })),
+          });
+          setOrderContext({
+            code: order.code || "",
+            purpose: order.purpose || "",
+            branchName: typeof order.branch === "object" ? order.branch?.name : "",
+            departmentName: typeof order.department === "object" ? order.department?.name : "",
+          });
+        } catch (err) {
+          console.error("Failed to fetch order for billing prefill", err);
+        }
+      };
+      fetchOrder();
+    }
+  }, [currentEntity, orderId, editingBill]);
 
   const handleSubmit = async (data) => {
     try {
@@ -56,16 +135,28 @@ export default function BillCreation() {
         status: data.status.toUpperCase(),
       };
       
+      const targetOrderId = prefilledValues?.order || orderId;
+      if (targetOrderId) {
+        payload.order = targetOrderId;
+      }
+
       if (editingBill) {
         await bills.crud.edit(editingBill._id, payload);
         navigate(`/${user.role}/bills`);
       } else {
         await bills.create(payload);
+        navigate(`/${user.role}/bill`);
       }
     } catch {
       // errors handled by CRUD layer
     }
   };
+
+  const formValues = editingBill
+    ? getFormDefaultValues(editingBill)
+    : prefilledValues
+    ? prefilledValues
+    : defaultBillValues;
 
   return (
     <div className="space-y-6">
@@ -85,11 +176,10 @@ export default function BillCreation() {
       <BillForm
         inventoryProducts={inventoryProducts.state}
         services={services.state}
-        branches={branches.state}
-        departments={departments.state}
-        defaultValues={getFormDefaultValues(editingBill)}
+        defaultValues={formValues}
         onSubmit={handleSubmit}
         isEdit={!!editingBill}
+        orderContext={orderContext}
         loading={bills.loading?.create || bills.loading?.edit || false}
       />
     </div>

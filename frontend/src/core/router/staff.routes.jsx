@@ -13,6 +13,7 @@ import Profile from "@/pages/profile/profile";
 import Product from "@/pages/product/product";
 import Bill from "@/pages/bill/bill";
 import Dashboard from "@/pages/dashboard/dashboard";
+import Order from "@/pages/order/order";
 
 export const staffRoutes = {
     role: 'staff',
@@ -64,6 +65,14 @@ export const staffRoutes = {
               description: "View and manage your profile details",
               element: <Profile />,
               icon: <IconUser className="h-5 w-5 shrink-0" />,
+            },
+            {
+              path: "/staff/order",
+              label: "Orders",
+              title: "Orders",
+              description: "View and fulfill approved department orders",
+              element: <Order />,
+              icon: <IconClipboardList className="h-5 w-5 shrink-0" />,
             },
     ],
     logout: {

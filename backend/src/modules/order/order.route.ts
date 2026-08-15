@@ -19,7 +19,7 @@ import {
   eraseOrder,
   submitOrder,
   branchApproveOrder,
-  vpApproveOrder,
+  superAdminApproveOrder,
 } from './order.controller.js';
 
 
@@ -74,7 +74,7 @@ router.delete('/:id/erase', eraseOrder);
 
 router.patch('/:id/submit', submitOrder);
 router.patch('/:id/branch-approve', branchApproveOrder);
-router.patch('/:id/vp-approve', vpApproveOrder);
+router.patch('/:id/super-admin-approve', superAdminApproveOrder);
 
 
 export default router;

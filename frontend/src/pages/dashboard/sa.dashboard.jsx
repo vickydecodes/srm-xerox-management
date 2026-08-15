@@ -68,6 +68,20 @@ export default function SaDashboard({ data, refreshData }) {
       icon: <IconReceipt className="w-6 h-6 text-indigo-500" />,
       bgColor: "bg-indigo-500/10",
     },
+    {
+      title: "Credit Approvals",
+      value: stats.pendingCreditBills || 0,
+      description: "Bills awaiting approval",
+      icon: <IconReceipt className="w-6 h-6 text-red-500" />,
+      bgColor: "bg-red-500/10",
+    },
+    {
+      title: "Unbilled Orders",
+      value: stats.unbilledRequisitions || 0,
+      description: "Approved orders to bill",
+      icon: <IconClipboardList className="w-6 h-6 text-violet-500" />,
+      bgColor: "bg-violet-500/10",
+    },
   ];
 
   const quickActions = [
@@ -182,7 +196,7 @@ export default function SaDashboard({ data, refreshData }) {
       </Card>
 
       {/* KPI Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
         {kpis.map((card, i) => (
           <Card key={i} className="border border-border shadow-sm bg-card hover:shadow-md transition-shadow duration-300">
             <CardContent className="p-6 flex items-center justify-between">

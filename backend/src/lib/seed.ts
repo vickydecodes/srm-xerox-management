@@ -325,7 +325,6 @@ async function seedUsers(branches: any[], departments: any[]) {
         phone: randomPhone(),
         password: defaultPassword,
         role: 'shop_admin',
-        branch: branch._id,
       });
       await user.save();
       users.push(user);
@@ -340,7 +339,6 @@ async function seedUsers(branches: any[], departments: any[]) {
         phone: randomPhone(),
         password: defaultPassword,
         role: 'staff',
-        branch: branch._id,
       });
       await user.save();
       users.push(user);
@@ -368,6 +366,7 @@ async function seedUsers(branches: any[], departments: any[]) {
       password: defaultPassword,
       role: 'department_admin',
       branch: dept.branch,
+      department: dept._id,
     });
     await user.save();
     users.push(user);

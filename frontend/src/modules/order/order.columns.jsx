@@ -11,6 +11,15 @@ import { MoreHorizontal } from "lucide-react"
 import { Hint } from "@/core/utils/tooltip.util"
 import formatdate from "@/core/utils/formatdate.util"
 
+import { useAuth } from "@/core/contexts/auth.context";
+import {
+  IconBuildingCommunity,
+  IconUsers,
+  IconReceipt,
+  IconCoin,
+  IconClipboardList,
+} from "@tabler/icons-react";
+
 const statusVariant = {
   draft: 'outline',
   pending: 'secondary',
@@ -20,6 +29,10 @@ const statusVariant = {
 };
 
 export const useOrderColumns = (orders) => {
+
+  const { user } = useAuth();
+
+
   return [
     {
       accessorKey: 'code',
@@ -63,13 +76,35 @@ export const useOrderColumns = (orders) => {
       cell: ({ row }) => {
         const order = row.original;
         const isDeleted = Boolean(order?.deleted || order?.deletedAt);
-        const canEdit = !isDeleted && order.status === 'draft';
+
+        const isSuperAdmin = user?.role === "super_admin";
+        const isDeptAdmin = user?.role === "department_admin";
+        const isBranchAdmin = user?.role === "branch_admin";
+        const isShopOrStaff = user?.role === "shop_admin" || user?.role === "staff";
+
+        const branchStatus = order.branchAdminApproval?.status || "pending";
+        const superAdminStatus = order.superAdminApproval?.status || "pending";
+
+        // Action permissions
+        const canSubmit = !isDeleted && order.status === "draft" && (isSuperAdmin || isDeptAdmin);
+        const canEdit = !isDeleted && order.status === "draft" && (isSuperAdmin || isDeptAdmin);
         const canBranchApprove =
-          !isDeleted && order.status === 'pending' && order.branchAdminApproval?.status === 'pending';
-        const canVpApprove =
           !isDeleted &&
-          order.branchAdminApproval?.status === 'approved' &&
-          order.vpApproval?.status === 'pending';
+          order.status !== "draft" &&
+          order.status !== "completed" &&
+          (isSuperAdmin || isBranchAdmin);
+        const canSuperAdminApprove =
+          !isDeleted &&
+          order.status !== "draft" &&
+          order.status !== "completed" &&
+          branchStatus === "approved" &&
+          isSuperAdmin;
+
+        // Shop Admin and Staff (and Super Admin) can convert to bill if approved
+        const canConvertToBill =
+          !isDeleted &&
+          (order.status === "in_progress" || order.status === "pending" || order.status === "approved") &&
+          (isSuperAdmin || isShopOrStaff);
 
         return (
           <DropdownMenu>
@@ -83,6 +118,12 @@ export const useOrderColumns = (orders) => {
                 View
               </DropdownMenuItem>
 
+              {canSubmit && (
+                <DropdownMenuItem onClick={() => orders.submit(order._id)}>
+                  Submit Order
+                </DropdownMenuItem>
+              )}
+
               {canEdit && (
                 <DropdownMenuItem onClick={() => orders.openEdit(order)}>
                   Edit
@@ -90,14 +131,20 @@ export const useOrderColumns = (orders) => {
               )}
 
               {canBranchApprove && (
-                <DropdownMenuItem onClick={() => orders.openBranchAdminApproval(order)}>
+                <DropdownMenuItem onClick={() => orders.openApprovalDialog(order, "branch")}>
                   Branch Admin Approval
                 </DropdownMenuItem>
               )}
 
-              {canVpApprove && (
-                <DropdownMenuItem onClick={() => orders.openVpApproval(order)}>
-                  VP Approval
+              {canSuperAdminApprove && (
+                <DropdownMenuItem onClick={() => orders.openApprovalDialog(order, "super_admin")}>
+                  Super Admin Approval
+                </DropdownMenuItem>
+              )}
+
+              {canConvertToBill && (
+                <DropdownMenuItem onClick={() => orders.convertToBill(order)}>
+                  Convert to Bill
                 </DropdownMenuItem>
               )}
 

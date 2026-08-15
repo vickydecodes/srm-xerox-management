@@ -6,15 +6,6 @@ const approvalSchema = z.object({
 });
 
 export const createOrderSchema = z.object({
-  department: z
-    .string()
-    .trim()
-    .min(1, 'Department is required'),
-
-  branch: z
-    .string()
-    .trim()
-    .min(1, 'Branch is required'),
 
   purpose: z
     .string()
@@ -70,7 +61,7 @@ export const createOrderSchema = z.object({
     .default([]),
 
   branchAdminApproval: approvalSchema.optional(),
-  vpApproval: approvalSchema.optional(),
+  superAdminApproval: approvalSchema.optional(),
 
   status: z
     .enum([

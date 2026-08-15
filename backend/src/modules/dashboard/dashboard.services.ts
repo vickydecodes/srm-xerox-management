@@ -6,6 +6,7 @@ import Product from '@db/models/product.model.ts';
 import Service from '@db/models/service.model.ts';
 import Bill from '@db/models/bill.model.ts';
 import InventoryProduct from '@db/models/inventory-product.model.ts';
+import Order from '@db/models/order.model.ts';
 
 export const getSuperAdminDashboard = async () => {
   const [
@@ -20,6 +21,8 @@ export const getSuperAdminDashboard = async () => {
     paymentMethods,
     branchRevenue,
     recentBills,
+    pendingCreditBills,
+    unbilledRequisitions,
   ] = await Promise.all([
     Branch.countDocuments({ active: true, deleted: false }),
     Department.countDocuments({ active: true, deleted: false }),
@@ -101,7 +104,15 @@ export const getSuperAdminDashboard = async () => {
       .populate('department', 'name')
       .populate('createdBy', 'name')
       .lean(),
+
+    // Pending credit bills needing Super Admin approval
+    Bill.countDocuments({ paymentMethod: 'CREDIT', approvalStatus: 'pending', active: true, deleted: false }),
+
+    // Unbilled approved requisitions
+    Order.countDocuments({ status: 'in_progress', deleted: false }),
   ]);
+
+
 
   return {
     stats: {
@@ -112,6 +123,8 @@ export const getSuperAdminDashboard = async () => {
       services: serviceCount,
       totalBills: billsCount,
       totalRevenue: totalRevenueResult[0]?.total ?? 0,
+      pendingCreditBills,
+      unbilledRequisitions,
     },
     monthlyRevenue: monthlyRevenue.map((item) => ({
       year: item._id.year,

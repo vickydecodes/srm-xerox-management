@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useFieldArray, useWatch } from "react-hook-form";
+import { useAuth } from "@/core/contexts/auth.context";
 import {
   FormControl,
   FormField,
@@ -39,6 +40,8 @@ export default function OrderForm({
   BillingItemSearchCombobox, 
   searchProducts 
 }) {
+  const { user } = useAuth();
+  const isSuperAdmin = user?.role === "super_admin";
   const selectedBranch = useWatch({ control: form.control, name: "branch" });
 
   const filteredDepartments = selectedBranch
@@ -114,67 +117,7 @@ export default function OrderForm({
 
   return (
     <>
-      {/* Branch */}
-      <FormField
-        control={form.control}
-        name="branch"
-        render={({ field: f }) => (
-          <FormItem>
-            <FormLabel>Branch</FormLabel>
-            <Select onValueChange={f.onChange} value={f.value}>
-              <FormControl>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a branch" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                {branches.map((branch) => (
-                  <SelectItem key={branch._id} value={branch._id}>
-                    {branch.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
 
-      {/* Department */}
-      <FormField
-        control={form.control}
-        name="department"
-        render={({ field: f }) => (
-          <FormItem>
-            <FormLabel>Department</FormLabel>
-            <Select
-              onValueChange={f.onChange}
-              value={f.value}
-              disabled={!selectedBranch}
-            >
-              <FormControl>
-                <SelectTrigger className="w-full">
-                  <SelectValue
-                    placeholder={
-                      selectedBranch
-                        ? "Select a department"
-                        : "Select a branch first"
-                    }
-                  />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                {filteredDepartments.map((dept) => (
-                  <SelectItem key={dept._id} value={dept._id}>
-                    {dept.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
 
       {/* Purpose */}
       <FormField

@@ -4,6 +4,7 @@ import {
     IconLogout2,
     IconUser,
     IconLayoutDashboard,
+    IconClipboardList,
 } from '@tabler/icons-react';
 
 import Department from "@/pages/department/department";
@@ -11,6 +12,7 @@ import DepartmentAdmin from "@/pages/department-admin/department-admin";
 import ChangePassword from "@/pages/changepassword/changepassword";
 import Profile from "@/pages/profile/profile";
 import Dashboard from "@/pages/dashboard/dashboard";
+import Order from "@/pages/order/order";
 
 
 export const branchAdminRoutes = {
@@ -55,6 +57,14 @@ export const branchAdminRoutes = {
               description: "View and manage your profile details",
               element: <Profile />,
               icon: <IconUser className="h-5 w-5 shrink-0" />,
+            },
+            {
+              path: "/branch_admin/order",
+              label: "Orders",
+              title: "Requisition Orders",
+              description: "Review and approve department orders",
+              element: <Order />,
+              icon: <IconClipboardList className="h-5 w-5 shrink-0" />,
             },
     ],
     logout: {

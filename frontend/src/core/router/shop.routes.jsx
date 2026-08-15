@@ -5,6 +5,7 @@ import {
     IconKey,
     IconUser,
     IconLayoutDashboard,
+    IconClipboardList,
 } from '@tabler/icons-react';
 
 import Bill from "@/pages/bill/bill";
@@ -12,6 +13,7 @@ import BillCreation from '@/pages/bill-creation/bill-creation';
 import ChangePassword from "@/pages/changepassword/changepassword";
 import Profile from "@/pages/profile/profile";
 import Dashboard from "@/pages/dashboard/dashboard";
+import Order from "@/pages/order/order";
 
 export const shopAdminRoutes = {
     role: 'shop_admin',
@@ -55,6 +57,14 @@ export const shopAdminRoutes = {
               description: "View and manage your profile details",
               element: <Profile />,
               icon: <IconUser className="h-5 w-5 shrink-0" />,
+            },
+            {
+              path: "/shop_admin/order",
+              label: "Orders",
+              title: "Requisition Orders",
+              description: "View and fulfill approved department orders",
+              element: <Order />,
+              icon: <IconClipboardList className="h-5 w-5 shrink-0" />,
             },
     ],
     logout: {

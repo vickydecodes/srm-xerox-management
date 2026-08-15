@@ -4,26 +4,27 @@ import { modals } from "./order.modals";
 import { useOrderStore } from "./order.store";
 import { useUI } from "@/core/contexts/ui.context";
 import { apiurls } from "@/core/api/api.urls";
+import { apiRequest } from "@/core/api/api.request";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import { createEntityQueryActions } from "@/core/utils/entity.util";
+import { useAuth } from "@/core/contexts/auth.context";
+import { useBillStore } from "@/modules/bill/bill.store";
 
 export const useOrderModule = (exported) => {
   const { openModal } = useUI();
-
-  const list = useOrderStore((s) => s.list);
-  const loading = useOrderStore((s) => s.loading);
-  const pagination = useOrderStore((s) => s.pagination);
-  const current = useOrderStore((s) => s.current);
-
+  const {role} = useAuth();
   const store = useOrderStore();
-  const { set, setCurrent, setQuery } = store;
+  const navigate = useNavigate();
 
-  const { orders } = apiurls;
+  const { setQuery } = store;
+  const { orders: orderUrls } = apiurls;
 
   const crud = createCrud({
-    entity: 'Order',
-    urls: orders,
+    entity: "Order",
+    urls: orderUrls,
     store: store,
-    getRole: () => 'super_admin',
+    getRole: () => "super_admin",
   });
 
   const openView = (order) => {
@@ -32,59 +33,55 @@ export const useOrderModule = (exported) => {
 
   const openCreate = () => {
     return openModal(modals.create, {
-      submitFn: (formData) => crud.create(formData),
+      submitFn: async (data) => {
+        const created = await crud.create(data);
+        if (created) {
+          setTimeout(() => {
+            openView(created);
+          }, 100);
+        }
+        return created;
+      },
       exported,
     });
   };
 
   const openEdit = (order) => {
-    setCurrent(order);
     return openModal(modals.edit, {
       order,
-      submitFn: (formData) => crud.edit(order._id, formData),
+      submitFn: (data) => crud.edit(order._id, data),
       exported,
     });
   };
 
-  const openDelete = (order) => {
+  const openDelete = (id, code) => {
     return openModal(modals.delete, {
-      id: order._id,
-      code: order.code,
+      id,
+      name: code || "Draft",
       submitFn: (id) => crud.delete(id),
       exported,
     });
   };
 
-  const openErase = (id) => {
-    return openModal(modals.erase, {
-      id,
-      submitFn: (id) => crud.erase(id),
-      exported,
-    });
-  };
+  const submit = (id) => crud.submit(id);
 
-  const openRetrieve = (id) => {
-    return openModal(modals.retrieve, {
-      id,
-      submitFn: (id) => crud.retrieve(id),
-      exported,
-    });
-  };
-
-  const openBranchAdminApproval = (order) => {
-    return openModal(modals.branchAdminApproval, {
+  const openApprovalDialog = (order, roleType) => {
+    const isBranch = roleType === "branch";
+    const modalKey = isBranch ? "branchAdminApproval" : "superAdminApproval";
+    return openModal(modals[modalKey], {
       id: order._id,
-      submitFn: (id, data) => crud.branchAdminApprove(id, data),
+      submitFn: (id, data) =>
+        crud[isBranch ? "branchApprove" : "superAdminApprove"](id, {
+          status: data.status,
+          remarks: data.remarks,
+        }),
       exported,
     });
   };
 
-  const openVpApproval = (order) => {
-    return openModal(modals.vpApproval, {
-      id: order._id,
-      submitFn: (id, data) => crud.vpApprove(id, data),
-      exported,
-    });
+  const convertToBill = (order) => {
+    useBillStore.getState().setCurrent(order);
+    navigate(`/${role}/bill-creation`);
   };
 
   const { fetch, reset, sortByColumn, presets } = createEntityQueryActions({
@@ -95,28 +92,25 @@ export const useOrderModule = (exported) => {
 
   return {
     get state() {
-      return list;
+      return useOrderStore.getState().list;
     },
     get loading() {
-      return loading;
+      return useOrderStore.getState().loading;
     },
     get pagination() {
-      return pagination;
+      return useOrderStore.getState().pagination;
     },
     get current() {
-      return current;
+      return useOrderStore.getState().current;
     },
-    set,
-    setCurrent,
     useOrderColumns,
     openView,
     openCreate,
     openEdit,
     openDelete,
-    openErase,
-    openRetrieve,
-    openBranchAdminApproval,
-    openVpApproval,
+    submit,
+    openApprovalDialog,
+    convertToBill,
     crud,
     fetch,
     reset,

@@ -242,7 +242,7 @@ export default function DataTable({
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          {create.provision && create.permission && (
+          {create && create.provision && create.permission && (
             <Button className="flex items-center gap-2" onClick={create.action}>
               <PlusCircle className="w-4 h-4" />
               {create.label}
