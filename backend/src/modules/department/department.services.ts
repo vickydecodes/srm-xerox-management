@@ -12,8 +12,7 @@ import {
 import { enhanceDepartment } from './department.util.ts';
 import { departmentFilterConfig } from './department.filterconfig.ts';
 import Bill from '@db/models/bill.model.ts';
-import CreditPayment from '@db/models/creditpayment.model.ts';
-
+import CreditPayment from '@db/models/credit.model.ts';
 
 export const createDepartment = async (data: CreateDepartmentPayload) => {
   const department = await new Department(data).save();
@@ -86,8 +85,6 @@ export const setDepartmentActiveStatus = async (id: string, active: boolean) => 
   );
 };
 
-
-
 export const clearCredit = async (
   id: string,
   userId: string,
@@ -125,13 +122,26 @@ export const clearCredit = async (
 
   department.outstandingCredit = Math.max(0, department.outstandingCredit - data.amount);
 
+  const departmentId = toObjectId(id);
+  if (!departmentId) throw new Error('Invalid department id');
+
+  const billObjectIds = data.billIds.map((bid) => {
+    const oid = toObjectId(bid);
+    if (!oid) throw new Error(`Invalid bill id: ${bid}`);
+    return oid;
+  });
+
+  const paidByObjectId = toObjectId(userId);
+  if (!paidByObjectId) throw new Error('Invalid user id');
+
   await CreditPayment.create({
-    department: toObjectId(id),
-    bills: data.billIds.map((bid) => toObjectId(bid)),
-    amount: data.amount,
-    paymentMethod: data.paymentMethod,
-    paidBy: toObjectId(userId),
-    remarks: data.remarks || '',
+    department: departmentId,
+    bills: billObjectIds,
+    amount: data.amount, // required — make sure this is present
+    paymentMethod: data.paymentMethod, // required — must be 'CASH' | 'UPI', not a plain string
+    paidBy: paidByObjectId,
+    date: new Date(), // optional (has default), fine to omit
+    remarks: data.remarks, // optional
   });
 
   await department.save();

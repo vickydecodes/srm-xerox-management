@@ -22,7 +22,6 @@ const controllers = {
       return sendResponse.unauthorized?.(res) ?? res.status(401).json({ message: 'Unauthorized' });
     }
 
-    // Use the correct property from your AuthUser type (most common: id or _id)
     const createdBy = String(req.user.id ?? (req.user as any)._id);
 
     const bill = await service.createBill(req.body, createdBy);
@@ -34,8 +33,6 @@ const controllers = {
     const result = await service.getAllBills(queries);
     return sendResponse.paginated(res, 'bill', result);
   },
-
-  // bill.controller.ts — add to controllers object
 
   getBillsByDepartment: async (req: Request<{ id: string }>, res: Response) => {
     const { id } = req.params;
@@ -101,6 +98,7 @@ const controllers = {
 export const {
   createBill,
   getAllBills,
+  getBillsByDepartment,
   getBillById,
   updateBill,
   deleteBill,

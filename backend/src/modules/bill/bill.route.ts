@@ -15,6 +15,7 @@ import {
   eraseBill,
   approveCreditBill,
   rejectCreditBill,
+  getBillsByDepartment,
 } from './bill.controller.js';
 
 const router = Router();

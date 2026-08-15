@@ -9,7 +9,6 @@ export interface IDepartment extends Document {
 
   creditLimit: number;
   outstandingCredit: number;
-  creditPayments: ICreditPayment[];
 
   active: boolean;
   deleted: boolean;

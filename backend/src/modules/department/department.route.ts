@@ -6,6 +6,7 @@ import {
   createDepartmentSchema,
   updateDepartmentSchema,
   setDepartmentActiveStatusSchema,
+  clearCreditSchema,
 } from './department.validator.js';
 
 import {
