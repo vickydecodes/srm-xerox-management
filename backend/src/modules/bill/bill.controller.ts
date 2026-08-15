@@ -35,6 +35,15 @@ const controllers = {
     return sendResponse.paginated(res, 'bill', result);
   },
 
+  // bill.controller.ts — add to controllers object
+
+  getBillsByDepartment: async (req: Request<{ id: string }>, res: Response) => {
+    const { id } = req.params;
+    const queries = buildQuery(req);
+    const result = await service.getBillsByDepartment(id, queries);
+    return sendResponse.paginated(res, 'bill', result);
+  },
+
   getBillById: async (req: Request<{ id: string }>, res: Response) => {
     const { id } = req.params;
     const bill = await service.getBillById(id);
@@ -60,7 +69,10 @@ const controllers = {
     return sendResponse.deleted(res, 'bill');
   },
 
-  approveCreditBill: async (req: AccessRequest<{ id: string }, {}, { remarks?: string }>, res: Response) => {
+  approveCreditBill: async (
+    req: AccessRequest<{ id: string }, {}, { remarks?: string }>,
+    res: Response
+  ) => {
     if (!req.user) {
       return sendResponse.unauthorized?.(res) ?? res.status(401).json({ message: 'Unauthorized' });
     }
@@ -71,7 +83,10 @@ const controllers = {
     return sendResponse.updated(res, 'bill', bill);
   },
 
-  rejectCreditBill: async (req: AccessRequest<{ id: string }, {}, { remarks?: string }>, res: Response) => {
+  rejectCreditBill: async (
+    req: AccessRequest<{ id: string }, {}, { remarks?: string }>,
+    res: Response
+  ) => {
     if (!req.user) {
       return sendResponse.unauthorized?.(res) ?? res.status(401).json({ message: 'Unauthorized' });
     }

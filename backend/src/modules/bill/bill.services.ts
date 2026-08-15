@@ -211,6 +211,18 @@ export const getBillById = async (id: string) => {
   return enhanceBill(bill);
 };
 
+
+export const getBillsByDepartment = async (
+  departmentId: string,
+  queries: Record<string, unknown>,
+  role?: Role
+) => {
+  return dynamicFilter(Bill, billFilterConfig, {...queries, full: true, status: 'UNPAID'}, {
+    visibility: getVisibility(role),
+    rawQuery: { department: departmentId },
+  });
+};
+
 export const updateBill = async (id: string, data: UpdateBillPayload) => {
   const oldBill = await Bill.findById(id);
   if (!oldBill) return null;

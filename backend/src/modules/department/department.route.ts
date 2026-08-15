@@ -68,6 +68,9 @@ router.put('/:id/retrieve', retrieveDepartment);
 
 router.delete('/:id/erase', eraseDepartment);
 
-router.post('/:id/clear-credit', clearCredit);
-
+router.post(
+  '/:id/clear-credit',
+  zodValidate(clearCreditSchema),
+  clearCredit
+);
 export default router;

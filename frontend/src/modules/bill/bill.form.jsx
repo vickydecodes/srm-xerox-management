@@ -155,9 +155,30 @@ export function BillForm({
                 Billing Items
               </CardTitle>
             </CardHeader>
-            <CardContent className="pt-6 space-y-4">
+            <CardContent className="space-y-4">
               {/* POS Item Search and Add Combobox */}
-              <div className="space-y-2 mb-6">
+              {isCredit && orderContext && (
+                <div className="bg-muted/40 border rounded-lg p-4 space-y-2 mt-4 text-sm animate-in fade-in-50 slide-in-from-top-2 duration-200">
+                  <div className="font-semibold text-xs text-muted-foreground uppercase tracking-wider">
+                    Associated Entity Information
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-muted-foreground block text-[10px] uppercase font-bold">Branch</span>
+                      <span className="font-medium text-foreground">
+                        {orderContext.branchName || "-"}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block text-[10px] uppercase font-bold">Department</span>
+                      <span className="font-medium text-foreground">
+                        {orderContext.departmentName || "-"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {!isCredit && !orderContext && (<div className="space-y-2 mb-6">
                 <Label className="text-sm font-semibold">
                   Search and Add Products / Services
                 </Label>
@@ -192,7 +213,7 @@ export function BillForm({
                   placeholder="Search by product or service name..."
                   searchProducts={searchProducts} // ← ADD THIS LINE
                 />
-              </div>
+              </div>)}
 
               {fields.length > 0 && (
                 <>
@@ -342,6 +363,7 @@ export function BillForm({
                             <RadioGroupItem
                               id={`payment-${method.value}`}
                               value={method.value}
+                              disabled={!!orderContext}
                               className="sr-only"
                             />
                             {getPaymentIcon(method.value)}
@@ -357,7 +379,7 @@ export function BillForm({
                 )}
               />
 
-              <FormField
+           {!isCredit && !orderContext &&  ( <FormField
                 control={control}
                 name="status"
                 render={({ field }) => (
@@ -387,29 +409,9 @@ export function BillForm({
                     </FormControl>
                   </FormItem>
                 )}
-              />
+              />)}
 
-              {isCredit && orderContext && (
-                <div className="bg-muted/40 border rounded-lg p-4 space-y-2 mt-4 text-sm animate-in fade-in-50 slide-in-from-top-2 duration-200">
-                  <div className="font-semibold text-xs text-muted-foreground uppercase tracking-wider">
-                    Associated Entity Information
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <span className="text-muted-foreground block text-[10px] uppercase font-bold">Branch</span>
-                      <span className="font-medium text-foreground">
-                        {orderContext.branchName || "-"}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground block text-[10px] uppercase font-bold">Department</span>
-                      <span className="font-medium text-foreground">
-                        {orderContext.departmentName || "-"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
+              
             </CardContent>
           </Card>
         </div>
