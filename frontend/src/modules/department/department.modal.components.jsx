@@ -1,14 +1,25 @@
 import { Button } from "@/components/ui/button";
-import { DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useAsync } from "@/core/hooks/useAsync";
 import { useClearError } from "@/core/hooks/useClearError";
 import { useSubmit } from "@/core/hooks/useSubmit";
 import { useForm } from "react-hook-form";
-import { zodResolver } from '@hookform/resolvers/zod';
-import { departmentCreateSchema, departmentEditSchema } from "./department.schema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  departmentCreateSchema,
+  departmentEditSchema,
+} from "./department.schema";
 import DepartmentForm from "./department.form";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { useLoader } from "@/core/hooks/useLoader";
 import React, { useEffect } from "react";
@@ -33,25 +44,31 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-
-export const Create = ({ submitFn = () => { }, closeModal = () => { }, data, exported } = {}) => {
+export const Create = ({
+  submitFn = () => {},
+  closeModal = () => {},
+  data,
+  exported,
+} = {}) => {
   const { createPreset } = useLoader();
-
 
   const form = useForm({
     resolver: zodResolver(data ? departmentEditSchema : departmentCreateSchema),
-    defaultValues: data ? {
-      code: data.code,
-      name: data.name,
-      branch: typeof data.branch === 'object' ? data.branch?._id : data.branch,
-    } : {
-      code: '',
-      name: '',
-      branch: '',
-    },
+    defaultValues: data
+      ? {
+          code: data.code,
+          name: data.name,
+          branch:
+            typeof data.branch === "object" ? data.branch?._id : data.branch,
+        }
+      : {
+          code: "",
+          name: "",
+          branch: "",
+        },
   });
 
-  const modal = createPreset(exported.branches)
+  const modal = createPreset(exported.branches);
 
   const { run, loading, ErrorAlert, clearError } = useAsync(submitFn);
 
@@ -65,24 +82,37 @@ export const Create = ({ submitFn = () => { }, closeModal = () => { }, data, exp
 
   useEffect(() => {
     modal();
-  }, [])
+  }, []);
 
   return (
     <DialogContent className="w-xl">
       <DialogHeader>
-        <DialogTitle>{data ? "Edit Department" : "Create Department"}</DialogTitle>
+        <DialogTitle>
+          {data ? "Edit Department" : "Create Department"}
+        </DialogTitle>
         <DialogDescription>Enter details of Department</DialogDescription>
       </DialogHeader>
 
       <Form {...form}>
-        <form className="grid gap-4 py-2" onSubmit={form.handleSubmit(onSubmit)}>
-          <DepartmentForm form={form} isEdit={data} branches={exported.branches.state} />
+        <form
+          className="grid gap-4 py-2"
+          onSubmit={form.handleSubmit(onSubmit)}
+        >
+          <DepartmentForm
+            form={form}
+            isEdit={data}
+            branches={exported.branches.state}
+          />
           {ErrorAlert}
           <DialogFooter>
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button type="submit" loading={loading} loadingText="Saving the department..">
+            <Button
+              type="submit"
+              loading={loading}
+              loadingText="Saving the department.."
+            >
               Save
             </Button>
           </DialogFooter>
@@ -92,8 +122,195 @@ export const Create = ({ submitFn = () => { }, closeModal = () => { }, data, exp
   );
 };
 
+export const ClearCreditByBill = ({ department, exported, closeModal }) => {
+  const [bills, setBills] = React.useState([]);
+  const [selectedBillIds, setSelectedBillIds] = React.useState([]);
+  const [fetching, setFetching] = React.useState(true);
+  const [paymentMethod, setPaymentMethod] = React.useState("CASH");
+  const [remarks, setRemarks] = React.useState("");
+  const [loading, setLoading] = React.useState(false);
 
-export const Delete = ({ id, name, submitFn = () => { }, closeModal = () => { } }) => {
+  useEffect(() => {
+    const fetchBills = async () => {
+      setFetching(true);
+      try {
+        const config = apiurls.bills.getByDepartment;
+        const res = await apiRequest({
+          ...config,
+          url: config.url(department._id),
+        });
+        setBills(res?.data || []);
+      } catch (err) {
+        toast.error(err.message || "Failed to load department bills");
+      } finally {
+        setFetching(false);
+      }
+    };
+
+    if (department?._id) fetchBills();
+  }, [department]);
+
+  const toggleBill = (billId) => {
+    setSelectedBillIds((prev) =>
+      prev.includes(billId)
+        ? prev.filter((id) => id !== billId)
+        : [...prev, billId],
+    );
+  };
+
+  const selectedBills = bills.filter((b) => selectedBillIds.includes(b._id));
+  const totalAmount = selectedBills.reduce(
+    (sum, b) => sum + Number(b.total || 0),
+    0,
+  );
+
+  const handleClearCredit = async (e) => {
+    e.preventDefault();
+    if (selectedBillIds.length === 0) {
+      toast.error("Please select at least one bill");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const config = apiurls.departments.clearCredit;
+      const updatedDept = await apiRequest({
+        ...config,
+        url: config.url(department._id),
+        data: {
+          bills: selectedBillIds,
+          amount: totalAmount,
+          paymentMethod,
+          remarks,
+        },
+      });
+
+      if (exported && exported.departments) {
+        exported.departments.update(department._id, updatedDept);
+      }
+      toast.success(`Credit cleared for ${selectedBillIds.length} bill(s)`);
+      closeModal();
+    } catch (err) {
+      toast.error(err.message || "Failed to clear credit");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+      <DialogHeader>
+        <DialogTitle>Clear Credit: {department?.name}</DialogTitle>
+        <DialogDescription>
+          Select one or more bills raised by this department and clear their
+          outstanding credit.
+        </DialogDescription>
+      </DialogHeader>
+
+      <form onSubmit={handleClearCredit} className="space-y-4 my-2">
+        <div className="space-y-1.5">
+          <Label className="text-xs">Select Bills</Label>
+
+          {fetching ? (
+            <p className="text-sm text-muted-foreground">Loading bills...</p>
+          ) : bills.length === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              No bills found for this department.
+            </p>
+          ) : (
+            <div className="border rounded-lg divide-y max-h-60 overflow-y-auto">
+              {bills.map((bill) => (
+                <label
+                  key={bill._id}
+                  className="flex items-center justify-between gap-3 px-3 py-2 text-sm cursor-pointer hover:bg-muted/40"
+                >
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={selectedBillIds.includes(bill._id)}
+                      onCheckedChange={() => toggleBill(bill._id)}
+                    />
+                    <span className="font-mono">{bill.code}</span>
+                    <Badge variant="outline" className="text-[10px]">
+                      {bill.status}
+                    </Badge>
+                  </div>
+                  <span className="font-medium">
+                    {Number(bill.total || 0).toLocaleString()} INR
+                  </span>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {selectedBillIds.length > 0 && (
+          <div className="border rounded-lg p-3 bg-muted/30 text-sm space-y-1">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Bills Selected</span>
+              <span className="font-semibold">{selectedBillIds.length}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Total Amount</span>
+              <span className="font-semibold">
+                {totalAmount.toLocaleString()} INR
+              </span>
+            </div>
+          </div>
+        )}
+
+        <div className="space-y-1.5">
+          <Label htmlFor="clear-payment-method" className="text-xs">
+            Payment Method
+          </Label>
+          <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+            <SelectTrigger id="clear-payment-method">
+              <SelectValue placeholder="Select Method" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="CASH">CASH</SelectItem>
+              <SelectItem value="UPI">UPI</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="clear-remarks" className="text-xs">
+            Remarks (Optional)
+          </Label>
+          <Input
+            id="clear-remarks"
+            placeholder="E.g., Bulk clearing for March bills"
+            value={remarks}
+            onChange={(e) => setRemarks(e.target.value)}
+          />
+        </div>
+
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button type="button" variant="outline">
+              Cancel
+            </Button>
+          </DialogClose>
+          <Button
+            type="submit"
+            disabled={loading || selectedBillIds.length === 0}
+          >
+            {loading
+              ? "Clearing..."
+              : `Clear Credit (${selectedBillIds.length})`}
+          </Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
+  );
+};
+
+export const Delete = ({
+  id,
+  name,
+  submitFn = () => {},
+  closeModal = () => {},
+}) => {
   const { run, loading, ErrorAlert } = useAsync(submitFn);
 
   const handleDelete = async () => {
@@ -104,9 +321,12 @@ export const Delete = ({ id, name, submitFn = () => { }, closeModal = () => { } 
   return (
     <DialogContent className="sm:max-w-[425px]">
       <DialogHeader>
-        <DialogTitle>Are you sure? {id} {name}</DialogTitle>
+        <DialogTitle>
+          Are you sure? {id} {name}
+        </DialogTitle>
         <DialogDescription>
-          This will be stored as deleted, this department record can be retrieved by Admin.
+          This will be stored as deleted, this department record can be
+          retrieved by Admin.
         </DialogDescription>
       </DialogHeader>
 
@@ -124,15 +344,13 @@ export const Delete = ({ id, name, submitFn = () => { }, closeModal = () => { } 
   );
 };
 
-
-
 export const Erase = ({ id, submitFn, closeModal }) => (
   <DialogContent className="sm:max-w-[425px] pe-10">
     <DialogHeader>
       <DialogTitle>Are you sure?</DialogTitle>
       <DialogDescription>
-        <strong>Note:</strong> This operation is Permenent Delete. All the data related to this department
-        will be lost.
+        <strong>Note:</strong> This operation is Permenent Delete. All the data
+        related to this department will be lost.
       </DialogDescription>
     </DialogHeader>
 
@@ -157,8 +375,8 @@ export const Retrieve = ({ id, submitFn, closeModal }) => (
     <DialogHeader>
       <DialogTitle>Are you sure?</DialogTitle>
       <DialogDescription>
-        <strong>Note:</strong> this operation is retrieve All the data related to this department will be
-        back.
+        <strong>Note:</strong> this operation is retrieve All the data related
+        to this department will be back.
       </DialogDescription>
     </DialogHeader>
 
@@ -185,7 +403,7 @@ export const ActiveStatus = ({
   closeModal,
   exported,
 }) => {
-  const actionLabel = status ? 'Deactivate' : 'Activate';
+  const actionLabel = status ? "Deactivate" : "Activate";
 
   const onConfirm = async () => {
     await submitFn(id, {
@@ -224,11 +442,11 @@ export const ActiveStatus = ({
         </DialogClose>
 
         <Button
-          variant={status ? 'destructive' : 'default'}
+          variant={status ? "destructive" : "default"}
           onClick={onConfirm}
           disabled={exported?.loading?.edit}
         >
-          {exported?.loading?.edit ? 'Updating...' : actionLabel}
+          {exported?.loading?.edit ? "Updating..." : actionLabel}
         </Button>
       </DialogFooter>
     </DialogContent>
@@ -281,7 +499,9 @@ export const View = ({ department } = {}) => {
 };
 
 export const ManageCredit = ({ department, exported, closeModal }) => {
-  const [amount, setAmount] = React.useState(department?.outstandingCredit || 0);
+  const [amount, setAmount] = React.useState(
+    department?.outstandingCredit || 0,
+  );
   const [paymentMethod, setPaymentMethod] = React.useState("CASH");
   const [remarks, setRemarks] = React.useState("");
   const [loading, setLoading] = React.useState(false);
@@ -325,17 +545,21 @@ export const ManageCredit = ({ department, exported, closeModal }) => {
   };
 
   const payments = department?.creditPayments || [];
-  const remainingCredit = (department?.creditLimit || 0) - (department?.outstandingCredit || 0);
+  const remainingCredit =
+    (department?.creditLimit || 0) - (department?.outstandingCredit || 0);
 
   return (
     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle className="flex justify-between items-center pr-6">
           <span>Manage Credit: {department?.name}</span>
-          <span className="font-mono text-xs text-muted-foreground">{department?.code}</span>
+          <span className="font-mono text-xs text-muted-foreground">
+            {department?.code}
+          </span>
         </DialogTitle>
         <DialogDescription>
-          View department credit balance, history, and clear outstanding amounts.
+          View department credit balance, history, and clear outstanding
+          amounts.
         </DialogDescription>
       </DialogHeader>
 
@@ -343,17 +567,25 @@ export const ManageCredit = ({ department, exported, closeModal }) => {
         {/* Credit Summary Cards */}
         <div className="grid grid-cols-3 gap-4">
           <div className="border rounded-lg p-3 text-center bg-muted/20">
-            <span className="text-xs text-muted-foreground block uppercase font-semibold">Credit Limit</span>
-            <span className="text-lg font-bold">{(department?.creditLimit || 0).toLocaleString()} INR</span>
+            <span className="text-xs text-muted-foreground block uppercase font-semibold">
+              Credit Limit
+            </span>
+            <span className="text-lg font-bold">
+              {(department?.creditLimit || 0).toLocaleString()} INR
+            </span>
           </div>
           <div className="border rounded-lg p-3 text-center bg-amber-50/55 dark:bg-amber-950/10 border-amber-100">
-            <span className="text-xs text-amber-700 dark:text-amber-400 block uppercase font-semibold">Outstanding</span>
+            <span className="text-xs text-amber-700 dark:text-amber-400 block uppercase font-semibold">
+              Outstanding
+            </span>
             <span className="text-lg font-bold text-amber-700 dark:text-amber-400">
               {(department?.outstandingCredit || 0).toLocaleString()} INR
             </span>
           </div>
           <div className="border rounded-lg p-3 text-center bg-emerald-50/55 dark:bg-emerald-950/10 border-emerald-100">
-            <span className="text-xs text-emerald-700 dark:text-emerald-400 block uppercase font-semibold">Remaining</span>
+            <span className="text-xs text-emerald-700 dark:text-emerald-400 block uppercase font-semibold">
+              Remaining
+            </span>
             <span className="text-lg font-bold text-emerald-700 dark:text-emerald-400">
               {remainingCredit.toLocaleString()} INR
             </span>
@@ -364,11 +596,16 @@ export const ManageCredit = ({ department, exported, closeModal }) => {
 
         {/* Clear Credit Form */}
         {department?.outstandingCredit > 0 ? (
-          <form onSubmit={handleClearCredit} className="space-y-4 bg-muted/40 p-4 rounded-lg border">
+          <form
+            onSubmit={handleClearCredit}
+            className="space-y-4 bg-muted/40 p-4 rounded-lg border"
+          >
             <h4 className="font-semibold text-sm">Clear Outstanding Credit</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
               <div className="space-y-1.5">
-                <Label htmlFor="clear-amount" className="text-xs">Amount to Clear (INR)</Label>
+                <Label htmlFor="clear-amount" className="text-xs">
+                  Amount to Clear (INR)
+                </Label>
                 <Input
                   id="clear-amount"
                   type="number"
@@ -381,7 +618,9 @@ export const ManageCredit = ({ department, exported, closeModal }) => {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="payment-method" className="text-xs">Payment Method</Label>
+                <Label htmlFor="payment-method" className="text-xs">
+                  Payment Method
+                </Label>
                 <Select value={paymentMethod} onValueChange={setPaymentMethod}>
                   <SelectTrigger id="payment-method">
                     <SelectValue placeholder="Select Method" />
@@ -399,7 +638,9 @@ export const ManageCredit = ({ department, exported, closeModal }) => {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="clear-remarks" className="text-xs">Payment Remarks (Optional)</Label>
+              <Label htmlFor="clear-remarks" className="text-xs">
+                Payment Remarks (Optional)
+              </Label>
               <Input
                 id="clear-remarks"
                 placeholder="E.g., Monthly bulk clearing by dept head"
@@ -442,8 +683,12 @@ export const ManageCredit = ({ department, exported, closeModal }) => {
                     <TableCell>
                       <Badge variant="outline">{pay.paymentMethod}</Badge>
                     </TableCell>
-                    <TableCell className="text-xs">{pay.paidBy?.name || "System"}</TableCell>
-                    <TableCell className="text-xs italic text-muted-foreground">{pay.remarks || "-"}</TableCell>
+                    <TableCell className="text-xs">
+                      {pay.paidBy?.name || "System"}
+                    </TableCell>
+                    <TableCell className="text-xs italic text-muted-foreground">
+                      {pay.remarks || "-"}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

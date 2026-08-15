@@ -34,6 +34,10 @@ export const useDepartmentModule = (exported) => {
     return openModal(modals.manageCredit, { department, exported });
   };
 
+  const openClearCreditByBill = (department) => {
+  return openModal(modals.clearCreditByBill, { department, exported });
+};
+
   const openCreate = () => {
     return openModal(modals.create, {
       submitFn: (data) => crud.create(data),
@@ -102,6 +106,7 @@ export const useDepartmentModule = (exported) => {
     setCurrent,
     useDepartmentColumns,
     openCreate,
+    openClearCreditByBill,
     openEdit,
     openDelete,
     openView,

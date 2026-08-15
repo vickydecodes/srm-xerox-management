@@ -104,6 +104,10 @@ const apiurls = {
     create: { method: "post", url: () => `${base_url}/bills` },
     getAll: { method: "get", url: () => `${base_url}/bills` },
     getOne: { method: "get", url: (id) => `${base_url}/bills/${id}` },
+    getByDepartment: {
+      method: "get",
+      url: (id) => `${base_url}/bills/department/${id}`,
+    },
     edit: { method: "put", url: (id) => `${base_url}/bills/${id}` },
     delete: { method: "delete", url: (id) => `${base_url}/bills/${id}` },
     setActiveStatus: {
@@ -115,8 +119,14 @@ const apiurls = {
       url: (id) => `${base_url}/bills/${id}/retrieve`,
     },
     erase: { method: "delete", url: (id) => `${base_url}/bills/${id}/erase` },
-    approveCredit: { method: "patch", url: (id) => `${base_url}/bills/${id}/approve-credit` },
-    rejectCredit: { method: "patch", url: (id) => `${base_url}/bills/${id}/reject-credit` },
+    approveCredit: {
+      method: "patch",
+      url: (id) => `${base_url}/bills/${id}/approve-credit`,
+    },
+    rejectCredit: {
+      method: "patch",
+      url: (id) => `${base_url}/bills/${id}/reject-credit`,
+    },
   },
   branches: {
     create: { method: "post", url: () => `${base_url}/branches` },
@@ -195,9 +205,18 @@ const apiurls = {
     products: { method: "get", url: () => `${base_url}/search/products` },
   },
   dashboard: {
-    superAdmin: { method: "get", url: () => `${base_url}/dashboard/super-admin` },
-    branchAdmin: { method: "get", url: () => `${base_url}/dashboard/branch-admin` },
-    departmentAdmin: { method: "get", url: () => `${base_url}/dashboard/department-admin` },
+    superAdmin: {
+      method: "get",
+      url: () => `${base_url}/dashboard/super-admin`,
+    },
+    branchAdmin: {
+      method: "get",
+      url: () => `${base_url}/dashboard/branch-admin`,
+    },
+    departmentAdmin: {
+      method: "get",
+      url: () => `${base_url}/dashboard/department-admin`,
+    },
     shopAdmin: { method: "get", url: () => `${base_url}/dashboard/shop-admin` },
     staff: { method: "get", url: () => `${base_url}/dashboard/staff` },
   },

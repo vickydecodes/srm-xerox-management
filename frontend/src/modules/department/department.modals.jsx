@@ -1,11 +1,14 @@
-import { ActiveStatus, Create, Delete, Erase, Retrieve, View, ManageCredit } from "./department.modal.components";
+import {
+  Create, Delete, Erase, Retrieve, ActiveStatus, View, ManageCredit, ClearCreditByBill
+} from "./department.modal.components";
 
 export const modals = {
   create: Create,
   delete: Delete,
-  activeStatus: ActiveStatus,
-  retrieve: Retrieve,
   erase: Erase,
+  retrieve: Retrieve,
+  activeStatus: ActiveStatus,
   view: View,
   manageCredit: ManageCredit,
-};
+  clearCreditByBill: ClearCreditByBill,
+}
