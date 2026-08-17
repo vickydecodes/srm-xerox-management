@@ -114,10 +114,15 @@ export const clearCredit = async (
   }
 
   const expectedTotal = bills.reduce((sum, b) => sum + b.total, 0);
-  if (data.amount !== expectedTotal) {
+  if (data.amount < expectedTotal) {
     throw new Error(
-      `Payment amount (${data.amount}) must equal the sum of selected bills (${expectedTotal})`
+      `Payment amount (${data.amount}) cannot be less than the sum of selected bills (${expectedTotal})`
     );
+  }
+
+  const excess = data.amount - expectedTotal;
+  if (excess > 0) {
+    department.creditLimit += excess;
   }
 
   department.outstandingCredit = Math.max(0, department.outstandingCredit - data.amount);

@@ -38,6 +38,7 @@ import InventoryProduct from '@db/models/inventory-product.model.ts';
 import Service from '@db/models/service.model.ts';
 import Bill, { BillItemType } from '@db/models/bill.model.ts';
 import { Counter } from '@db/models/counter.model.ts';
+import CreditPayment from '@db/models/credit.model.ts';
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/srm_xerox_db';
 
@@ -136,6 +137,7 @@ async function clearCollections() {
     Service.deleteMany({}),
     Bill.deleteMany({}),
     Counter.deleteMany({}),
+    CreditPayment.deleteMany({}),
   ]);
   console.log('Collections cleared (counters reset).');
 }
@@ -895,6 +897,58 @@ async function seed() {
     const inventoryProducts = await seedInventory(products);
     const services = await seedServices(inventoryProducts);
     await seedBills(branches, departments, users, products, services);
+
+    console.log('Seeding Credit Ledger records and outstanding department credits...');
+    const allBills = await Bill.find({});
+    const allDepts = await Department.find({});
+    const allUsers = await User.find({});
+    const staffUser = allUsers.find(u => u.role === 'staff') || allUsers[0];
+
+    // Let's loop through departments and assign some outstanding credit
+    for (let i = 0; i < allDepts.length; i++) {
+      const dept = allDepts[i];
+      // Set credit limit
+      dept.creditLimit = 10000 + (i * 2000);
+      
+      // Get some bills of this department to make them UNPAID CREDIT bills
+      const deptBills = allBills.filter(b => String(b.department) === String(dept._id));
+      
+      // Make 2 bills UNPAID CREDIT
+      const unpaidCreditBills = deptBills.slice(0, 2);
+      let outstanding = 0;
+      for (const bill of unpaidCreditBills) {
+        await Bill.updateOne(
+          { _id: bill._id },
+          { $set: { paymentMethod: 'CREDIT', status: 'UNPAID' } }
+        );
+        outstanding += bill.total;
+      }
+      dept.outstandingCredit = outstanding;
+      await dept.save();
+
+      // Make 2 other bills PAID CREDIT and log a CreditPayment!
+      const paidCreditBills = deptBills.slice(2, 4);
+      if (paidCreditBills.length > 0) {
+        const sum = paidCreditBills.reduce((s, b) => s + b.total, 0);
+        for (const bill of paidCreditBills) {
+          await Bill.updateOne(
+            { _id: bill._id },
+            { $set: { paymentMethod: 'CREDIT', status: 'PAID' } }
+          );
+        }
+
+        await new CreditPayment({
+          department: dept._id,
+          bills: paidCreditBills.map(b => b._id),
+          amount: sum + (i % 2 === 0 ? 0 : 500), // Some have excess payment!
+          paymentMethod: i % 2 === 0 ? 'CASH' : 'UPI',
+          paidBy: staffUser._id,
+          remarks: `Monthly settlement for ${dept.name}`,
+          date: new Date(Date.now() - (i + 1) * 24 * 60 * 60 * 1000), // historical days
+        }).save();
+      }
+    }
+    console.log('Successfully seeded credit ledger records and outstanding credits.');
 
     console.log('\n========================================');
     console.log('Seed completed successfully ✅');

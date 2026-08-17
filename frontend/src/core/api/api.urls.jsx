@@ -170,6 +170,9 @@ const apiurls = {
       url: (id) => `${base_url}/departments/${id}/clear-credit`,
     },
   },
+  credits: {
+    getAll: { method: "get", url: () => `${base_url}/credits` },
+  },
   orders: {
     create: { method: "post", url: () => `${base_url}/orders` },
     getAll: { method: "get", url: () => `${base_url}/orders` },

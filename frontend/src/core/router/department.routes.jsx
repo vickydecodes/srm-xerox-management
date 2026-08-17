@@ -1,8 +1,9 @@
-import { IconKey, IconLogout2, IconUser, IconLayoutDashboard, IconClipboardList } from "@tabler/icons-react";
+import { IconKey, IconLogout2, IconUser, IconLayoutDashboard, IconClipboardList, IconCreditCard } from "@tabler/icons-react";
 import ChangePassword from "@/pages/changepassword/changepassword";
 import Profile from "@/pages/profile/profile";
 import Dashboard from "@/pages/dashboard/dashboard";
 import Order from "@/pages/order/order";
+import Credits from "@/pages/credits/credits";
 
 export const departmentAdminRoutes = {
   role: "department_admin",
@@ -38,6 +39,14 @@ export const departmentAdminRoutes = {
       description: "View and manage department orders",
       element: <Order />,
       icon: <IconClipboardList className="h-5 w-5 shrink-0" />,
+    },
+    {
+      path: "/department_admin/credits",
+      label: "Credit Tracker",
+      title: "Credit Tracking & Balances",
+      description: "Track credit allocations, department spending, user spending, and credit payments.",
+      icon: <IconCreditCard className="h-5 w-5 shrink-0" />,
+      element: <Credits />,
     },
   ],
   logout: {
