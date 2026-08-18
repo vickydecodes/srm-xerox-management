@@ -37,8 +37,8 @@ export default function OrderForm({
   form,
   branches = [],
   departments = [],
-  BillingItemSearchCombobox, 
-  searchProducts 
+  BillingItemSearchCombobox,
+  searchProducts
 }) {
   const { user } = useAuth();
   const isSuperAdmin = user?.role === "super_admin";
@@ -134,85 +134,7 @@ export default function OrderForm({
         )}
       />
 
-      {/* Management Amount */}
-      <FormField
-        control={form.control}
-        name="managementAmount"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Management Amount</FormLabel>
-            <FormControl>
-              <Input
-                type="number"
-                min={0}
-                step="0.01"
-                placeholder="0.00"
-                {...field}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
 
-      <Separator className="my-2" />
-
-      {/* Sponsors */}
-      <div className="flex items-center justify-between">
-        <FormLabel>Sponsors</FormLabel>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          onClick={() => appendSponsor({ name: "", amount: 0 })}
-        >
-          Add Sponsor
-        </Button>
-      </div>
-
-      {sponsorFields.map((item, index) => (
-        <div key={item.id} className="flex gap-2 items-start">
-          <FormField
-            control={form.control}
-            name={`sponsors.${index}.name`}
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormControl>
-                  <Input placeholder="Sponsor name" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name={`sponsors.${index}.amount`}
-            render={({ field }) => (
-              <FormItem className="w-32">
-                <FormControl>
-                  <Input
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    placeholder="Amount"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <Button
-            type="button"
-            variant="destructive"
-            onClick={() => removeSponsor(index)}
-          >
-            Remove
-          </Button>
-        </div>
-      ))}
-
-      <Separator className="my-2" />
 
       {/* Items – search & add */}
       <div className="space-y-3">
@@ -344,6 +266,117 @@ export default function OrderForm({
           </>
         )}
       </div>
+
+      <Separator className="my-2" />
+
+      {/* Management Amount */}
+      <FormField
+        control={form.control}
+        name="managementAmount"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Management Amount</FormLabel>
+            <FormControl>
+              <Input
+                type="number"
+                min={0}
+                max={Math.max(0, totalCost - totalSponsorship)}
+                step="0.01"
+                placeholder="0.00"
+                {...field}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  if (raw === "") {
+                    field.onChange("");
+                    return;
+                  }
+                  const val = parseFloat(raw) || 0;
+                  const maxVal = Math.max(0, totalCost - totalSponsorship);
+                  const cappedVal = Math.min(val, maxVal);
+                  field.onChange(cappedVal);
+                }}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <Separator className="my-2" />
+
+      {/* Sponsors */}
+      <div className="flex items-center justify-between">
+        <FormLabel>Sponsors</FormLabel>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() => appendSponsor({ name: "", amount: 0 })}
+          disabled={totalAvailable >= totalCost}
+        >
+          Add Sponsor
+        </Button>
+      </div>
+
+      {sponsorFields.map((item, index) => (
+        <div key={item.id} className="flex gap-2 items-start">
+          <FormField
+            control={form.control}
+            name={`sponsors.${index}.name`}
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormControl>
+                  <Input placeholder="Sponsor name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name={`sponsors.${index}.amount`}
+            render={({ field }) => {
+              const currentSponsorAmt = Number(sponsors[index]?.amount) || 0;
+              const maxSponsorAmt = Math.max(
+                0,
+                totalCost - Number(managementAmount || 0) - (totalSponsorship - currentSponsorAmt)
+              );
+              return (
+                <FormItem className="w-32">
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={maxSponsorAmt}
+                      step="0.01"
+                      placeholder="Amount"
+                      {...field}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        if (raw === "") {
+                          field.onChange("");
+                          return;
+                        }
+                        const val = parseFloat(raw) || 0;
+                        const cappedVal = Math.min(val, maxSponsorAmt);
+                        field.onChange(cappedVal);
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
+          />
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={() => removeSponsor(index)}
+          >
+            Remove
+          </Button>
+        </div>
+      ))}
 
       <Separator className="my-2" />
 

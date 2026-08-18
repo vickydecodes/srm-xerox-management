@@ -39,6 +39,7 @@ import Service from '@db/models/service.model.ts';
 import Bill, { BillItemType } from '@db/models/bill.model.ts';
 import { Counter } from '@db/models/counter.model.ts';
 import CreditPayment from '@db/models/credit.model.ts';
+import Order from '@db/models/order.model.ts';
 import { applyCreditBalance } from '../modules/department/department.services.ts';
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/srm_xerox_db';
@@ -139,6 +140,7 @@ async function clearCollections() {
     Bill.deleteMany({}),
     Counter.deleteMany({}),
     CreditPayment.deleteMany({}),
+    Order.deleteMany({}),
   ]);
   console.log('Collections cleared (counters reset).');
 }

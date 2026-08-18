@@ -116,7 +116,13 @@ export const applyCreditBalance = async (department: any) => {
 export const clearCredit = async (
   id: string,
   userId: string,
-  data: { billIds?: string[]; amount: number; paymentMethod: 'CASH' | 'UPI'; remarks?: string }
+  data: {
+    billIds?: string[];
+    amount: number;
+    paymentMethod: 'CASH' | 'UPI' | 'OTHER';
+    otherPaymentMethod?: string;
+    remarks?: string;
+  }
 ) => {
   const department = await Department.findById(id);
   if (!department) return null;
@@ -179,6 +185,7 @@ export const clearCredit = async (
     bills: billObjectIds,
     amount: data.amount,
     paymentMethod: data.paymentMethod,
+    otherPaymentMethod: data.otherPaymentMethod,
     paidBy: paidByObjectId,
     date: new Date(),
     remarks: data.remarks,

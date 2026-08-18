@@ -70,7 +70,15 @@ export const useCreditColumns = (credits) => {
     {
       accessorKey: "paymentMethod",
       header: () => Hint("Method", "Payment method"),
-      cell: ({ row }) => <Badge variant="secondary" className="font-bold text-2xs">{row.getValue("paymentMethod")}</Badge>,
+      cell: ({ row }) => {
+        const method = row.original.paymentMethod;
+        const other = row.original.otherPaymentMethod;
+        return (
+          <Badge variant="secondary" className="font-bold text-2xs">
+            {method === "OTHER" && other ? other.toUpperCase() : method}
+          </Badge>
+        );
+      },
     },
     {
       accessorKey: "paidBy",

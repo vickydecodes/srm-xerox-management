@@ -22,7 +22,9 @@ export const clearCreditSchema = z.object({
 
   amount: z.number().positive('Amount must be greater than 0'),
 
-  paymentMethod: z.enum(['CASH', 'UPI']),
+  paymentMethod: z.enum(['CASH', 'UPI', 'OTHER']),
+
+  otherPaymentMethod: z.string().trim().optional(),
 
   remarks: z.string().trim().optional(),
 });

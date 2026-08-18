@@ -127,6 +127,7 @@ export const ClearCreditByBill = ({ department, exported, closeModal }) => {
   const [selectedBillIds, setSelectedBillIds] = React.useState([]);
   const [fetching, setFetching] = React.useState(true);
   const [paymentMethod, setPaymentMethod] = React.useState("CASH");
+  const [otherPaymentMethod, setOtherPaymentMethod] = React.useState("");
   const [remarks, setRemarks] = React.useState("");
   const [loading, setLoading] = React.useState(false);
 
@@ -171,6 +172,11 @@ export const ClearCreditByBill = ({ department, exported, closeModal }) => {
       return;
     }
 
+    if (paymentMethod === "OTHER" && !otherPaymentMethod.trim()) {
+      toast.error("Please specify the other payment method");
+      return;
+    }
+
     setLoading(true);
     try {
       const config = apiurls.departments.clearCredit;
@@ -178,9 +184,10 @@ export const ClearCreditByBill = ({ department, exported, closeModal }) => {
         ...config,
         url: config.url(department._id),
         data: {
-          bills: selectedBillIds,
+          billIds: selectedBillIds,
           amount: totalAmount,
           paymentMethod,
+          otherPaymentMethod: paymentMethod === "OTHER" ? otherPaymentMethod.trim() : undefined,
           remarks,
         },
       });
@@ -269,9 +276,24 @@ export const ClearCreditByBill = ({ department, exported, closeModal }) => {
             <SelectContent>
               <SelectItem value="CASH">CASH</SelectItem>
               <SelectItem value="UPI">UPI</SelectItem>
+              <SelectItem value="OTHER">OTHER</SelectItem>
             </SelectContent>
           </Select>
         </div>
+
+        {paymentMethod === "OTHER" && (
+          <div className="space-y-1.5">
+            <Label htmlFor="clear-other-payment-method" className="text-xs">
+              Specify Other Payment Method
+            </Label>
+            <Input
+              id="clear-other-payment-method"
+              placeholder="e.g. Cheque, Card"
+              value={otherPaymentMethod}
+              onChange={(e) => setOtherPaymentMethod(e.target.value)}
+            />
+          </div>
+        )}
 
         <div className="space-y-1.5">
           <Label htmlFor="clear-remarks" className="text-xs">
@@ -503,6 +525,7 @@ export const ManageCredit = ({ department, exported, closeModal }) => {
     department?.outstandingCredit || 0,
   );
   const [paymentMethod, setPaymentMethod] = React.useState("CASH");
+  const [otherPaymentMethod, setOtherPaymentMethod] = React.useState("");
   const [remarks, setRemarks] = React.useState("");
   const [loading, setLoading] = React.useState(false);
 
@@ -518,6 +541,12 @@ export const ManageCredit = ({ department, exported, closeModal }) => {
       toast.error("Clear amount must be greater than 0");
       return;
     }
+
+    if (paymentMethod === "OTHER" && !otherPaymentMethod.trim()) {
+      toast.error("Please specify the other payment method");
+      return;
+    }
+
     setLoading(true);
     try {
       const config = apiurls.departments.clearCredit;
@@ -527,6 +556,7 @@ export const ManageCredit = ({ department, exported, closeModal }) => {
         data: {
           amount,
           paymentMethod,
+          otherPaymentMethod: paymentMethod === "OTHER" ? otherPaymentMethod.trim() : undefined,
           remarks,
         },
       });
@@ -615,6 +645,7 @@ export const ManageCredit = ({ department, exported, closeModal }) => {
                   <SelectContent>
                     <SelectItem value="CASH">CASH</SelectItem>
                     <SelectItem value="UPI">UPI</SelectItem>
+                    <SelectItem value="OTHER">OTHER</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -623,6 +654,21 @@ export const ManageCredit = ({ department, exported, closeModal }) => {
                 Clear Credit
               </Button>
             </div>
+
+            {paymentMethod === "OTHER" && (
+              <div className="space-y-1.5 pt-2">
+                <Label htmlFor="clear-other-payment-method" className="text-xs">
+                  Specify Other Payment Method
+                </Label>
+                <Input
+                  id="clear-other-payment-method"
+                  placeholder="e.g. Cheque, Card"
+                  value={otherPaymentMethod}
+                  onChange={(e) => setOtherPaymentMethod(e.target.value)}
+                  required
+                />
+              </div>
+            )}
 
             <div className="space-y-1.5">
               <Label htmlFor="clear-remarks" className="text-xs">
@@ -663,7 +709,11 @@ export const ManageCredit = ({ department, exported, closeModal }) => {
                       -{pay.amount.toLocaleString()} INR
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{pay.paymentMethod}</Badge>
+                      <Badge variant="outline">
+                        {pay.paymentMethod === "OTHER" && pay.otherPaymentMethod
+                          ? pay.otherPaymentMethod.toUpperCase()
+                          : pay.paymentMethod}
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-xs">
                       {pay.paidBy?.name || "System"}

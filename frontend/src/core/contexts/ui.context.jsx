@@ -172,8 +172,8 @@ export const UIProvider = ({ children }) => {
     return (
         <UIContext.Provider value={value}>
             {children}
-            <ModalStackRenderer />
-            <AlertRenderer />
+            {ModalStackRenderer()}
+            {AlertRenderer()}
         </UIContext.Provider>
     );
 };

@@ -28,19 +28,39 @@ import {
 import { apiRequest } from "@/core/api/api.request";
 import { apiurls } from "@/core/api/api.urls";
 import { toast } from "sonner";
-import { IconCreditCard, IconBuildingCommunity } from "@tabler/icons-react";
+import { IconCreditCard, IconBuildingCommunity, IconEye } from "@tabler/icons-react";
+import { useUI } from "@/core/contexts/ui.context";
+import { modals as billModals } from "../bill/bill.modals";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 
 export const Create = ({ closeModal, exported }) => {
+  const { openModal } = useUI();
   const { user } = exported || {};
   const [departments, setDepartments] = useState([]);
   const [loadingDepts, setLoadingDepts] = useState(false);
   const [selectedDeptId, setSelectedDeptId] = useState("");
+  const [openDeptPopover, setOpenDeptPopover] = useState(false);
+  const [deptSearchQuery, setDeptSearchQuery] = useState("");
+
+  const filteredDepts = useMemo(() => {
+    if (!deptSearchQuery.trim()) return departments;
+    const q = deptSearchQuery.toLowerCase();
+    return departments.filter(
+      (d) =>
+        d.name?.toLowerCase().includes(q) ||
+        d.code?.toLowerCase().includes(q)
+    );
+  }, [departments, deptSearchQuery]);
 
   const [unpaidBills, setUnpaidBills] = useState([]);
   const [loadingBills, setLoadingBills] = useState(false);
   const [selectedBillIds, setSelectedBillIds] = useState([]);
   const [amount, setAmount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState("CASH");
+  const [otherPaymentMethod, setOtherPaymentMethod] = useState("");
   const [remarks, setRemarks] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -163,6 +183,11 @@ export const Create = ({ closeModal, exported }) => {
       return;
     }
 
+    if (paymentMethod === "OTHER" && !otherPaymentMethod.trim()) {
+      toast.error("Please specify the other payment method");
+      return;
+    }
+
     try {
       setSubmitting(true);
       const res = await apiRequest("post", apiurls.departments.clearCredit.url(selectedDeptId), {
@@ -170,6 +195,7 @@ export const Create = ({ closeModal, exported }) => {
           billIds: selectedBillIds,
           amount,
           paymentMethod,
+          otherPaymentMethod: paymentMethod === "OTHER" ? otherPaymentMethod.trim() : undefined,
           remarks,
         },
       });
@@ -210,7 +236,11 @@ export const Create = ({ closeModal, exported }) => {
   };
 
   return (
-    <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto p-6">
+    <DialogContent
+      className="sm:max-w-2xl max-h-[90vh] overflow-y-auto p-6"
+      onPointerDownOutside={(e) => e.preventDefault()}
+      onInteractOutside={(e) => e.preventDefault()}
+    >
       <DialogHeader>
         <DialogTitle className="text-xl font-extrabold flex items-center gap-2">
           <IconCreditCard className="w-6 h-6 text-primary" />
@@ -232,18 +262,70 @@ export const Create = ({ closeModal, exported }) => {
               Loading departments...
             </div>
           ) : !isDeptAdmin ? (
-            <Select value={selectedDeptId} onValueChange={setSelectedDeptId}>
-              <SelectTrigger className="h-10">
-                <SelectValue placeholder="Select department..." />
-              </SelectTrigger>
-              <SelectContent>
-                {departments.map((d) => (
-                  <SelectItem key={d._id} value={d._id}>
-                    {d.name} ({d.code}) — Balance: {formatCurrency(d.outstandingCredit)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover open={openDeptPopover} onOpenChange={setOpenDeptPopover}>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={openDeptPopover}
+                  className="w-full justify-between bg-background text-left font-normal h-10 px-3 border rounded-md text-sm text-muted-foreground"
+                >
+                  <span className="truncate text-foreground">
+                    {selectedDeptId && selectedDeptDetails
+                      ? `${selectedDeptDetails.name} (${selectedDeptDetails.code})`
+                      : "Select department..."}
+                  </span>
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                <Command shouldFilter={false}>
+                  <CommandInput
+                    placeholder="Search department by name or code..."
+                    value={deptSearchQuery}
+                    onValueChange={setDeptSearchQuery}
+                  />
+                  <CommandList className="max-h-[300px]">
+                    {filteredDepts.length === 0 ? (
+                      <CommandEmpty>No departments found.</CommandEmpty>
+                    ) : (
+                      <CommandGroup>
+                        {filteredDepts.map((d) => (
+                          <CommandItem
+                            key={d._id}
+                            value={d._id}
+                            onSelect={() => {
+                              setSelectedDeptId(d._id);
+                              setOpenDeptPopover(false);
+                              setDeptSearchQuery("");
+                            }}
+                            className="cursor-pointer flex items-center justify-between"
+                          >
+                            <div className="flex items-center min-w-0">
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4 shrink-0",
+                                  selectedDeptId === d._id ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              <div className="flex flex-col truncate">
+                                <span className="font-semibold text-sm truncate">
+                                  {d.name} ({d.code})
+                                </span>
+                              </div>
+                            </div>
+                            <span className="text-2xs text-muted-foreground text-right ml-4 shrink-0">
+                              Balance: {formatCurrency(d.outstandingCredit)}
+                            </span>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    )}
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           ) : (
             <div className="h-10 flex items-center px-3 bg-muted/40 border rounded-md text-sm font-semibold">
               {selectedDeptDetails?.name} (Code: {selectedDeptDetails?.code})
@@ -306,6 +388,7 @@ export const Create = ({ closeModal, exported }) => {
                       <TableHead className="font-bold h-8 text-xs py-1">Code</TableHead>
                       <TableHead className="font-bold h-8 text-xs py-1">Date</TableHead>
                       <TableHead className="font-bold text-right h-8 text-xs py-1">Amount</TableHead>
+                      <TableHead className="font-bold text-center h-8 text-xs py-1 w-12">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -330,6 +413,24 @@ export const Create = ({ closeModal, exported }) => {
                         </TableCell>
                         <TableCell className="text-right font-semibold py-1.5">
                           {formatCurrency(bill.total)}
+                        </TableCell>
+                        <TableCell
+                          className="text-center py-1.5"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openModal(billModals.view, { bill });
+                            }}
+                            size="icon"
+                            variant="ghost"
+                            className="h-6 w-6 cursor-pointer"
+                            title="View Bill Details"
+                          >
+                            <IconEye className="w-3.5 h-3.5 text-primary" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -375,9 +476,25 @@ export const Create = ({ closeModal, exported }) => {
                 <SelectContent>
                   <SelectItem value="CASH">CASH</SelectItem>
                   <SelectItem value="UPI">UPI</SelectItem>
+                  <SelectItem value="OTHER">OTHER</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+          </div>
+        )}
+
+        {selectedBillIds.length > 0 && paymentMethod === "OTHER" && (
+          <div className="space-y-1.5 pt-2">
+            <label className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+              Specify Other Payment Method
+            </label>
+            <Input
+              type="text"
+              value={otherPaymentMethod}
+              onChange={(e) => setOtherPaymentMethod(e.target.value)}
+              placeholder="e.g. Cheque, Bank Transfer, Card"
+              className="h-10"
+            />
           </div>
         )}
 
@@ -421,6 +538,7 @@ export const Create = ({ closeModal, exported }) => {
 };
 
 export const ViewBills = ({ closeModal, payment }) => {
+  const { openModal } = useUI();
   const formatCurrency = (amt) => `${(amt || 0).toLocaleString()} INR`;
   const formatDate = (dateStr) => {
     if (!dateStr) return "-";
@@ -437,7 +555,11 @@ export const ViewBills = ({ closeModal, payment }) => {
   const excess = Math.max(0, (payment?.amount || 0) - billsTotal);
 
   return (
-    <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto p-6">
+    <DialogContent
+      className="sm:max-w-2xl max-h-[90vh] overflow-y-auto p-6"
+      onPointerDownOutside={(e) => e.preventDefault()}
+      onInteractOutside={(e) => e.preventDefault()}
+    >
       <DialogHeader>
         <DialogTitle className="text-xl font-extrabold flex items-center gap-2">
           <IconBuildingCommunity className="w-6 h-6 text-primary" />
@@ -488,6 +610,7 @@ export const ViewBills = ({ closeModal, payment }) => {
                 <TableHead className="font-bold h-9 py-1 text-xs">Created By</TableHead>
                 <TableHead className="font-bold h-9 py-1 text-xs">Payment Status</TableHead>
                 <TableHead className="font-bold text-right h-9 py-1 text-xs">Amount</TableHead>
+                <TableHead className="font-bold text-center h-9 py-1 text-xs w-16">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -508,6 +631,21 @@ export const ViewBills = ({ closeModal, payment }) => {
                     </TableCell>
                     <TableCell className="text-right font-semibold text-foreground py-1.5">
                       {formatCurrency(bill.total)}
+                    </TableCell>
+                    <TableCell className="text-center py-1.5">
+                      <Button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openModal(billModals.view, { bill });
+                        }}
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6 cursor-pointer"
+                        title="View Bill Details"
+                      >
+                        <IconEye className="w-3.5 h-3.5 text-primary" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))

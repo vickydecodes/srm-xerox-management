@@ -28,7 +28,6 @@ const DepartmentSchema = new Schema(
     branch: {
       type: Schema.Types.ObjectId,
       ref: 'Branch',
-      required: true,
     },
 
     outstandingCredit: { type: Number, default: 0, min: 0 },
