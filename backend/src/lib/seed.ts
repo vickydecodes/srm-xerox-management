@@ -39,6 +39,7 @@ import Service from '@db/models/service.model.ts';
 import Bill, { BillItemType } from '@db/models/bill.model.ts';
 import { Counter } from '@db/models/counter.model.ts';
 import CreditPayment from '@db/models/credit.model.ts';
+import { applyCreditBalance } from '../modules/department/department.services.ts';
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/srm_xerox_db';
 
@@ -904,48 +905,115 @@ async function seed() {
     const allUsers = await User.find({});
     const staffUser = allUsers.find(u => u.role === 'staff') || allUsers[0];
 
+    const allProducts = await Product.find({});
+    const allServices = await Service.find({});
+
     // Let's loop through departments and assign some outstanding credit
     for (let i = 0; i < allDepts.length; i++) {
       const dept = allDepts[i];
       // Initialize creditBalance
       dept.creditBalance = 0;
       
-      // Get some bills of this department to make them UNPAID CREDIT bills
-      const deptBills = allBills.filter(b => String(b.department) === String(dept._id));
-      
-      // Make 2 bills UNPAID CREDIT
-      const unpaidCreditBills = deptBills.slice(0, 2);
+      // Let's generate 2-3 unpaid CREDIT bills for this department
+      const numBills = 2 + (i % 2); // alternating 2 and 3 bills
       let outstanding = 0;
-      for (const bill of unpaidCreditBills) {
-        await Bill.updateOne(
-          { _id: bill._id },
-          { $set: { paymentMethod: 'CREDIT', status: 'UNPAID' } }
-        );
+
+      for (let j = 0; j < numBills; j++) {
+        // Pick a product or service
+        const isProduct = j % 2 === 0;
+        const itemObj = isProduct 
+          ? allProducts[j % allProducts.length] 
+          : allServices[j % allServices.length];
+        const price = isProduct ? 50 : 25;
+        const quantity = 3 + j;
+        const total = quantity * price;
+
+        const bill = new Bill({
+          items: [{
+            type: isProduct ? 'InventoryProduct' : 'Service',
+            item: itemObj._id,
+            name: itemObj.name,
+            quantity,
+            price,
+            total
+          }],
+          subtotal: total,
+          discount: 0,
+          tax: Math.round(total * 0.05),
+          total: total + Math.round(total * 0.05),
+          paymentMethod: 'CREDIT',
+          status: 'UNPAID',
+          approvalStatus: 'approved',
+          createdBy: staffUser._id,
+          branch: dept.branch,
+          department: dept._id,
+          createdAt: new Date(Date.now() - (j + 1) * 2 * 24 * 60 * 60 * 1000)
+        });
+
+        await bill.save();
         outstanding += bill.total;
       }
+
       dept.outstandingCredit = outstanding;
       await dept.save();
 
-      // Make 2 other bills PAID CREDIT and log a CreditPayment!
-      const paidCreditBills = deptBills.slice(2, 4);
-      if (paidCreditBills.length > 0) {
-        const sum = paidCreditBills.reduce((s, b) => s + b.total, 0);
-        for (const bill of paidCreditBills) {
-          await Bill.updateOne(
-            { _id: bill._id },
-            { $set: { paymentMethod: 'CREDIT', status: 'PAID' } }
-          );
-        }
+      // Let's also create 2 PAID credit bills for ledger history
+      const paidBillsList = [];
+      let paidSum = 0;
+      for (let j = 0; j < 2; j++) {
+        const isProduct = j % 2 === 0;
+        const itemObj = isProduct 
+          ? allProducts[(j + 2) % allProducts.length] 
+          : allServices[(j + 2) % allServices.length];
+        const price = isProduct ? 100 : 50;
+        const quantity = 2;
+        const total = quantity * price;
 
-        await new CreditPayment({
+        const bill = new Bill({
+          items: [{
+            type: isProduct ? 'InventoryProduct' : 'Service',
+            item: itemObj._id,
+            name: itemObj.name,
+            quantity,
+            price,
+            total
+          }],
+          subtotal: total,
+          discount: 0,
+          tax: Math.round(total * 0.05),
+          total: total + Math.round(total * 0.05),
+          paymentMethod: 'CREDIT',
+          status: 'PAID',
+          approvalStatus: 'approved',
+          createdBy: staffUser._id,
+          branch: dept.branch,
           department: dept._id,
-          bills: paidCreditBills.map(b => b._id),
-          amount: sum + (i % 2 === 0 ? 0 : 500), // Some have excess payment!
-          paymentMethod: i % 2 === 0 ? 'CASH' : 'UPI',
-          paidBy: staffUser._id,
-          remarks: `Monthly settlement for ${dept.name}`,
-          date: new Date(Date.now() - (i + 1) * 24 * 60 * 60 * 1000), // historical days
-        }).save();
+          createdAt: new Date(Date.now() - (j + 1) * 5 * 24 * 60 * 60 * 1000)
+        });
+
+        await bill.save();
+        paidSum += bill.total;
+        paidBillsList.push(bill);
+      }
+
+      const excess = (i % 2 === 0 ? 0 : 300);
+
+      // Create a credit payment record for these paid bills
+      await new CreditPayment({
+        department: dept._id,
+        bills: paidBillsList.map(b => b._id),
+        amount: paidSum + excess,
+        paymentMethod: i % 2 === 0 ? 'CASH' : 'UPI',
+        paidBy: staffUser._id,
+        remarks: `Initial credit settlement for ${dept.name}`,
+        date: new Date(Date.now() - (i + 1) * 24 * 60 * 60 * 1000),
+      }).save();
+
+      if (excess > 0) {
+        dept.creditBalance = excess;
+        // Apply it to the unpaid bills we generated above!
+        await applyCreditBalance(dept);
+        await dept.save();
       }
     }
     console.log('Successfully seeded credit ledger records and outstanding credits.');
