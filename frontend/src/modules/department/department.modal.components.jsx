@@ -545,9 +545,6 @@ export const ManageCredit = ({ department, exported, closeModal }) => {
   };
 
   const payments = department?.creditPayments || [];
-  const remainingCredit =
-    (department?.creditLimit || 0) - (department?.outstandingCredit || 0);
-
   return (
     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
@@ -565,29 +562,21 @@ export const ManageCredit = ({ department, exported, closeModal }) => {
 
       <div className="space-y-6 my-2">
         {/* Credit Summary Cards */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="border rounded-lg p-3 text-center bg-muted/20">
-            <span className="text-xs text-muted-foreground block uppercase font-semibold">
-              Credit Limit
+        <div className="grid grid-cols-2 gap-4">
+          <div className="border rounded-lg p-3 text-center bg-emerald-50/55 dark:bg-emerald-950/10 border-emerald-100">
+            <span className="text-xs text-emerald-700 dark:text-emerald-400 block uppercase font-semibold">
+              Credit Balance
             </span>
-            <span className="text-lg font-bold">
-              {(department?.creditLimit || 0).toLocaleString()} INR
+            <span className="text-lg font-bold text-emerald-700 dark:text-emerald-400">
+              {(department?.creditBalance || 0).toLocaleString()} INR
             </span>
           </div>
           <div className="border rounded-lg p-3 text-center bg-amber-50/55 dark:bg-amber-950/10 border-amber-100">
             <span className="text-xs text-amber-700 dark:text-amber-400 block uppercase font-semibold">
-              Outstanding
+              Outstanding Credit
             </span>
             <span className="text-lg font-bold text-amber-700 dark:text-amber-400">
               {(department?.outstandingCredit || 0).toLocaleString()} INR
-            </span>
-          </div>
-          <div className="border rounded-lg p-3 text-center bg-emerald-50/55 dark:bg-emerald-950/10 border-emerald-100">
-            <span className="text-xs text-emerald-700 dark:text-emerald-400 block uppercase font-semibold">
-              Remaining
-            </span>
-            <span className="text-lg font-bold text-emerald-700 dark:text-emerald-400">
-              {remainingCredit.toLocaleString()} INR
             </span>
           </div>
         </div>
@@ -595,27 +584,25 @@ export const ManageCredit = ({ department, exported, closeModal }) => {
         <Separator />
 
         {/* Clear Credit Form */}
-        {department?.outstandingCredit > 0 ? (
-          <form
-            onSubmit={handleClearCredit}
-            className="space-y-4 bg-muted/40 p-4 rounded-lg border"
-          >
-            <h4 className="font-semibold text-sm">Clear Outstanding Credit</h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-              <div className="space-y-1.5">
-                <Label htmlFor="clear-amount" className="text-xs">
-                  Amount to Clear (INR)
-                </Label>
-                <Input
-                  id="clear-amount"
-                  type="number"
-                  min="1"
-                  max={department.outstandingCredit}
-                  value={amount}
-                  onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
-                  required
-                />
-              </div>
+        <form
+          onSubmit={handleClearCredit}
+          className="space-y-4 bg-muted/40 p-4 rounded-lg border"
+        >
+          <h4 className="font-semibold text-sm">Settle Credit / Make Advance Payment</h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <div className="space-y-1.5">
+              <Label htmlFor="clear-amount" className="text-xs">
+                Amount (INR)
+              </Label>
+              <Input
+                id="clear-amount"
+                type="number"
+                min="1"
+                value={amount}
+                onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
+                required
+              />
+            </div>
 
               <div className="space-y-1.5">
                 <Label htmlFor="payment-method" className="text-xs">
@@ -649,11 +636,6 @@ export const ManageCredit = ({ department, exported, closeModal }) => {
               />
             </div>
           </form>
-        ) : (
-          <div className="text-center py-4 text-sm text-emerald-700 bg-emerald-50 dark:bg-emerald-950/20 dark:text-emerald-400 rounded-lg border border-emerald-100">
-            This department currently has no outstanding credit balance!
-          </div>
-        )}
 
         <Separator />
 

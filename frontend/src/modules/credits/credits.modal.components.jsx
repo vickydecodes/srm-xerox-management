@@ -217,7 +217,7 @@ export const Create = ({ closeModal, exported }) => {
           Create New Credit Payment
         </DialogTitle>
         <DialogDescription className="text-sm text-muted-foreground">
-          Clear outstanding bills for a department. Excess payments increase the credit limit.
+          Clear outstanding bills for a department. Excess payments increase the credit balance.
         </DialogDescription>
       </DialogHeader>
 
@@ -261,9 +261,9 @@ export const Create = ({ closeModal, exported }) => {
               </span>
             </div>
             <div>
-              <span className="text-muted-foreground block mb-0.5">Allotted Credit Limit:</span>
+              <span className="text-muted-foreground block mb-0.5">Credit Balance:</span>
               <span className="font-bold text-foreground text-sm">
-                {formatCurrency(selectedDeptDetails.creditLimit)}
+                {formatCurrency(selectedDeptDetails.creditBalance)}
               </span>
             </div>
           </div>
@@ -358,7 +358,7 @@ export const Create = ({ closeModal, exported }) => {
                 <span>Sum of selected bills: {formatCurrency(selectedBillsSum)}</span>
                 {excess > 0 && (
                   <span className="text-amber-600 font-extrabold">
-                    + Excess payment: {formatCurrency(excess)} will increase the credit limit.
+                    + Excess payment: {formatCurrency(excess)} will increase the credit balance.
                   </span>
                 )}
               </div>
@@ -470,7 +470,7 @@ export const ViewBills = ({ closeModal, payment }) => {
           </div>
           <div>
             <span className="text-muted-foreground block text-xs font-semibold uppercase tracking-wider mb-0.5">
-              Limit Increase (Excess)
+              Credit Balance Addition (Excess)
             </span>
             <span className="text-lg font-bold text-amber-600">
               {formatCurrency(excess)}

@@ -52,7 +52,7 @@ export const useCreditColumns = (credits) => {
     },
     {
       id: "excess",
-      header: () => Hint("Limit Increase", "Excess payment that increased the credit limit"),
+      header: () => Hint("Credit Balance Addition", "Excess payment that increased the credit balance"),
       cell: ({ row }) => {
         const amt = row.original.amount || 0;
         const bills = row.original.bills || [];

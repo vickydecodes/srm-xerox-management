@@ -85,56 +85,91 @@ export const setDepartmentActiveStatus = async (id: string, active: boolean) => 
   );
 };
 
+export const applyCreditBalance = async (department: any) => {
+  if (department.creditBalance <= 0) return;
+
+  const unpaidBills = await Bill.find({
+    department: department._id,
+    paymentMethod: 'CREDIT',
+    status: 'UNPAID',
+    approvalStatus: 'approved',
+    deleted: false,
+  }).sort({ createdAt: 1 });
+
+  for (const bill of unpaidBills) {
+    if (department.creditBalance <= 0) break;
+
+    if (department.creditBalance >= bill.total) {
+      department.creditBalance -= bill.total;
+      department.outstandingCredit = Math.max(0, department.outstandingCredit - bill.total);
+      bill.status = 'PAID';
+      await bill.save();
+    } else {
+      const used = department.creditBalance;
+      department.creditBalance = 0;
+      department.outstandingCredit = Math.max(0, department.outstandingCredit - used);
+      break;
+    }
+  }
+};
+
 export const clearCredit = async (
   id: string,
   userId: string,
-  data: { billIds: string[]; amount: number; paymentMethod: 'CASH' | 'UPI'; remarks?: string }
+  data: { billIds?: string[]; amount: number; paymentMethod: 'CASH' | 'UPI'; remarks?: string }
 ) => {
   const department = await Department.findById(id);
   if (!department) return null;
 
-  if (!data.billIds.length) throw new Error('At least one bill must be selected');
+  const billIds = data.billIds || [];
+  let expectedTotal = 0;
+  let billObjectIds: any[] = [];
 
-  const bills = await Bill.find({ _id: { $in: data.billIds } });
+  if (billIds.length > 0) {
+    const bills = await Bill.find({ _id: { $in: billIds } });
 
-  if (bills.length !== data.billIds.length) {
-    throw new Error('One or more bills not found');
-  }
-
-  for (const bill of bills) {
-    if (String(bill.department) !== id) {
-      throw new Error(`Bill ${bill.code} does not belong to this department`);
+    if (bills.length !== billIds.length) {
+      throw new Error('One or more bills not found');
     }
-    if (bill.paymentMethod !== 'CREDIT') {
-      throw new Error(`Bill ${bill.code} is not a credit bill`);
-    }
-    if (bill.status !== 'UNPAID') {
-      throw new Error(`Bill ${bill.code} is already ${bill.status.toLowerCase()}`);
-    }
-  }
 
-  const expectedTotal = bills.reduce((sum, b) => sum + b.total, 0);
-  if (data.amount < expectedTotal) {
-    throw new Error(
-      `Payment amount (${data.amount}) cannot be less than the sum of selected bills (${expectedTotal})`
-    );
+    for (const bill of bills) {
+      if (String(bill.department) !== id) {
+        throw new Error(`Bill ${bill.code} does not belong to this department`);
+      }
+      if (bill.paymentMethod !== 'CREDIT') {
+        throw new Error(`Bill ${bill.code} is not a credit bill`);
+      }
+      if (bill.status !== 'UNPAID') {
+        throw new Error(`Bill ${bill.code} is already ${bill.status.toLowerCase()}`);
+      }
+    }
+
+    expectedTotal = bills.reduce((sum, b) => sum + b.total, 0);
+    if (data.amount < expectedTotal) {
+      throw new Error(
+        `Payment amount (${data.amount}) cannot be less than the sum of selected bills (${expectedTotal})`
+      );
+    }
+
+    billObjectIds = billIds.map((bid) => {
+      const oid = toObjectId(bid);
+      if (!oid) throw new Error(`Invalid bill id: ${bid}`);
+      return oid;
+    });
+
+    await Bill.updateMany({ _id: { $in: billIds } }, { $set: { status: 'PAID' } });
+    department.outstandingCredit = Math.max(0, department.outstandingCredit - expectedTotal);
   }
 
   const excess = data.amount - expectedTotal;
   if (excess > 0) {
-    department.creditLimit += excess;
+    department.creditBalance += excess;
   }
 
-  department.outstandingCredit = Math.max(0, department.outstandingCredit - data.amount);
+  await applyCreditBalance(department);
 
   const departmentId = toObjectId(id);
   if (!departmentId) throw new Error('Invalid department id');
-
-  const billObjectIds = data.billIds.map((bid) => {
-    const oid = toObjectId(bid);
-    if (!oid) throw new Error(`Invalid bill id: ${bid}`);
-    return oid;
-  });
 
   const paidByObjectId = toObjectId(userId);
   if (!paidByObjectId) throw new Error('Invalid user id');
@@ -142,15 +177,14 @@ export const clearCredit = async (
   await CreditPayment.create({
     department: departmentId,
     bills: billObjectIds,
-    amount: data.amount, // required — make sure this is present
-    paymentMethod: data.paymentMethod, // required — must be 'CASH' | 'UPI', not a plain string
+    amount: data.amount,
+    paymentMethod: data.paymentMethod,
     paidBy: paidByObjectId,
-    date: new Date(), // optional (has default), fine to omit
-    remarks: data.remarks, // optional
+    date: new Date(),
+    remarks: data.remarks,
   });
 
   await department.save();
-  await Bill.updateMany({ _id: { $in: data.billIds } }, { $set: { status: 'PAID' } });
 
   return enhanceDepartment(department);
 };

@@ -10,6 +10,7 @@ import { Role } from '@typings/auth.types.js';
 import { UPDATE_OPTIONS, SOFT_DELETE, RETRIEVE, getVisibility } from './bill.constants.ts';
 import { enhanceBill } from './bill.util.ts';
 import { billFilterConfig } from './bill.filterconfig.ts';
+import { applyCreditBalance } from '@modules/department/department.services.ts';
 
 export const adjustStockForBill = async (
   oldItems: IBillItem[],
@@ -119,23 +120,18 @@ export const createBill = async (data: CreateBillPayload, createdBy: string) => 
   bill.subtotal = bill.items.reduce((sum, item) => sum + item.total, 0);
   bill.total = bill.subtotal - (bill.discount || 0) + (bill.tax || 0);
 
+  await bill.save();
+
   if (data.paymentMethod === 'CREDIT' && data.department) {
     const dept = await Department.findById(data.department);
     if (!dept) throw new Error('Department not found');
 
-    if (dept.outstandingCredit + bill.total > dept.creditLimit) {
-      throw new Error(
-        `Credit bill total (${bill.total} INR) exceeds remaining department credit limit (${dept.creditLimit - dept.outstandingCredit} INR)`
-      );
-    }
-
     if (approvalStatus === 'approved') {
       dept.outstandingCredit += bill.total;
+      await applyCreditBalance(dept);
       await dept.save();
     }
   }
-
-  await bill.save();
 
   if (data.order) {
     const order = await Order.findById(data.order);
@@ -145,7 +141,8 @@ export const createBill = async (data: CreateBillPayload, createdBy: string) => 
     }
   }
 
-  return enhanceBill(bill);
+  const updatedBill = await Bill.findById(bill._id);
+  return enhanceBill(updatedBill!);
 };
 
 export const approveCreditBill = async (id: string, userId: string, remarks?: string) => {
@@ -155,25 +152,24 @@ export const approveCreditBill = async (id: string, userId: string, remarks?: st
     throw new Error('Bill is not a pending CREDIT bill');
   }
 
-  if (bill.department) {
-    const dept = await Department.findById(bill.department);
-    if (!dept) throw new Error('Department not found');
-    if (dept.outstandingCredit + bill.total > dept.creditLimit) {
-      throw new Error(
-        `Approving this bill exceeds remaining department credit limit (${dept.creditLimit - dept.outstandingCredit} INR)`
-      );
-    }
-    dept.outstandingCredit += bill.total;
-    await dept.save();
-  }
-
   bill.approvalStatus = 'approved';
   bill.approvedBy = new mongoose.Types.ObjectId(userId);
   bill.approvedAt = new Date();
   if (remarks) bill.remarks = remarks;
 
   await bill.save();
-  return enhanceBill(bill);
+
+  if (bill.department) {
+    const dept = await Department.findById(bill.department);
+    if (!dept) throw new Error('Department not found');
+
+    dept.outstandingCredit += bill.total;
+    await applyCreditBalance(dept);
+    await dept.save();
+  }
+
+  const updatedBill = await Bill.findById(id);
+  return enhanceBill(updatedBill!);
 };
 
 export const rejectCreditBill = async (id: string, userId: string, remarks?: string) => {

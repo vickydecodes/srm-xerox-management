@@ -7,8 +7,8 @@ export interface IDepartment extends Document {
   code: string;
   branch: mongoose.Types.ObjectId;
 
-  creditLimit: number;
   outstandingCredit: number;
+  creditBalance: number;
 
   active: boolean;
   deleted: boolean;
@@ -31,8 +31,8 @@ const DepartmentSchema = new Schema(
       required: true,
     },
 
-    creditLimit: { type: Number, default: 50000, min: 0 },
     outstandingCredit: { type: Number, default: 0, min: 0 },
+    creditBalance: { type: Number, default: 0, min: 0 },
 
     active: { type: Boolean, default: true },
 

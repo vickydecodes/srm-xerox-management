@@ -907,8 +907,8 @@ async function seed() {
     // Let's loop through departments and assign some outstanding credit
     for (let i = 0; i < allDepts.length; i++) {
       const dept = allDepts[i];
-      // Set credit limit
-      dept.creditLimit = 10000 + (i * 2000);
+      // Initialize creditBalance
+      dept.creditBalance = 0;
       
       // Get some bills of this department to make them UNPAID CREDIT bills
       const deptBills = allBills.filter(b => String(b.department) === String(dept._id));

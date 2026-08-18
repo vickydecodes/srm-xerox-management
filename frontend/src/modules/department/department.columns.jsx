@@ -62,10 +62,10 @@ export const useDepartmentColumns = (departments) => {
       },
     },
     {
-      accessorKey: "creditLimit",
-      header: () => Hint("Credit Limit", "Maximum credit allocation"),
+      accessorKey: "creditBalance",
+      header: () => Hint("Credit Balance", "Prepaid credit / advance balance"),
       cell: ({ row }) => {
-        const amt = row.original.creditLimit || 0;
+        const amt = row.original.creditBalance || 0;
         return <span>{amt.toLocaleString()} INR</span>;
       },
     },

@@ -18,7 +18,7 @@ export const setDepartmentActiveStatusSchema = z.object({
 export const clearCreditSchema = z.object({
   billIds: z
     .array(z.string().trim().min(1))
-    .min(1, 'At least one bill must be selected'),
+    .optional(),
 
   amount: z.number().positive('Amount must be greater than 0'),
 

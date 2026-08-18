@@ -62,14 +62,14 @@ export default function DaDashboard({ data, refreshData }) {
     {
       title: "Outstanding Credit",
       value: currencyFormatter(deptCredit?.outstandingCredit || 0),
-      description: `Limit: ${currencyFormatter(deptCredit?.creditLimit || 50000)}`,
+      description: "Amount to be settled",
       icon: <IconCreditCard className="w-6 h-6 text-amber-600" />,
       bgColor: "bg-amber-500/10",
     },
     {
-      title: "Remaining Credit",
-      value: currencyFormatter((deptCredit?.creditLimit || 50000) - (deptCredit?.outstandingCredit || 0)),
-      description: "Available credit limit",
+      title: "Credit Balance",
+      value: currencyFormatter(deptCredit?.creditBalance || 0),
+      description: "Available advance credit",
       icon: <IconCoin className="w-6 h-6 text-emerald-500" />,
       bgColor: "bg-emerald-500/10",
     },
