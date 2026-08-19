@@ -40,6 +40,7 @@ import Bill, { BillItemType } from '@db/models/bill.model.ts';
 import { Counter } from '@db/models/counter.model.ts';
 import CreditPayment from '@db/models/credit.model.ts';
 import Order from '@db/models/order.model.ts';
+import Setting from '@db/models/setting.model.ts';
 import { applyCreditBalance } from '../modules/department/department.services.ts';
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/srm_xerox_db';
@@ -141,8 +142,22 @@ async function clearCollections() {
     Counter.deleteMany({}),
     CreditPayment.deleteMany({}),
     Order.deleteMany({}),
+    Setting.deleteMany({}),
   ]);
   console.log('Collections cleared (counters reset).');
+}
+
+/* ------------------------------------------------------------------ */
+/*  Settings                                                           */
+/* ------------------------------------------------------------------ */
+
+async function seedSettings() {
+  console.log('Seeding Settings...');
+  const setting = new Setting({
+    srmCollegeEmail: 'srmxerox@srmist.edu.in',
+  });
+  await setting.save();
+  console.log('Seeded default settings');
 }
 
 /* ------------------------------------------------------------------ */
@@ -893,6 +908,7 @@ async function seed() {
   try {
     await clearCollections();
 
+    await seedSettings();
     const branches = await seedBranches();
     const departments = await seedDepartments(branches);
     const users = await seedUsers(branches, departments);

@@ -94,6 +94,8 @@ export const useDepartmentModule = (exported) => {
     setQuery,
   });
 
+  const clearCredit = (id, data) => crud.clearCredit(id, data);
+
   return {
     state: list,
     loading,
@@ -102,6 +104,7 @@ export const useDepartmentModule = (exported) => {
     set,
     add,
     update,
+    clearCredit,
     remove,
     setCurrent,
     useDepartmentColumns,

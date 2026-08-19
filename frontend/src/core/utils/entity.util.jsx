@@ -142,6 +142,7 @@ export const createEntityQueryActions = ({ crud, getQuery, setQuery }) => {
 
     
     filterByField: (field, value, f = {}) => fetch({ [field]: value, page: 1, ...f }),
+    where: (field, value, f = {}) => fetch({ [field]: value, page: 1, ...f }),
   };
 
   return {

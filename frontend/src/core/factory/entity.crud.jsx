@@ -99,7 +99,7 @@ export const createCrud = ({ entity, urls, store, getRole }) => {
 
         const res = await apiRequest(method, finalUrl, options);
 
-        if (SET_KEYS.includes(key)) {
+        if (SET_KEYS.includes(key) && !callOptions.skipStore) {
           store.set(res.data || []);
           if (res.pagination) {
             store.setPagination(res.pagination);

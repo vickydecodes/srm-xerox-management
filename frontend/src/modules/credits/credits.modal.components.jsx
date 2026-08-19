@@ -25,8 +25,7 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
-import { apiRequest } from "@/core/api/api.request";
-import { apiurls } from "@/core/api/api.urls";
+import { useLoader } from "@/core/hooks/useLoader";
 import { toast } from "sonner";
 import { IconCreditCard, IconBuildingCommunity, IconEye } from "@tabler/icons-react";
 import { useUI } from "@/core/contexts/ui.context";
@@ -40,7 +39,6 @@ export const Create = ({ closeModal, exported }) => {
   const { openModal } = useUI();
   const { user } = exported || {};
   const [departments, setDepartments] = useState([]);
-  const [loadingDepts, setLoadingDepts] = useState(false);
   const [selectedDeptId, setSelectedDeptId] = useState("");
   const [openDeptPopover, setOpenDeptPopover] = useState(false);
   const [deptSearchQuery, setDeptSearchQuery] = useState("");
@@ -67,40 +65,39 @@ export const Create = ({ closeModal, exported }) => {
   const isDeptAdmin = user?.role === "department_admin";
   const userDeptId = user?.department?._id || user?.department;
 
-  // Load departments
+  const { createPreset } = useLoader();
+  const loadDepartmentsPreset = createPreset(exported?.departments);
+
   useEffect(() => {
-    const loadDepartments = async () => {
-      try {
-        setLoadingDepts(true);
-        const res = await apiRequest("get", apiurls.departments.getAll.url(), { params: { full: true } });
-        if (res.success) {
-          const allDepts = res.data || [];
-          // Filter departments depending on role
-          const filtered = allDepts.filter((d) => {
-            if (user?.role === "super_admin") return true;
-            if (user?.role === "branch_admin") {
-              const uBranch = user.branch?._id || user.branch;
-              const dBranch = d.branch?._id || d.branch;
-              return String(uBranch) === String(dBranch);
-            }
-            if (isDeptAdmin) {
-              return String(d._id) === String(userDeptId);
-            }
-            return false;
-          });
-          setDepartments(filtered);
-          if (isDeptAdmin && filtered.length > 0) {
-            setSelectedDeptId(String(filtered[0]._id));
-          }
+    if (exported?.departments) {
+      loadDepartmentsPreset();
+    }
+  }, []);
+
+  const allDepts = exported?.departments?.state || [];
+  const loadingDepts = exported?.departments?.loading || false;
+
+  // Filter departments depending on role
+  useEffect(() => {
+    if (allDepts.length > 0) {
+      const filtered = allDepts.filter((d) => {
+        if (user?.role === "super_admin") return true;
+        if (user?.role === "branch_admin") {
+          const uBranch = user.branch?._id || user.branch;
+          const dBranch = d.branch?._id || d.branch;
+          return String(uBranch) === String(dBranch);
         }
-      } catch (err) {
-        console.error("Error loading departments in modal:", err);
-      } finally {
-        setLoadingDepts(false);
+        if (isDeptAdmin) {
+          return String(d._id) === String(userDeptId);
+        }
+        return false;
+      });
+      setDepartments(filtered);
+      if (isDeptAdmin && filtered.length > 0 && !selectedDeptId) {
+        setSelectedDeptId(String(filtered[0]._id));
       }
-    };
-    loadDepartments();
-  }, [user, isDeptAdmin, userDeptId]);
+    }
+  }, [allDepts, user, isDeptAdmin, userDeptId]);
 
   // Load unpaid bills when department changes
   useEffect(() => {
@@ -113,27 +110,23 @@ export const Create = ({ closeModal, exported }) => {
     const loadUnpaidBills = async () => {
       try {
         setLoadingBills(true);
-        const res = await apiRequest("get", apiurls.bills.getAll.url(), {
-          params: {
-            department: selectedDeptId,
-            paymentMethod: "CREDIT",
-            status: "UNPAID",
-            full: true,
-          },
-        });
-        if (res.success) {
-          setUnpaidBills(res.data || []);
-          setSelectedBillIds([]);
-          setAmount(0);
-        }
+        const data = await exported.bills.crud.getAll({
+          department: selectedDeptId,
+          paymentMethod: "CREDIT",
+          status: "UNPAID",
+          full: true,
+        }, { __options: { skipStore: true } });
+        setUnpaidBills(data || []);
+        setSelectedBillIds([]);
+        setAmount(0);
       } catch (err) {
         console.error("Error loading bills in modal:", err);
       } finally {
         setLoadingBills(false);
       }
     };
-    loadUnpaidBills();
-  }, [selectedDeptId]);
+    if (exported?.bills) loadUnpaidBills();
+  }, [selectedDeptId, exported]);
 
   const handleToggleBill = (billId) => {
     setSelectedBillIds((prev) => {
@@ -190,21 +183,17 @@ export const Create = ({ closeModal, exported }) => {
 
     try {
       setSubmitting(true);
-      const res = await apiRequest("post", apiurls.departments.clearCredit.url(selectedDeptId), {
-        data: {
-          billIds: selectedBillIds,
-          amount,
-          paymentMethod,
-          otherPaymentMethod: paymentMethod === "OTHER" ? otherPaymentMethod.trim() : undefined,
-          remarks,
-        },
+      await exported.departments.clearCredit(selectedDeptId, {
+        billIds: selectedBillIds,
+        amount,
+        paymentMethod,
+        otherPaymentMethod: paymentMethod === "OTHER" ? otherPaymentMethod.trim() : undefined,
+        remarks,
       });
-      if (res.success) {
-        toast.success("Payment recorded successfully!");
-        closeModal();
-        if (exported?.fetch) {
-          exported.fetch();
-        }
+      toast.success("Payment recorded successfully!");
+      closeModal();
+      if (exported?.fetch) {
+        exported.fetch();
       }
     } catch (err) {
       toast.error(err.message || "Failed to settle credit");

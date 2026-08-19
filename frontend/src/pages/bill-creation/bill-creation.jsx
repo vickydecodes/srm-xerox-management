@@ -7,8 +7,6 @@ import { useAction } from "@/core/hooks/useAction";
 import { Button } from "@/components/ui/button";
 import { BillForm } from "@/modules/bill/bill.form";
 import { defaultBillValues } from "@/modules/bill/bill.schema";
-import { apiurls } from "@/core/api/api.urls";
-import { apiRequest } from "@/core/api/api.request";
 import { useBillStore } from "@/modules/bill/bill.store";
 
 const getFormDefaultValues = (bill) => {
@@ -35,7 +33,7 @@ export default function BillCreation() {
   const { search } = useLocation();
   const { user } = useAuth();
   const { usePageAction } = useAction();
-  const { inventoryProducts, services, bills } = useApi();
+  const { inventoryProducts, services, bills, orders } = useApi();
   const { createPreset } = useLoader();
 
   const [editingBill, setEditingBill] = useState(null);
@@ -92,11 +90,7 @@ export default function BillCreation() {
     } else if (orderId) {
       const fetchOrder = async () => {
         try {
-          const config = apiurls.orders.getOne;
-          const order = await apiRequest({
-            ...config,
-            url: config.url(orderId),
-          });
+          const order = await orders.crud.getOne(orderId);
           setPrefilledValues({
             paymentMethod: "credit",
             status: "unpaid",

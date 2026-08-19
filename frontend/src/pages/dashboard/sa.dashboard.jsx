@@ -2,8 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { apiRequest } from "@/core/api/api.request";
-import { apiurls } from "@/core/api/api.urls";
+import { useApi } from "@/core/contexts/api.context";
 import { toast } from "sonner";
 import {
   IconBuildingCommunity,
@@ -30,6 +29,7 @@ import {
 
 export default function SaDashboard({ data, refreshData }) {
   const navigate = useNavigate();
+  const { bills: billsModule } = useApi();
   const stats = data?.stats || {};
   const methods = data?.paymentMethods || [];
   const list = data?.branchRevenue || [];
@@ -113,14 +113,9 @@ export default function SaDashboard({ data, refreshData }) {
 
   const handleMarkAsPaid = async (billId, paymentMethod) => {
     try {
-      const url = apiurls.bills.edit.url(billId);
-      const res = await apiRequest("put", url, { status: "PAID", paymentMethod });
-      if (res.success) {
-        toast.success(`Bill marked as PAID via ${paymentMethod}!`);
-        if (refreshData) refreshData();
-      } else {
-        toast.error(res.message || "Failed to update bill status");
-      }
+      await billsModule.crud.edit(billId, { status: "PAID", paymentMethod });
+      toast.success(`Bill marked as PAID via ${paymentMethod}!`);
+      if (refreshData) refreshData();
     } catch (err) {
       toast.error(err.message || "An error occurred");
     }
@@ -128,14 +123,9 @@ export default function SaDashboard({ data, refreshData }) {
 
   const handleCancelBill = async (billId) => {
     try {
-      const url = apiurls.bills.edit.url(billId);
-      const res = await apiRequest("put", url, { status: "CANCELLED" });
-      if (res.success) {
-        toast.success("Bill cancelled successfully.");
-        if (refreshData) refreshData();
-      } else {
-        toast.error(res.message || "Failed to cancel bill");
-      }
+      await billsModule.crud.edit(billId, { status: "CANCELLED" });
+      toast.success("Bill cancelled successfully.");
+      if (refreshData) refreshData();
     } catch (err) {
       toast.error(err.message || "An error occurred");
     }

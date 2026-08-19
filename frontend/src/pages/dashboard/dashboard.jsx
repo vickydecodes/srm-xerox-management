@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useAuth } from "@/core/contexts/auth.context";
-import { apiRequest } from "@/core/api/api.request";
-import { apiurls } from "@/core/api/api.urls";
+import { useApi } from "@/core/contexts/api.context";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -16,44 +15,20 @@ import StaffDashboard from "./staff.dashboard";
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { dashboard } = useApi();
 
-  const getDashboardUrl = () => {
-    switch (user.role) {
-      case "super_admin":
-        return apiurls.dashboard.superAdmin.url();
-      case "branch_admin":
-        return apiurls.dashboard.branchAdmin.url();
-      case "department_admin":
-        return apiurls.dashboard.departmentAdmin.url();
-      case "shop_admin":
-        return apiurls.dashboard.shopAdmin.url();
-      case "staff":
-        return apiurls.dashboard.staff.url();
-      default:
-        throw new Error("Invalid user role for dashboard");
-    }
-  };
-
-  const fetchDashboard = async () => {
-    try {
-      setLoading(true);
-      const url = getDashboardUrl();
-      const res = await apiRequest("get", url);
-      if (res.success) {
-        setData(res.data);
-      }
-    } catch (err) {
-      console.error("Error loading dashboard data:", err);
-    } finally {
-      setLoading(false);
+  const fetchDashboard = () => {
+    if (dashboard && user?.role) {
+      dashboard.fetch(user.role);
     }
   };
 
   useEffect(() => {
     fetchDashboard();
-  }, [user.role]);
+  }, [user?.role]);
+
+  const data = dashboard?.data;
+  const loading = dashboard?.loading;
 
   const getRoleLabel = (role) => {
     switch (role) {

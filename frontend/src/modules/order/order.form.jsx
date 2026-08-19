@@ -134,6 +134,21 @@ export default function OrderForm({
         )}
       />
 
+      {/* Attachment Email */}
+      <FormField
+        control={form.control}
+        name="attachmentEmail"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Attachment Sender Email</FormLabel>
+            <FormControl>
+              <Input type="email" placeholder="Email address from which you sent the attachments" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
 
 
       {/* Items – search & add */}

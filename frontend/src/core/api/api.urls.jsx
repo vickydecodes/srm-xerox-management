@@ -204,6 +204,10 @@ const apiurls = {
       url: (id) => `${base_url}/orders/${id}/super-admin-approve`,
     },
   },
+  settings: {
+    get: { method: "get", url: () => `${base_url}/settings` },
+    update: { method: "put", url: () => `${base_url}/settings` },
+  },
   search: {
     products: { method: "get", url: () => `${base_url}/search/products` },
   },

@@ -3,8 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { apiRequest } from "@/core/api/api.request";
-import { apiurls } from "@/core/api/api.urls";
+import { useApi } from "@/core/contexts/api.context";
 import { toast } from "sonner";
 import { useAuth } from "@/core/contexts/auth.context";
 import {
@@ -34,6 +33,7 @@ import {
 export default function DaDashboard({ data, refreshData }) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { bills: billsModule, departments: departmentsModule } = useApi();
   const stats = data?.stats || {};
   const methods = data?.paymentMethods || [];
   const list = data?.departmentRevenue || [];
@@ -43,17 +43,15 @@ export default function DaDashboard({ data, refreshData }) {
   const [deptCredit, setDeptCredit] = useState(null);
 
   useEffect(() => {
-    if (user?.department) {
+    if (user?.department && departmentsModule) {
       const deptId = typeof user.department === "object" ? user.department._id : user.department;
-      apiRequest("get", apiurls.departments.getOne.url(deptId))
+      departmentsModule.crud.getOne(deptId)
         .then((res) => {
-          if (res.success) {
-            setDeptCredit(res.data);
-          }
+          setDeptCredit(res);
         })
         .catch((err) => console.error("Error fetching department credit", err));
     }
-  }, [user]);
+  }, [user, departmentsModule]);
 
   const currencyFormatter = (val) =>
     new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(val);
@@ -106,14 +104,9 @@ export default function DaDashboard({ data, refreshData }) {
 
   const handleMarkAsPaid = async (billId, paymentMethod) => {
     try {
-      const url = apiurls.bills.edit.url(billId);
-      const res = await apiRequest("put", url, { status: "PAID", paymentMethod });
-      if (res.success) {
-        toast.success(`Bill marked as PAID via ${paymentMethod}!`);
-        if (refreshData) refreshData();
-      } else {
-        toast.error(res.message || "Failed to update bill status");
-      }
+      await billsModule.crud.edit(billId, { status: "PAID", paymentMethod });
+      toast.success(`Bill marked as PAID via ${paymentMethod}!`);
+      if (refreshData) refreshData();
     } catch (err) {
       toast.error(err.message || "An error occurred");
     }
@@ -121,14 +114,9 @@ export default function DaDashboard({ data, refreshData }) {
 
   const handleCancelBill = async (billId) => {
     try {
-      const url = apiurls.bills.edit.url(billId);
-      const res = await apiRequest("put", url, { status: "CANCELLED" });
-      if (res.success) {
-        toast.success("Bill cancelled successfully.");
-        if (refreshData) refreshData();
-      } else {
-        toast.error(res.message || "Failed to cancel bill");
-      }
+      await billsModule.crud.edit(billId, { status: "CANCELLED" });
+      toast.success("Bill cancelled successfully.");
+      if (refreshData) refreshData();
     } catch (err) {
       toast.error(err.message || "An error occurred");
     }

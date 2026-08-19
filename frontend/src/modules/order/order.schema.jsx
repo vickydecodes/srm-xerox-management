@@ -17,6 +17,7 @@ export const orderCreateSchema = z.object({
   department: z.string().optional(),
   branch: z.string().optional(),
   purpose: z.string().optional(),
+  attachmentEmail: z.string().email({ message: 'Please enter a valid email address' }).min(1, { message: 'Email is required' }),
   managementAmount: z.coerce.number().min(0).optional(),
   sponsors: z.array(sponsorSchema).default([]),
   items: z.array(orderItemSchema).min(1, { error: 'Add at least one item' }),

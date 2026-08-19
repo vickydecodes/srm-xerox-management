@@ -12,6 +12,11 @@ export const createOrderSchema = z.object({
     .trim()
     .optional(),
 
+  attachmentEmail: z
+    .string()
+    .trim()
+    .email('Invalid email address'),
+
   managementAmount: z
     .number()
     .min(0, 'Management amount cannot be negative')

@@ -31,6 +31,7 @@ import {
 import OrderForm from "./order.form";
 import { useLoader } from "@/core/hooks/useLoader";
 import { useEffect } from "react";
+import { Mail } from "lucide-react";
 
 const statusVariant = {
   draft: "outline",
@@ -78,9 +79,15 @@ export const View = ({ order, exported, closeModal } = {}) => {
       </DialogHeader>
 
       <div className="grid gap-3 text-sm">
-        <div className="rounded-md border p-3">
-          <span className="text-muted-foreground block">Purpose</span>
-          <span>{order?.purpose || "-"}</span>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="rounded-md border p-3">
+            <span className="text-muted-foreground block">Purpose</span>
+            <span>{order?.purpose || "-"}</span>
+          </div>
+          <div className="rounded-md border p-3">
+            <span className="text-muted-foreground block">Attachment Sender Email</span>
+            <span className="font-mono">{order?.attachmentEmail || "-"}</span>
+          </div>
         </div>
         <div className="rounded-md border p-3">
           <span className="text-muted-foreground block mb-2">Items</span>
@@ -276,6 +283,7 @@ export const Create = ({
       branch: userBranchId,
       department: userDeptId,
       purpose: "",
+      attachmentEmail: user?.email || "",
       managementAmount: 0,
       sponsors: [],
       items: [],
@@ -285,6 +293,7 @@ export const Create = ({
   const { createPreset } = useLoader();
   const loadBranches = createPreset(exported?.branches);
   const loadDepartments = createPreset(exported?.departments);
+  const loadSettings = createPreset(exported?.settings);
 
   const { run, loading, ErrorAlert, clearError } = useAsync(submitFn);
 
@@ -295,8 +304,11 @@ export const Create = ({
   useEffect(() => {
     if (exported?.branches) loadBranches();
     if (exported?.departments) loadDepartments();
+    if (exported?.settings) loadSettings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const collegeEmail = exported?.settings?.config?.srmCollegeEmail || "srmxerox@srmist.edu.in";
 
   return (
     <DialogContent className="w-2xl max-h-[85vh] overflow-y-auto">
@@ -304,6 +316,18 @@ export const Create = ({
         <DialogTitle>Create Order</DialogTitle>
         <DialogDescription>Raise a new order</DialogDescription>
       </DialogHeader>
+
+      <div className="rounded-lg border border-indigo-200 bg-indigo-50/50 p-4 text-sm text-indigo-900 flex items-start gap-3 shadow-sm dark:border-indigo-950 dark:bg-indigo-950/20 dark:text-indigo-200 my-2">
+        <Mail className="h-5 w-5 text-indigo-600 shrink-0 mt-0.5 dark:text-indigo-400" />
+        <div className="flex-1">
+          <h5 className="font-semibold mb-1 text-xs uppercase tracking-wider text-indigo-700 dark:text-indigo-300">Important Instruction</h5>
+          <p className="text-xs leading-relaxed text-indigo-600 dark:text-indigo-400">
+            Please email your attachments/files to:{" "}
+            <strong className="text-indigo-900 font-bold select-all underline decoration-dashed dark:text-indigo-200">{collegeEmail}</strong>.
+            Ensure you fill the email from which you sent them in the field below.
+          </p>
+        </div>
+      </div>
 
       <Form {...form}>
         <form
@@ -346,6 +370,7 @@ export const Edit = ({
       branch: order?.branch?._id || order?.branch || "",
       department: order?.department?._id || order?.department || "",
       purpose: order?.purpose || "",
+      attachmentEmail: order?.attachmentEmail || "",
       managementAmount: order?.managementAmount || 0,
       sponsors: order?.sponsors || [],
       items:
@@ -363,6 +388,7 @@ export const Edit = ({
   const { createPreset } = useLoader();
   const loadBranches = createPreset(exported?.branches);
   const loadDepartments = createPreset(exported?.departments);
+  const loadSettings = createPreset(exported?.settings);
 
   const { run, loading, ErrorAlert, clearError } = useAsync(submitFn);
 
@@ -373,8 +399,11 @@ export const Edit = ({
   useEffect(() => {
     if (exported?.branches) loadBranches();
     if (exported?.departments) loadDepartments();
+    if (exported?.settings) loadSettings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const collegeEmail = exported?.settings?.config?.srmCollegeEmail || "srmxerox@srmist.edu.in";
 
   return (
     <DialogContent className="w-2xl max-h-[85vh] overflow-y-auto">
@@ -382,6 +411,18 @@ export const Edit = ({
         <DialogTitle>Edit Order {order?.code}</DialogTitle>
         <DialogDescription>Update this order before approval</DialogDescription>
       </DialogHeader>
+
+      <div className="rounded-lg border border-indigo-200 bg-indigo-50/50 p-4 text-sm text-indigo-900 flex items-start gap-3 shadow-sm dark:border-indigo-950 dark:bg-indigo-950/20 dark:text-indigo-200 my-2">
+        <Mail className="h-5 w-5 text-indigo-600 shrink-0 mt-0.5 dark:text-indigo-400" />
+        <div className="flex-1">
+          <h5 className="font-semibold mb-1 text-xs uppercase tracking-wider text-indigo-700 dark:text-indigo-300">Important Instruction</h5>
+          <p className="text-xs leading-relaxed text-indigo-600 dark:text-indigo-400">
+            Please email your attachments/files to:{" "}
+            <strong className="text-indigo-900 font-bold select-all underline decoration-dashed dark:text-indigo-200">{collegeEmail}</strong>.
+            Ensure you fill the email from which you sent them in the field below.
+          </p>
+        </div>
+      </div>
 
       <Form {...form}>
         <form

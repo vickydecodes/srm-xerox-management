@@ -24,8 +24,6 @@ import { Separator } from "@/components/ui/separator";
 import { useLoader } from "@/core/hooks/useLoader";
 import React, { useEffect } from "react";
 import { toast } from "sonner";
-import { apiRequest } from "@/core/api/api.request";
-import { apiurls } from "@/core/api/api.urls";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -135,12 +133,8 @@ export const ClearCreditByBill = ({ department, exported, closeModal }) => {
     const fetchBills = async () => {
       setFetching(true);
       try {
-        const config = apiurls.bills.getByDepartment;
-        const res = await apiRequest({
-          ...config,
-          url: config.url(department._id),
-        });
-        setBills(res?.data || []);
+        const data = await exported.bills.crud.getByDepartment(department._id);
+        setBills(data || []);
       } catch (err) {
         toast.error(err.message || "Failed to load department bills");
       } finally {
@@ -148,8 +142,8 @@ export const ClearCreditByBill = ({ department, exported, closeModal }) => {
       }
     };
 
-    if (department?._id) fetchBills();
-  }, [department]);
+    if (department?._id && exported?.bills) fetchBills();
+  }, [department, exported]);
 
   const toggleBill = (billId) => {
     setSelectedBillIds((prev) =>
@@ -179,17 +173,12 @@ export const ClearCreditByBill = ({ department, exported, closeModal }) => {
 
     setLoading(true);
     try {
-      const config = apiurls.departments.clearCredit;
-      const updatedDept = await apiRequest({
-        ...config,
-        url: config.url(department._id),
-        data: {
-          billIds: selectedBillIds,
-          amount: totalAmount,
-          paymentMethod,
-          otherPaymentMethod: paymentMethod === "OTHER" ? otherPaymentMethod.trim() : undefined,
-          remarks,
-        },
+      const updatedDept = await exported.departments.clearCredit(department._id, {
+        billIds: selectedBillIds,
+        amount: totalAmount,
+        paymentMethod,
+        otherPaymentMethod: paymentMethod === "OTHER" ? otherPaymentMethod.trim() : undefined,
+        remarks,
       });
 
       if (exported && exported.departments) {
@@ -549,16 +538,11 @@ export const ManageCredit = ({ department, exported, closeModal }) => {
 
     setLoading(true);
     try {
-      const config = apiurls.departments.clearCredit;
-      const updatedDept = await apiRequest({
-        ...config,
-        url: config.url(department._id),
-        data: {
-          amount,
-          paymentMethod,
-          otherPaymentMethod: paymentMethod === "OTHER" ? otherPaymentMethod.trim() : undefined,
-          remarks,
-        },
+      const updatedDept = await exported.departments.clearCredit(department._id, {
+        amount,
+        paymentMethod,
+        otherPaymentMethod: paymentMethod === "OTHER" ? otherPaymentMethod.trim() : undefined,
+        remarks,
       });
 
       // Update the department in list

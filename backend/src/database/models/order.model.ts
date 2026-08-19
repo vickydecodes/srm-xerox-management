@@ -100,6 +100,8 @@ export interface IOrder extends Document {
 
   createdBy: Types.ObjectId;
 
+  attachmentEmail?: string;
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -112,6 +114,7 @@ const OrderSchema = new Schema<IOrder>(
     branch: { type: Schema.Types.ObjectId, ref: 'Branch', required: true },
 
     purpose: { type: String, trim: true },
+    attachmentEmail: { type: String, trim: true },
 
     managementAmount: { type: Number, min: 0 },
     sponsors: { type: [SponsorSchema], default: [] },

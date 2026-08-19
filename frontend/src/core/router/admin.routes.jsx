@@ -11,6 +11,7 @@ import {
   IconUser,
   IconLayoutDashboard,
   IconCreditCard,
+  IconSettings,
 } from "@tabler/icons-react";
 
 import Department from "@/pages/department/department";
@@ -29,6 +30,7 @@ import Profile from "@/pages/profile/profile";
 import Dashboard from "@/pages/dashboard/dashboard";
 import Order from "@/pages/order/order";
 import Credits from "@/pages/credits/credits";
+import Settings from "@/pages/settings/settings";
 
 export const adminRoutes = {
   role: "super_admin",
@@ -166,6 +168,14 @@ export const adminRoutes = {
       description: "Track credit allocations, department spending, user spending, and credit payments.",
       icon: <IconCreditCard className="h-5 w-5 shrink-0" />,
       element: <Credits />,
+    },
+    {
+      path: "/super_admin/settings",
+      label: "Settings",
+      title: "System Settings",
+      description: "Manage global SRM college system configuration.",
+      icon: <IconSettings className="h-5 w-5 shrink-0" />,
+      element: <Settings />,
     },
   ],
   logout: {
