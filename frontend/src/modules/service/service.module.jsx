@@ -53,7 +53,8 @@ export const useServiceModule = (exported) => {
     return openModal(modals.activeStatus, {
       id: service._id ?? service.id,
       status: service.active,
-      submitFn: (id, data) => crud.edit(id, data),
+      submitFn: (id, data) => crud.setActiveStatus(id, data),
+      loading: store.loading.edit,
       exported,
     });
   };

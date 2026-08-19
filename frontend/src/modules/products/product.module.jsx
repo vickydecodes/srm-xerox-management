@@ -70,7 +70,8 @@ export const useProductModule = (exported) => {
     return openModal(modals.activeStatus, {
       id: product._id ?? product.id,
       status: product.active,
-      submitFn: (id, data) => crud.edit(id, data),
+      submitFn: (id, data) => crud.setActiveStatus(id, data),
+      loading: store.loading.edit,
       exported,
     });
   };

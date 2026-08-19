@@ -18,6 +18,19 @@ import { inventoryProductSchema } from "./inventory-product.schema";
 import { InventoryProductForm } from "./inventory-product.form";
 import { Button } from "@/components/ui/button";
 
+const findMatchingVariantId = (product, selectedAttributes) => {
+  if (!product || !product.variants || !selectedAttributes) return null;
+  const match = product.variants.find((v) => {
+    const vAttrs = v.attributes || {};
+    const vEntries = typeof vAttrs.entries === 'function' 
+      ? [...vAttrs.entries()] 
+      : Object.entries(vAttrs);
+    if (vEntries.length === 0) return false;
+    return vEntries.every(([k, val]) => String(selectedAttributes[k]) === String(val));
+  });
+  return match ? match._id : null;
+};
+
 export const Create = ({ exported, submitFn, closeModal }) => {
   const { createPreset } = useLoader();
   const preset = createPreset(exported.products);
@@ -47,6 +60,14 @@ export const Create = ({ exported, submitFn, closeModal }) => {
   const onSubmit = useSubmit({
     run,
     form,
+    transform: (data) => {
+      const selectedProduct = products.find(p => String(p._id) === String(data.product));
+      const variantId = findMatchingVariantId(selectedProduct, data.variant);
+      return {
+        ...data,
+        variant: variantId,
+      };
+    },
     onSuccess: closeModal,
   });
 
@@ -108,6 +129,14 @@ export const Edit = ({ inventoryProduct, exported, submitFn = () => {}, closeMod
   const onSubmit = useSubmit({
     run,
     form,
+    transform: (data) => {
+      const selectedProduct = products.find(p => String(p._id) === String(data.product));
+      const variantId = findMatchingVariantId(selectedProduct, data.variant);
+      return {
+        ...data,
+        variant: variantId,
+      };
+    },
     onSuccess: closeModal,
   });
 
@@ -219,7 +248,7 @@ export const Retrieve = ({ id, submitFn, closeModal }) => (
   </DialogContent>
 );
 
-export const ActiveStatus = ({ id, status, submitFn, closeModal, exported }) => {
+export const ActiveStatus = ({ id, status, submitFn, closeModal, loading = false }) => {
   const actionLabel = status ? "Deactivate" : "Activate";
 
   const onConfirm = async () => {
@@ -253,7 +282,7 @@ export const ActiveStatus = ({ id, status, submitFn, closeModal, exported }) => 
 
       <DialogFooter>
         <DialogClose asChild>
-          <Button variant="outline" disabled={exported?.loading?.edit}>
+          <Button variant="outline" disabled={loading}>
             Cancel
           </Button>
         </DialogClose>
@@ -261,9 +290,10 @@ export const ActiveStatus = ({ id, status, submitFn, closeModal, exported }) => 
         <Button
           variant={status ? "destructive" : "default"}
           onClick={onConfirm}
-          disabled={exported?.loading?.edit}
+          disabled={loading}
+          loading={loading}
         >
-          {exported?.loading?.edit ? "Updating..." : actionLabel}
+          {loading ? "Updating..." : actionLabel}
         </Button>
       </DialogFooter>
     </DialogContent>

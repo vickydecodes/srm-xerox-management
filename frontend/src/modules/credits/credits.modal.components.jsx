@@ -34,6 +34,7 @@ import { Check, ChevronsUpDown } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
+import { useDepartmentStore } from "@/modules/department/department.store";
 
 export const Create = ({ closeModal, exported }) => {
   const { openModal } = useUI();
@@ -41,17 +42,6 @@ export const Create = ({ closeModal, exported }) => {
   const [departments, setDepartments] = useState([]);
   const [selectedDeptId, setSelectedDeptId] = useState("");
   const [openDeptPopover, setOpenDeptPopover] = useState(false);
-  const [deptSearchQuery, setDeptSearchQuery] = useState("");
-
-  const filteredDepts = useMemo(() => {
-    if (!deptSearchQuery.trim()) return departments;
-    const q = deptSearchQuery.toLowerCase();
-    return departments.filter(
-      (d) =>
-        d.name?.toLowerCase().includes(q) ||
-        d.code?.toLowerCase().includes(q)
-    );
-  }, [departments, deptSearchQuery]);
 
   const [unpaidBills, setUnpaidBills] = useState([]);
   const [loadingBills, setLoadingBills] = useState(false);
@@ -74,8 +64,8 @@ export const Create = ({ closeModal, exported }) => {
     }
   }, []);
 
-  const allDepts = exported?.departments?.state || [];
-  const loadingDepts = exported?.departments?.loading || false;
+  const allDepts = useDepartmentStore((s) => s.list);
+  const loadingDepts = useDepartmentStore((s) => s.loading.getAll);
 
   // Filter departments depending on role
   useEffect(() => {
@@ -269,48 +259,42 @@ export const Create = ({ closeModal, exported }) => {
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-                <Command shouldFilter={false}>
+                <Command>
                   <CommandInput
                     placeholder="Search department by name or code..."
-                    value={deptSearchQuery}
-                    onValueChange={setDeptSearchQuery}
                   />
                   <CommandList className="max-h-[300px]">
-                    {filteredDepts.length === 0 ? (
-                      <CommandEmpty>No departments found.</CommandEmpty>
-                    ) : (
-                      <CommandGroup>
-                        {filteredDepts.map((d) => (
-                          <CommandItem
-                            key={d._id}
-                            value={d._id}
-                            onSelect={() => {
-                              setSelectedDeptId(d._id);
-                              setOpenDeptPopover(false);
-                              setDeptSearchQuery("");
-                            }}
-                            className="cursor-pointer flex items-center justify-between"
-                          >
-                            <div className="flex items-center min-w-0">
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4 shrink-0",
-                                  selectedDeptId === d._id ? "opacity-100" : "opacity-0"
-                                )}
-                              />
-                              <div className="flex flex-col truncate">
-                                <span className="font-semibold text-sm truncate">
-                                  {d.name} ({d.code})
-                                </span>
-                              </div>
+                    <CommandEmpty>No departments found.</CommandEmpty>
+                    <CommandGroup>
+                      {departments.map((d) => (
+                        <CommandItem
+                          key={d._id}
+                          value={`${d.name} ${d.code} ${d._id}`.toLowerCase()}
+                          onSelect={() => {
+                            setSelectedDeptId(d._id);
+                            setOpenDeptPopover(false);
+                          }}
+                          className="cursor-pointer flex items-center justify-between"
+                        >
+                          <div className="flex items-center min-w-0">
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4 shrink-0",
+                                selectedDeptId === d._id ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            <div className="flex flex-col truncate">
+                              <span className="font-semibold text-sm truncate">
+                                {d.name} ({d.code})
+                              </span>
                             </div>
-                            <span className="text-2xs text-muted-foreground text-right ml-4 shrink-0">
-                              Balance: {formatCurrency(d.outstandingCredit)}
-                            </span>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    )}
+                          </div>
+                          <span className="text-2xs text-muted-foreground text-right ml-4 shrink-0">
+                            Balance: {formatCurrency(d.outstandingCredit)}
+                          </span>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
                   </CommandList>
                 </Command>
               </PopoverContent>

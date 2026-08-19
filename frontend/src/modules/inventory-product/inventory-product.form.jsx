@@ -27,7 +27,7 @@ export function InventoryProductForm({ form, products = [], isEdit = false }) {
   );
 
   
-  const variantsObj = selectedProduct?.variants ?? {};
+  const variantsObj = selectedProduct?.attributes ?? {};
   const attributeKeys = Object.keys(variantsObj);
 
   const productSelect = useSelectItems(products, {

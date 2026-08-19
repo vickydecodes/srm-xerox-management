@@ -31,7 +31,7 @@ export const useProductColumns = (products) => {
       accessorKey: "variants",
       header: () => Hint("Variants", "Available product variants"),
       cell: ({ row }) => {
-        const variants = row.original.variants || {};
+        const variants = row.original.attributes || {};
         const entries = Object.entries(variants);
 
         if (entries.length === 0) {

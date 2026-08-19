@@ -84,6 +84,7 @@ export const useDepartmentModule = (exported) => {
       id,
       status,
       submitFn: (id, data) => crud.setActiveStatus(id, data),
+      loading: store.loading.edit,
       exported,
     });
   };

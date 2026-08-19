@@ -43,7 +43,7 @@ const toVariantsArray = (variants = {}) =>
   }));
 
 export const View = ({ product } = {}) => {
-  const variants = product?.variants || {};
+  const variants = product?.attributes || {};
   const variantEntries = Object.entries(variants);
 
   return (
@@ -180,7 +180,7 @@ export const Edit = ({
     defaultValues: {
       name: product?.name || "",
       description: product?.description || "",
-      variants: toVariantsArray(product?.variants),
+      variants: toVariantsArray(product?.attributes),
       active: product?.active ?? true,
     },
   });
@@ -321,7 +321,7 @@ export const ActiveStatus = ({
   status,
   submitFn,
   closeModal,
-  exported,
+  loading = false,
 }) => {
   const actionLabel = status ? "Deactivate" : "Activate";
   const isDeactivating = Boolean(status);
@@ -369,7 +369,7 @@ export const ActiveStatus = ({
 
       <DialogFooter>
         <DialogClose asChild>
-          <Button variant="outline" disabled={exported?.loading?.edit}>
+          <Button variant="outline" disabled={loading}>
             Cancel
           </Button>
         </DialogClose>
@@ -377,8 +377,8 @@ export const ActiveStatus = ({
         <Button
           variant={isDeactivating ? "destructive" : "default"}
           onClick={onConfirm}
-          disabled={exported?.loading?.edit}
-          loading={exported?.loading?.edit}
+          disabled={loading}
+          loading={loading}
           loadingText="Updating..."
         >
           {actionLabel}

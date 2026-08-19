@@ -412,7 +412,7 @@ export const ActiveStatus = ({
   status,
   submitFn,
   closeModal,
-  exported,
+  loading = false,
 }) => {
   const actionLabel = status ? "Deactivate" : "Activate";
 
@@ -447,7 +447,7 @@ export const ActiveStatus = ({
 
       <DialogFooter>
         <DialogClose asChild>
-          <Button variant="outline" disabled={exported?.loading?.edit}>
+          <Button variant="outline" disabled={loading}>
             Cancel
           </Button>
         </DialogClose>
@@ -455,9 +455,9 @@ export const ActiveStatus = ({
         <Button
           variant={status ? "destructive" : "default"}
           onClick={onConfirm}
-          disabled={exported?.loading?.edit}
+          disabled={loading}
         >
-          {exported?.loading?.edit ? "Updating..." : actionLabel}
+          {loading ? "Updating..." : actionLabel}
         </Button>
       </DialogFooter>
     </DialogContent>

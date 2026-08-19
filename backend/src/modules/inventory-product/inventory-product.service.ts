@@ -1,4 +1,5 @@
 import InventoryProduct from '@db/models/inventory-product.model.ts';
+import Inventory from '@db/models/inventory.model.ts';
 import { dynamicFilter } from '@core/constants/dynamicfilter.constant.ts';
 import {
   CreateInventoryProductPayload,
@@ -12,13 +13,26 @@ import {
   toObjectId,
   getVisibility,
 } from './inventory-product.constants.ts';
-import { enhanceInventoryProduct } from './inventory-product.util.ts';
+import { enhanceInventoryProduct, resolveInventoryProductVariant } from './inventory-product.util.ts';
 import { inventoryProductFilterConfig } from './inventory-product.filterconfig.ts';
 
 export const createInventoryProduct = async (data: CreateInventoryProductPayload) => {
-  const inventoryProduct = await new InventoryProduct(data).save();
+  let inventoryId = data.inventory;
+  if (!inventoryId) {
+    const defaultInventory = await Inventory.findOne({});
+    if (!defaultInventory) {
+      throw new Error('No default inventory found. Please run seed script.');
+    }
+    inventoryId = defaultInventory._id.toString();
+  }
 
-  return enhanceInventoryProduct(inventoryProduct);
+  const inventoryProduct = await new InventoryProduct({
+    ...data,
+    inventory: inventoryId,
+  }).save();
+
+  const populated = await InventoryProduct.findById(inventoryProduct._id).populate('product');
+  return resolveInventoryProductVariant(populated);
 };
 
 export const getAllInventoryProducts = async (
@@ -30,22 +44,28 @@ export const getAllInventoryProducts = async (
     ? { inventory: toObjectId(options.inventoryId) }
     : undefined;
 
-  return dynamicFilter(InventoryProduct, inventoryProductFilterConfig, queries, {
+  const result = await dynamicFilter(InventoryProduct, inventoryProductFilterConfig, queries, {
     visibility: getVisibility(role),
     rawQuery,
   });
+
+  if (result.data) {
+    result.data = result.data.map(resolveInventoryProductVariant);
+  }
+  return result;
 };
 
 export const getInventoryProductById = async (id: string) => {
-  return InventoryProduct.findById(id);
+  const ip = await InventoryProduct.findById(id).populate('product');
+  return resolveInventoryProductVariant(ip);
 };
 
 export const updateInventoryProduct = async (id: string, data: UpdateInventoryProductPayload) => {
-  const updated = await InventoryProduct.findByIdAndUpdate(id, data, UPDATE_OPTIONS);
+  const updated = await InventoryProduct.findByIdAndUpdate(id, data, UPDATE_OPTIONS).populate('product');
 
   if (!updated) return null;
 
-  return enhanceInventoryProduct(updated);
+  return resolveInventoryProductVariant(updated);
 };
 
 export const removeInventoryProduct = async (id: string) => {
