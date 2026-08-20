@@ -16,7 +16,6 @@ import sendResponse from '@core/constants/responsewrapper.constant.ts';
 import { buildQuery } from '@core/constants/querybuilder.constant.ts';
 import { wrapControllers } from '@core/constants/wrapcontroller.constant.ts';
 
-
 const orderStatus = createStatusControllers(
   {
     remove: service.removeOrder,
@@ -24,7 +23,6 @@ const orderStatus = createStatusControllers(
   },
   'order'
 );
-
 
 const controllers = {
   createOrder: async (
@@ -45,7 +43,6 @@ const controllers = {
     );
   },
 
-
   getAllOrders: async (
     req: Request,
     res: Response
@@ -65,7 +62,6 @@ const controllers = {
       result
     );
   },
-
 
   getOrderById: async (
     req: Request<{ id: string }>,
@@ -88,7 +84,6 @@ const controllers = {
       order
     );
   },
-
 
   updateOrder: async (
     req: Request<
@@ -119,11 +114,9 @@ const controllers = {
     );
   },
 
-
   deleteOrder: orderStatus.softDelete,
 
   retrieveOrder: orderStatus.retrieve,
-
 
   eraseOrder: async (
     req: Request<{ id: string }>,
@@ -147,36 +140,147 @@ const controllers = {
   },
 
   submitOrder: async (
-    req: AuthRequest & { params: { id: string } },
+    req: AuthRequest & {
+      params: { id: string };
+    },
     res: Response
   ) => {
     const { id } = req.params;
-    const order = await service.submitOrder(id, req.user!.id);
-    if (!order) return sendResponse.notFound(res, 'order');
-    return sendResponse.updated(res, 'order', order);
+
+    const order = await service.submitOrder(
+      id,
+      req.user!.id
+    );
+
+    if (!order) {
+      return sendResponse.notFound(
+        res,
+        'order'
+      );
+    }
+
+    return sendResponse.updated(
+      res,
+      'order',
+      order
+    );
   },
 
   branchApproveOrder: async (
-    req: AuthRequest & { params: { id: string }; body: { status: 'approved' | 'rejected'; remarks?: string } },
+    req: AuthRequest & {
+      params: { id: string };
+      body: {
+        status: 'approved' | 'rejected';
+        remarks?: string;
+      };
+    },
     res: Response
   ) => {
     const { id } = req.params;
-    const order = await service.branchApproveOrder(id, req.user!.id, req.body);
-    if (!order) return sendResponse.notFound(res, 'order');
-    return sendResponse.updated(res, 'order', order);
+
+    const order = await service.branchApproveOrder(
+      id,
+      req.user!.id,
+      req.body
+    );
+
+    if (!order) {
+      return sendResponse.notFound(
+        res,
+        'order'
+      );
+    }
+
+    return sendResponse.updated(
+      res,
+      'order',
+      order
+    );
   },
 
   superAdminApproveOrder: async (
-    req: AuthRequest & { params: { id: string }; body: { status: 'approved' | 'rejected'; remarks?: string } },
+    req: AuthRequest & {
+      params: { id: string };
+      body: {
+        status: 'approved' | 'rejected';
+        remarks?: string;
+      };
+    },
     res: Response
   ) => {
     const { id } = req.params;
-    const order = await service.superAdminApproveOrder(id, req.user!.id, req.body);
-    if (!order) return sendResponse.notFound(res, 'order');
-    return sendResponse.updated(res, 'order', order);
+
+    const order =
+      await service.superAdminApproveOrder(
+        id,
+        req.user!.id,
+        req.body
+      );
+
+    if (!order) {
+      return sendResponse.notFound(
+        res,
+        'order'
+      );
+    }
+
+    return sendResponse.updated(
+      res,
+      'order',
+      order
+    );
+  },
+
+  markOrderReadyForPickup: async (
+    req: AuthRequest & {
+      params: { id: string };
+    },
+    res: Response
+  ) => {
+    const { id } = req.params;
+
+    const order =
+      await service.markOrderReadyForPickup(id);
+
+    if (!order) {
+      return sendResponse.notFound(
+        res,
+        'order'
+      );
+    }
+
+    return sendResponse.updated(
+      res,
+      'order',
+      order
+    );
+  },
+
+  markOrderDelivered: async (
+    req: AuthRequest & {
+      params: { id: string };
+    },
+    res: Response
+  ) => {
+    const { id } = req.params;
+
+    const order =
+      await service.markOrderDelivered(id);
+
+    if (!order) {
+      return sendResponse.notFound(
+        res,
+        'order'
+      );
+    }
+
+    return sendResponse.updated(
+      res,
+      'order',
+      order
+    );
   },
 };
-
 
 export const {
   createOrder,
@@ -189,4 +293,6 @@ export const {
   submitOrder,
   branchApproveOrder,
   superAdminApproveOrder,
+  markOrderReadyForPickup,
+  markOrderDelivered,
 } = wrapControllers(controllers);

@@ -91,7 +91,13 @@ export interface IOrder extends Document {
   superAdminApproval: IApproval;
   approvalHistory: IApprovalHistory[];
 
-  status: 'draft' | 'pending' | 'in_progress' | 'completed' | 'rejected';
+  status:
+  | 'draft'
+  | 'pending'
+  | 'in_progress'
+  | 'ready_for_pickup'
+  | 'delivered'
+  | 'rejected';
 
   bill?: Types.ObjectId;
 
@@ -126,10 +132,17 @@ const OrderSchema = new Schema<IOrder>(
     approvalHistory: { type: [ApprovalHistorySchema], default: [] },
 
     status: {
-      type: String,
-      enum: ['draft', 'pending', 'in_progress', 'completed', 'rejected'],
-      default: 'draft',
-    },
+  type: String,
+  enum: [
+    'draft',
+    'pending',
+    'in_progress',
+    'ready_for_pickup',
+    'delivered',
+    'rejected',
+  ],
+  default: 'draft',
+},
 
     bill: { type: Schema.Types.ObjectId, ref: 'Bill' },
 
@@ -186,10 +199,5 @@ OrderSchema.pre('save', function () {
   }
 });
 
-OrderSchema.pre('save', function () {
-  if (this.bill) {
-    this.status = 'completed';
-  }
-});
 
 export default mongoose.model<IOrder>('Order', OrderSchema);

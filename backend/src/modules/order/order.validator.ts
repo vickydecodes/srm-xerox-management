@@ -69,14 +69,15 @@ export const createOrderSchema = z.object({
   superAdminApproval: approvalSchema.optional(),
 
   status: z
-    .enum([
-      'draft',
-      'pending',
-      'in_progress',
-      'completed',
-      'rejected',
-    ])
-    .optional(),
+  .enum([
+    'draft',
+    'pending',
+    'in_progress',
+    'ready_for_pickup',
+    'delivered',
+    'rejected',
+  ])
+  .optional(),
 });
 
 export const updateOrderSchema =

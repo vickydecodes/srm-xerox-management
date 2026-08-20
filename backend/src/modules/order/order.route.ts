@@ -20,6 +20,8 @@ import {
   submitOrder,
   branchApproveOrder,
   superAdminApproveOrder,
+  markOrderReadyForPickup,
+  markOrderDelivered,
 } from './order.controller.js';
 
 
@@ -75,6 +77,9 @@ router.delete('/:id/erase', eraseOrder);
 router.patch('/:id/submit', submitOrder);
 router.patch('/:id/branch-approve', branchApproveOrder);
 router.patch('/:id/super-admin-approve', superAdminApproveOrder);
+router.patch('/:id/ready-for-pickup',markOrderReadyForPickup);
+
+router.patch('/:id/delivered',markOrderDelivered);
 
 
 export default router;
