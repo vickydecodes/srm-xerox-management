@@ -33,12 +33,20 @@ import { useLoader } from "@/core/hooks/useLoader";
 import { useEffect } from "react";
 import { Mail } from "lucide-react";
 
-const statusVariant = {
-  draft: "outline",
-  pending: "secondary",
-  in_progress: "default",
-  completed: "default",
-  rejected: "destructive",
+const statusStyles = {
+  draft: "border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400",
+  pending: "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-400",
+  in_progress: "border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-900/50 dark:bg-blue-950/20 dark:text-blue-400",
+  ready_for_pickup: "border-indigo-200 bg-indigo-50 text-indigo-800 dark:border-indigo-900/50 dark:bg-indigo-950/20 dark:text-indigo-400",
+  delivered: "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-indigo-900/50 dark:bg-indigo-950/20 dark:text-indigo-400",
+  completed: "border-green-200 bg-green-50 text-green-800 dark:border-green-900/50 dark:bg-green-950/20 dark:text-green-400",
+  rejected: "border-red-200 bg-red-50 text-red-800 dark:border-red-900/50 dark:bg-red-950/20 dark:text-red-400",
+};
+
+const approvalStatusStyles = {
+  approved: "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/20 dark:text-emerald-400",
+  rejected: "border-red-200 bg-red-50 text-red-800 dark:border-red-900/50 dark:bg-red-950/20 dark:text-red-400",
+  pending: "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-400",
 };
 
 export const View = ({ order, exported, closeModal } = {}) => {
@@ -47,6 +55,7 @@ export const View = ({ order, exported, closeModal } = {}) => {
   const isSuperAdmin = user?.role === "super_admin";
   const isBranchAdmin = user?.role === "branch_admin";
   const isDeptAdmin = user?.role === "department_admin";
+  const isShopOrStaff = user?.role === "shop_admin" || user?.role === "staff";
 
   const branchStatus = order?.branchAdminApproval?.status || "pending";
   const superAdminStatus = order?.superAdminApproval?.status || "pending";
@@ -64,17 +73,27 @@ export const View = ({ order, exported, closeModal } = {}) => {
     branchStatus === "approved" &&
     isSuperAdmin;
 
+  const canDeliver = order?.status === "ready_for_pickup" && (isSuperAdmin || isShopOrStaff);
+
+  const canProcess =
+    order?.status === "pending" &&
+    superAdminStatus === "approved" &&
+    (isSuperAdmin || isShopOrStaff);
+
   return (
     <DialogContent className="w-2xl max-h-[85vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2">
           {order?.code || "Draft Order"}
-          <Badge variant={statusVariant[order?.status] || "outline"}>
-            {order?.status}
+          <Badge
+            variant="outline"
+            className={statusStyles[order?.status] || "border-gray-200 text-gray-700"}
+          >
+            {order?.status ? order.status.replace(/_/g, " ").toUpperCase() : "-"}
           </Badge>
         </DialogTitle>
         <DialogDescription>
-          {order?.department?.name || "-"} · {order?.branch?.name || "-"}
+          {order?.department?.name || "-"} · {order?.branch?.name || "-"} · Shop: {order?.shop?.name || "-"}
         </DialogDescription>
       </DialogHeader>
 
@@ -130,11 +149,10 @@ export const View = ({ order, exported, closeModal } = {}) => {
               Branch Admin Approval
             </span>
             <Badge
-              variant={
-                statusVariant[order?.branchAdminApproval?.status] || "outline"
-              }
+              variant="outline"
+              className={approvalStatusStyles[order?.branchAdminApproval?.status || "pending"]}
             >
-              {order?.branchAdminApproval?.status || "pending"}
+              {(order?.branchAdminApproval?.status || "pending").toUpperCase()}
             </Badge>
             {order?.branchAdminApproval?.remarks && (
               <p className="text-xs text-muted-foreground mt-1">
@@ -145,9 +163,10 @@ export const View = ({ order, exported, closeModal } = {}) => {
           <div className="rounded-md border p-3">
             <span className="text-muted-foreground block">Super Admin Approval</span>
             <Badge
-              variant={statusVariant[order?.superAdminApproval?.status] || "outline"}
+              variant="outline"
+              className={approvalStatusStyles[order?.superAdminApproval?.status || "pending"]}
             >
-              {order?.superAdminApproval?.status || "pending"}
+              {(order?.superAdminApproval?.status || "pending").toUpperCase()}
             </Badge>
             {order?.superAdminApproval?.remarks && (
               <p className="text-xs text-muted-foreground mt-1">
@@ -256,6 +275,26 @@ export const View = ({ order, exported, closeModal } = {}) => {
               }}
             >
               Super Admin Approval
+            </Button>
+          )}
+          {canDeliver && (
+            <Button
+              onClick={async () => {
+                await orders.deliver(order._id);
+                if (closeModal) closeModal();
+              }}
+            >
+              Mark as Delivered
+            </Button>
+          )}
+          {canProcess && (
+            <Button
+              onClick={async () => {
+                await orders.inProgress(order._id);
+                if (closeModal) closeModal();
+              }}
+            >
+              Start Processing
             </Button>
           )}
         </div>

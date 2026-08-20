@@ -53,11 +53,27 @@ export const useOrderModule = (exported) => {
     });
   };
 
-  const openDelete = (id, code) => {
+  const openDelete = (order) => {
     return openModal(modals.delete, {
-      id,
-      name: code || "Draft",
+      id: order._id,
+      code: order.code || "Draft",
       submitFn: (id) => crud.delete(id),
+      exported,
+    });
+  };
+
+  const openErase = (id) => {
+    return openModal(modals.erase, {
+      id,
+      submitFn: (id) => crud.erase(id),
+      exported,
+    });
+  };
+
+  const openRetrieve = (id) => {
+    return openModal(modals.retrieve, {
+      id,
+      submitFn: (id) => crud.retrieve(id),
       exported,
     });
   };
@@ -83,6 +99,10 @@ export const useOrderModule = (exported) => {
     navigate(`/${role}/bill-creation`);
   };
 
+  const deliver = (id) => crud.deliver(id);
+  const readyForPickup = (id) => crud.readyForPickup(id);
+  const inProgress = (id) => crud.inProgress(id);
+
   const { fetch, reset, sortByColumn, presets } = createEntityQueryActions({
     crud,
     getQuery: () => useOrderStore.getState().query,
@@ -107,9 +127,14 @@ export const useOrderModule = (exported) => {
     openCreate,
     openEdit,
     openDelete,
+    openErase,
+    openRetrieve,
     submit,
     openApprovalDialog,
     convertToBill,
+    deliver,
+    readyForPickup,
+    inProgress,
     crud,
     fetch,
     reset,

@@ -17,6 +17,9 @@ import { userFilterConfig } from './user.filterconfig.ts';
 
 
 export const createUser = async (data: CreateUserPayload) => {
+  if (data.role === 'shop_admin' && !data.shop) {
+    throw new Error('Shop is required for shop_admin role');
+  }
   const user = await new User(data).save();
   return enhanceUser(user);
 };
@@ -37,13 +40,23 @@ export const getAllUsers = async (
 };
 
 export const getUserById = async (id: string) => {
-  return User.findById(id);
+  return User.findById(id).populate('branch department shop');
 };
 
 export const updateUser = async (
   id: string,
   data: UpdateUserPayload
 ) => {
+  if (data.role === 'shop_admin' && !data.shop) {
+    throw new Error('Shop is required for shop_admin role');
+  }
+  if (data.role === undefined) {
+    const existing = await User.findById(id);
+    if (existing && existing.role === 'shop_admin' && 'shop' in data && !data.shop) {
+      throw new Error('Shop cannot be removed for shop_admin role');
+    }
+  }
+
   const updated = await User.findByIdAndUpdate(
     id,
     data,

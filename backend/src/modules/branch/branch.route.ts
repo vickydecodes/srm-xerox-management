@@ -19,6 +19,9 @@ import {
   eraseBranch,
 } from './branch.controller.js';
 
+export const basePath = '/branches';
+export const baseRoute = `/api/v1${basePath}`;
+
 const router = Router();
 
 router.use(authMiddleware);

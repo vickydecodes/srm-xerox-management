@@ -9,8 +9,15 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-export default function ShopAdminForm({ form, isEdit = false }) {
+export default function ShopAdminForm({ form, isEdit = false, shops = [] }) {
   const fields = isEdit
     ? ["name", "email", "phone", "address"]
     : ["name", "email", "phone", "address", "password"];
@@ -46,6 +53,34 @@ export default function ShopAdminForm({ form, isEdit = false }) {
           )}
         />
       ))}
+
+      <FormField
+        control={form.control}
+        name="shop"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Shop</FormLabel>
+            <Select
+              onValueChange={field.onChange}
+              value={field.value || ""}
+            >
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select shop" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {shops.map((s) => (
+                  <SelectItem key={s._id} value={s._id}>
+                    {s.name} ({s.code})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
       <FormField
         control={form.control}

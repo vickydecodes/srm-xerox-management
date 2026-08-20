@@ -1,6 +1,8 @@
 import Order from '@db/models/order.model.ts';
 import User from '@db/models/user.model.ts';
 import Department from '@db/models/department.model.ts';
+import Bill from '@db/models/bill.model.ts';
+import { applyCreditBalance } from '@modules/department/department.services.ts';
 import { dynamicFilter } from '@core/constants/dynamicfilter.constant.ts';
 
 import {
@@ -90,7 +92,7 @@ export const getOrderById = async (
   id: string
 ) => {
   return Order.findById(id).populate(
-    'branch department createdBy branchAdminApproval.approver superAdminApproval.approver approvalHistory.approver'
+    'branch department shop createdBy branchAdminApproval.approver superAdminApproval.approver approvalHistory.approver'
   );
 };
 
@@ -219,6 +221,10 @@ export const branchApproveOrder = async (
     remarks: approvalData.remarks || '',
   });
 
+  if (approvalData.status === 'rejected') {
+    order.status = 'rejected';
+  }
+
   await order.save();
 
   return enhanceOrder(order);
@@ -264,6 +270,36 @@ export const superAdminApproveOrder = async (
     remarks: approvalData.remarks || '',
   });
 
+  if (approvalData.status === 'rejected') {
+    order.status = 'rejected';
+  }
+
+  await order.save();
+
+  return enhanceOrder(order);
+};
+
+export const markOrderInProgress = async (
+  id: string
+) => {
+  const order = await Order.findById(id);
+
+  if (!order) return null;
+
+  if (order.status !== 'pending') {
+    throw new Error(
+      'Order must be pending before it can be processed'
+    );
+  }
+
+  if (order.superAdminApproval.status !== 'approved') {
+    throw new Error(
+      'Order must be approved by super admin first'
+    );
+  }
+
+  order.status = 'in_progress';
+
   await order.save();
 
   return enhanceOrder(order);
@@ -303,6 +339,19 @@ export const markOrderDelivered = async (
   }
 
   order.status = 'delivered';
+
+  // Apply postponed credit to the department on order delivery if the bill is a CREDIT bill
+  if (order.bill) {
+    const bill = await Bill.findById(order.bill);
+    if (bill && bill.paymentMethod === 'CREDIT' && bill.approvalStatus === 'approved') {
+      const dept = await Department.findById(order.department);
+      if (dept) {
+        dept.outstandingCredit += bill.total;
+        await applyCreditBalance(dept);
+        await dept.save();
+      }
+    }
+  }
 
   await order.save();
 

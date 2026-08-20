@@ -3,6 +3,7 @@ import InventoryProduct from '@db/models/inventory-product.model.ts';
 import Service from '@db/models/service.model.ts';
 import Department from '@db/models/department.model.ts';
 import Order from '@db/models/order.model.ts';
+import User from '@db/models/user.model.ts';
 import mongoose from 'mongoose';
 import { dynamicFilter } from '@core/constants/dynamicfilter.constant.ts';
 import { CreateBillPayload, UpdateBillPayload } from '@typings/bill.types.ts';
@@ -84,6 +85,13 @@ export const adjustStockForBill = async (
 };
 
 export const createBill = async (data: CreateBillPayload, createdBy: string) => {
+  // If this is for an order, make sure it exists and isn't already billed
+  if (data.order) {
+    const order = await Order.findById(data.order);
+    if (!order) throw new Error('Order not found');
+    if (order.bill) throw new Error('Order is already billed');
+  }
+
   await adjustStockForBill([], data.items as any);
 
   // Determine initial status and approvalStatus
@@ -122,7 +130,9 @@ export const createBill = async (data: CreateBillPayload, createdBy: string) => 
 
   await bill.save();
 
-  if (data.paymentMethod === 'CREDIT' && data.department) {
+  // If this is a direct CREDIT bill, apply the credit now.
+  // Otherwise (linked to order), apply it when the order is marked delivered.
+  if (data.paymentMethod === 'CREDIT' && data.department && !data.order) {
     const dept = await Department.findById(data.department);
     if (!dept) throw new Error('Department not found');
 
@@ -136,7 +146,12 @@ export const createBill = async (data: CreateBillPayload, createdBy: string) => 
   if (data.order) {
     const order = await Order.findById(data.order);
     if (order) {
+      const creatorUser = await User.findById(createdBy);
+      if (creatorUser && creatorUser.shop) {
+        order.shop = creatorUser.shop as any;
+      }
       order.bill = bill._id as any;
+      order.status = 'ready_for_pickup';
       await order.save();
     }
   }
@@ -159,7 +174,8 @@ export const approveCreditBill = async (id: string, userId: string, remarks?: st
 
   await bill.save();
 
-  if (bill.department) {
+  // Only apply credit on approval if this is a direct bill (not linked to an order)
+  if (bill.department && !bill.order) {
     const dept = await Department.findById(bill.department);
     if (!dept) throw new Error('Department not found');
 

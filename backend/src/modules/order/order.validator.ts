@@ -1,4 +1,9 @@
 import { z } from 'zod';
+import { Types } from 'mongoose';
+
+const objectId = z.string().refine((val) => Types.ObjectId.isValid(val), {
+  message: 'Invalid ObjectId',
+});
 
 const approvalSchema = z.object({
   status: z.enum(['pending', 'approved', 'rejected']),
@@ -6,6 +11,7 @@ const approvalSchema = z.object({
 });
 
 export const createOrderSchema = z.object({
+  shop: objectId.optional(),
 
   purpose: z
     .string()

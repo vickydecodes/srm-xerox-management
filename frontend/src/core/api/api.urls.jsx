@@ -203,6 +203,18 @@ const apiurls = {
       method: "patch",
       url: (id) => `${base_url}/orders/${id}/super-admin-approve`,
     },
+    readyForPickup: {
+      method: "patch",
+      url: (id) => `${base_url}/orders/${id}/ready-for-pickup`,
+    },
+    deliver: {
+      method: "patch",
+      url: (id) => `${base_url}/orders/${id}/delivered`,
+    },
+    inProgress: {
+      method: "patch",
+      url: (id) => `${base_url}/orders/${id}/in-progress`,
+    },
   },
   settings: {
     get: { method: "get", url: () => `${base_url}/settings` },

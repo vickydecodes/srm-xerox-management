@@ -5,6 +5,7 @@ export const enhanceOrder = (order: any) => {
   return enhanceDoc(OrderModel, order, [
     'branch',
     'department',
+    'shop',
     'createdBy',
     'branchAdminApproval.approver',
     'superAdminApproval.approver',

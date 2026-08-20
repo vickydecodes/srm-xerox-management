@@ -25,6 +25,14 @@ export const createUserSchema = z.object({
   branch: z.string().trim().optional(),
 
   shop: z.string().trim().optional(),
+}).refine((data) => {
+  if (data.role === 'shop_admin') {
+    return !!data.shop;
+  }
+  return true;
+}, {
+  message: 'Shop is required for shop admin role',
+  path: ['shop'],
 });
 
 

@@ -1,4 +1,6 @@
 import { Button } from "@/components/ui/button";
+import { useLoader } from "@/core/hooks/useLoader";
+import { useEffect } from "react";
 import {
   DialogClose,
   DialogContent,
@@ -48,6 +50,10 @@ export const View = ({ admin } = {}) => (
         <span className="text-muted-foreground block">Address</span>
         <span>{admin?.address || "-"}</span>
       </div>
+      <div className="rounded-md border p-3">
+        <span className="text-muted-foreground block">Shop</span>
+        <span>{admin?.shop?.name || "-"}</span>
+      </div>
     </div>
 
     <DialogFooter>
@@ -58,7 +64,7 @@ export const View = ({ admin } = {}) => (
   </DialogContent>
 );
 
-export const Create = ({ submitFn = () => {}, closeModal = () => {} } = {}) => {
+export const Create = ({ submitFn = () => {}, closeModal = () => {}, exported } = {}) => {
   const form = useForm({
     resolver: zodResolver(shopAdminCreateSchema),
     defaultValues: {
@@ -67,9 +73,17 @@ export const Create = ({ submitFn = () => {}, closeModal = () => {} } = {}) => {
       phone: "",
       address: "",
       password: "",
+      shop: "",
       active: true,
     },
   });
+
+  const { createPreset } = useLoader();
+  const loadShops = createPreset(exported?.shops);
+
+  useEffect(() => {
+    if (exported?.shops) loadShops();
+  }, []);
 
   const { run, loading, ErrorAlert, clearError } = useAsync(submitFn);
 
@@ -93,7 +107,7 @@ export const Create = ({ submitFn = () => {}, closeModal = () => {} } = {}) => {
           className="grid gap-4 py-2"
           onSubmit={form.handleSubmit(onSubmit)}
         >
-          <ShopAdminForm form={form} />
+          <ShopAdminForm form={form} shops={exported?.shops?.state || []} />
           {ErrorAlert}
           <DialogFooter>
             <DialogClose asChild>
@@ -202,6 +216,7 @@ export const Edit = ({
   admin,
   submitFn = () => {},
   closeModal = () => {},
+  exported,
 } = {}) => {
   const form = useForm({
     resolver: zodResolver(shopAdminEditSchema),
@@ -211,9 +226,17 @@ export const Edit = ({
       email: admin?.email || "",
       phone: admin?.phone || "",
       address: admin?.address || "",
+      shop: typeof admin?.shop === "object" ? admin?.shop?._id : admin?.shop || "",
       active: admin?.active ?? true,
     },
   });
+
+  const { createPreset } = useLoader();
+  const loadShops = createPreset(exported?.shops);
+
+  useEffect(() => {
+    if (exported?.shops) loadShops();
+  }, []);
 
   const { run, loading, ErrorAlert, clearError } = useAsync(submitFn);
 
@@ -237,7 +260,7 @@ export const Edit = ({
           className="grid gap-4 py-2"
           onSubmit={form.handleSubmit(onSubmit)}
         >
-          <ShopAdminForm form={form} isEdit />
+          <ShopAdminForm form={form} isEdit shops={exported?.shops?.state || []} />
           {ErrorAlert}
           <DialogFooter>
             <DialogClose asChild>

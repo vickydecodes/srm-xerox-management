@@ -79,6 +79,7 @@ export interface IOrder extends Document {
 
   department: Types.ObjectId;
   branch: Types.ObjectId;
+  shop?: Types.ObjectId;
 
   purpose?: string;
 
@@ -118,6 +119,7 @@ const OrderSchema = new Schema<IOrder>(
 
     department: { type: Schema.Types.ObjectId, ref: 'Department', required: true },
     branch: { type: Schema.Types.ObjectId, ref: 'Branch', required: true },
+    shop: { type: Schema.Types.ObjectId, ref: 'Shop', default: null },
 
     purpose: { type: String, trim: true },
     attachmentEmail: { type: String, trim: true },

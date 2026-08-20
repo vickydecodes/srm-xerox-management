@@ -231,6 +231,31 @@ const controllers = {
     );
   },
 
+  markOrderInProgress: async (
+    req: AuthRequest & {
+      params: { id: string };
+    },
+    res: Response
+  ) => {
+    const { id } = req.params;
+
+    const order =
+      await service.markOrderInProgress(id);
+
+    if (!order) {
+      return sendResponse.notFound(
+        res,
+        'order'
+      );
+    }
+
+    return sendResponse.updated(
+      res,
+      'order',
+      order
+    );
+  },
+
   markOrderReadyForPickup: async (
     req: AuthRequest & {
       params: { id: string };
@@ -293,6 +318,7 @@ export const {
   submitOrder,
   branchApproveOrder,
   superAdminApproveOrder,
+  markOrderInProgress,
   markOrderReadyForPickup,
   markOrderDelivered,
 } = wrapControllers(controllers);
