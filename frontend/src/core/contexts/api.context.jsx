@@ -16,6 +16,7 @@ import { useOrderModule } from "@/modules/order/order.module";
 import { useCreditModule } from "@/modules/credits";
 import { useSettingModule } from "@/modules/setting";
 import { useDashboardModule } from "@/modules/dashboard";
+import { useShopModule } from "@/modules/shop";
 
 
 
@@ -49,6 +50,7 @@ export const ApiProvider = ({ children }) => {
     const creditModule = useCreditModule(exported);
     const settingModule = useSettingModule(exported);
     const dashboardModule = useDashboardModule(exported);
+    const shopModule = useShopModule(exported);
 
 
     Object.assign(exported, {
@@ -67,6 +69,7 @@ export const ApiProvider = ({ children }) => {
         credits: creditModule,
         settings: settingModule,
         dashboard: dashboardModule,
+        shops: shopModule
     });
 
     

@@ -227,6 +227,18 @@ const apiurls = {
     shopAdmin: { method: "get", url: () => `${base_url}/dashboard/shop-admin` },
     staff: { method: "get", url: () => `${base_url}/dashboard/staff` },
   },
+
+  shops: {
+    create: { method: "post", url: () => `${base_url}/shops` },
+    getAll: { method: "get", url: () => `${base_url}/shops` },
+    getOne: { method: "get", url: (id) => `${base_url}/shops/${id}` },
+    edit: { method: "put", url: (id) => `${base_url}/shops/${id}` },
+    delete: { method: "delete", url: (id) => `${base_url}/shops/${id}` },
+    setActiveStatus: {
+      method: "patch",
+      url: (id) => `${base_url}/shops/${id}/active-status`,
+    },
+  },
 };
 
 export { apiurls };

@@ -31,6 +31,7 @@ import Dashboard from "@/pages/dashboard/dashboard";
 import Order from "@/pages/order/order";
 import Credits from "@/pages/credits/credits";
 import Settings from "@/pages/settings/settings";
+import Shop from "@/pages/shop/shop";
 
 export const adminRoutes = {
   role: "super_admin",
@@ -112,6 +113,14 @@ export const adminRoutes = {
       description: "Branch administrator controls and management.",
       icon: <IconGitBranch className="h-5 w-5 shrink-0" />,
       element: <BranchAdmin />,
+    },
+    {
+      path: "/super_admin/shop",
+      label: "Shops",
+      title: "Shop Management",
+      description: "Shop controls and management.",
+      icon: <IconGitBranch className="h-5 w-5 shrink-0" />,
+      element: <Shop />,
     },
     {
       path: "/super_admin/shop-admin",
