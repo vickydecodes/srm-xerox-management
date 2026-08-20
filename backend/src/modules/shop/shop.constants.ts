@@ -13,6 +13,18 @@ const UPDATE_OPTIONS = {
   context: 'query',
 } as const;
 
+const SOFT_DELETE = {
+  active: false,
+  deleted: true,
+  deletedAt: new Date(),
+};
+
+const RETRIEVE = {
+  active: true,
+  deleted: false,
+  deletedAt: null,
+};
+
 
 const toObjectId = (
   value?: string | Types.ObjectId | null
@@ -39,6 +51,8 @@ const getVisibility = (role?: Role) =>
 
 export {
   UPDATE_OPTIONS,
+  SOFT_DELETE,
+  RETRIEVE,
   toObjectId,
   getVisibility,
 };

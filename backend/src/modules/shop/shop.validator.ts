@@ -1,16 +1,10 @@
 import { z } from 'zod';
 
-
 export const createShopSchema = z.object({
   name: z
     .string()
     .trim()
     .min(2, 'Shop name is too short'),
-
-  code: z
-    .string()
-    .trim()
-    .min(1, 'Shop code is required'),
 
   phone: z
     .string()
@@ -23,10 +17,8 @@ export const createShopSchema = z.object({
     .optional(),
 });
 
-
 export const updateShopSchema =
   createShopSchema.partial();
-
 
 export const setShopActiveStatusSchema = z.object({
   active: z.boolean(),

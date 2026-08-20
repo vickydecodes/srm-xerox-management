@@ -1,5 +1,8 @@
 import Shop from '@db/models/shop.model.ts';
-import { dynamicFilter, PaginatedResult } from '@core/constants/dynamicfilter.constant.ts';
+import {
+  dynamicFilter,
+  PaginatedResult,
+} from '@core/constants/dynamicfilter.constant.ts';
 
 import {
   CreateShopPayload,
@@ -10,6 +13,8 @@ import { Role } from '@typings/auth.types.js';
 
 import {
   UPDATE_OPTIONS,
+  SOFT_DELETE,
+  RETRIEVE,
   toObjectId,
   getVisibility,
 } from './shop.constants.ts';
@@ -17,7 +22,6 @@ import {
 import { enhanceShop } from './shop.util.ts';
 import { shopFilterConfig } from './shop.filterconfig.ts';
 import { IShop } from '@db/models/shop.model.ts';
-
 
 export const createShop = async (
   data: CreateShopPayload,
@@ -30,7 +34,6 @@ export const createShop = async (
 
   return enhanceShop(shop);
 };
-
 
 export const getAllShops = async (
   queries: Record<string, unknown>,
@@ -46,13 +49,11 @@ export const getAllShops = async (
   );
 };
 
-
 export const getShopById = async (
   id: string
 ) => {
   return Shop.findById(id);
 };
-
 
 export const updateShop = async (
   id: string,
@@ -69,6 +70,43 @@ export const updateShop = async (
   return enhanceShop(updated);
 };
 
+export const removeShop = async (
+  id: string
+) => {
+  const removed = await Shop.findByIdAndUpdate(
+    id,
+    SOFT_DELETE,
+    UPDATE_OPTIONS
+  );
+
+  if (!removed) return null;
+
+  return enhanceShop(removed);
+};
+
+export const retrieveShop = async (
+  id: string
+) => {
+  const retrieved = await Shop.findByIdAndUpdate(
+    id,
+    RETRIEVE,
+    UPDATE_OPTIONS
+  );
+
+  if (!retrieved) return null;
+
+  return enhanceShop(retrieved);
+};
+
+export const eraseShop = async (
+  id: string
+) => {
+  const erased = await Shop.findByIdAndDelete(id);
+
+  if (!erased) return null;
+
+  return enhanceShop(erased);
+};
 
 export const setShopActiveStatus = async (
   id: string,
@@ -76,18 +114,15 @@ export const setShopActiveStatus = async (
 ) => {
   return Shop.findByIdAndUpdate(
     id,
-    { active },
+    {
+      active,
+      ...(active
+        ? {
+            deleted: false,
+            deletedAt: null,
+          }
+        : {}),
+    },
     { new: true }
   );
-};
-
-
-export const deleteShop = async (
-  id: string
-) => {
-  const deleted = await Shop.findByIdAndDelete(id);
-
-  if (!deleted) return null;
-
-  return enhanceShop(deleted);
 };

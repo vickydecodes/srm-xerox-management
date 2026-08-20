@@ -2,12 +2,12 @@ import { Router } from 'express';
 import { authMiddleware } from '@core/middlewares/auth.middleware.js';
 // import { accessControl } from '@core/middlewares/access.middleware.js';
 import { zodValidate } from '@core/middlewares/zod.validator.js';
+
 import {
   createShopSchema,
   updateShopSchema,
   setShopActiveStatusSchema,
 } from './shop.validator.js';
-
 
 import {
   createShop,
@@ -16,20 +16,17 @@ import {
   updateShop,
   deleteShop,
   setShopActiveStatus,
+  retrieveShop,
+  eraseShop,
 } from './shop.controller.js';
-
 
 const router = Router();
 
-
 router.use(authMiddleware);
-
 
 // router.use(accessControl);
 
-
 // const MODULE = '-shop';
-
 
 router.post(
   '/',
@@ -41,12 +38,9 @@ router.post(
   createShop
 );
 
-
 router.get('/', getAllShops);
 
-
 router.get('/:id', getShopById);
-
 
 router.put(
   '/:id',
@@ -58,9 +52,7 @@ router.put(
   updateShop
 );
 
-
 router.delete('/:id', deleteShop);
-
 
 router.patch(
   '/:id/active-status',
@@ -72,5 +64,8 @@ router.patch(
   setShopActiveStatus
 );
 
+router.put('/:id/retrieve', retrieveShop);
+
+router.delete('/:id/erase', eraseShop);
 
 export default router;

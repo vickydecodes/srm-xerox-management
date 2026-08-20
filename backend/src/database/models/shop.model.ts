@@ -1,5 +1,5 @@
 import mongoose, { Document, Schema, model } from 'mongoose';
-
+import { Counter } from './counter.model.ts';
 
 export interface IShop extends Document {
   code: string;
@@ -10,17 +10,18 @@ export interface IShop extends Document {
   createdBy: mongoose.Types.ObjectId;
 
   active: boolean;
+  deleted: boolean;
+  deletedAt?: Date;
 
   createdAt: Date;
   updatedAt: Date;
 }
 
-
 const ShopSchema = new Schema(
   {
     code: {
       type: String,
-      required: true,
+      unique: true,
     },
 
     name: {
@@ -50,15 +51,35 @@ const ShopSchema = new Schema(
       type: Boolean,
       default: true,
     },
+
+    deleted: {
+      type: Boolean,
+      default: false,
+    },
+
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );
 
+ShopSchema.pre('save', async function () {
+  if (!this.isNew) return;
+
+  const counter = await Counter.findOneAndUpdate(
+    { key: 'shop' },
+    { $inc: { value: 1 } },
+    { upsert: true, new: true }
+  );
+
+  this.code = `SHOP-${String(counter!.value).padStart(3, '0')}`;
+});
 
 const Shop = model<IShop>(
   'Shop',
   ShopSchema
 );
-
 
 export default Shop;
