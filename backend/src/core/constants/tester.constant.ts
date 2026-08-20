@@ -3,6 +3,8 @@ import request from 'supertest';
 import app from '../../app.ts';
 import User from '../../database/models/user.model.js';
 import { generateToken } from '../../lib/jwt.ts';
+import { randomUUID } from 'node:crypto';
+
 
 const makeRequest = (method: string, url: string, body?: any, token?: string) => {
   let req = (request(app) as any)[method](url);
@@ -27,8 +29,7 @@ export const tester = {
   setupAdmin: async () => {
     const mockUser = await User.create({
       name: 'Test Super Admin',
-      email: `testadmin_${Date.now()}@srm.edu`,
-      phone: '9999999999',
+      email: `testadmin_${randomUUID()}@srm.edu`,      phone: '9999999999',
       password: 'Password123',
       role: 'super_admin',
       active: true,

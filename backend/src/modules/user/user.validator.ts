@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 
-export const createUserSchema = z.object({
+export const baseUserSchema = z.object({
   name: z.string().trim().min(2, 'Name is too short'),
 
   email: z.string().trim().email('Invalid email address'),
@@ -25,7 +25,9 @@ export const createUserSchema = z.object({
   branch: z.string().trim().optional(),
 
   shop: z.string().trim().optional(),
-}).refine((data) => {
+});
+
+export const createUserSchema = baseUserSchema.refine((data) => {
   if (data.role === 'shop_admin') {
     return !!data.shop;
   }
@@ -35,9 +37,8 @@ export const createUserSchema = z.object({
   path: ['shop'],
 });
 
-
 export const updateUserSchema =
-  createUserSchema.partial();
+  baseUserSchema.partial();
 
 
 export const setUserActiveStatusSchema = z.object({
