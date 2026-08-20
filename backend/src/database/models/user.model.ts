@@ -14,6 +14,7 @@ export interface IUser extends Document {
   role: 'super_admin' | 'branch_admin' | 'department_admin' | 'shop_admin' | 'staff';
   branch?: mongoose.Types.ObjectId;
   department?: mongoose.Types.ObjectId;
+  shop?: mongoose.Types.ObjectId;
 
   active: boolean;
   deleted: boolean;
@@ -38,6 +39,7 @@ const UserSchema = new Schema(
     },
     branch: { type: Schema.Types.ObjectId, ref: 'Branch' },
     department: { type: Schema.Types.ObjectId, ref: 'Department' },
+    shop: { type: Schema.Types.ObjectId, ref: 'Shop'},
     active: { type: Boolean, default: true },
     deleted: { type: Boolean, default: false },
     deletedAt: { type: Date, default: null },

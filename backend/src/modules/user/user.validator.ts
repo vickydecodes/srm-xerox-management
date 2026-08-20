@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+
 export const createUserSchema = z.object({
   name: z.string().trim().min(2, 'Name is too short'),
 
@@ -22,10 +23,14 @@ export const createUserSchema = z.object({
   ]),
 
   branch: z.string().trim().optional(),
+
+  shop: z.string().trim().optional(),
 });
+
 
 export const updateUserSchema =
   createUserSchema.partial();
+
 
 export const setUserActiveStatusSchema = z.object({
   active: z.boolean(),
