@@ -371,7 +371,7 @@ export const Create = ({
     resolver: zodResolver(orderCreateSchema),
     defaultValues: {
       shop: "",
-      creditType: undefined, // ← add this
+      orderType: undefined, // ← add this
       purpose: "",
       attachmentEmail: "",
       managementAmount: 0,

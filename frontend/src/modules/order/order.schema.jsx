@@ -15,8 +15,8 @@ const sponsorSchema = z.object({
 
 export const orderCreateSchema = z.object({
   shop: z.string().min(1, { message: 'Please select a shop' }),
-  creditType: z.enum(['Work Order', 'Xerox order'], {
-    error: 'Please select type of credit',
+  orderType: z.enum(['Work Order', 'Xerox order'], {
+    error: 'Please select type of order',
   }),
   department: z.string().optional(),
   branch: z.string().optional(),

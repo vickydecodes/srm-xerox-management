@@ -147,20 +147,20 @@ export default function OrderForm({
         )}
       />
 
-      {/* Type of Credit */}
+      {/* Type of Order */}
       <FormField
         control={form.control}
-        name="creditType"
+        name="orderType"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Type of credit</FormLabel>
+            <FormLabel>Type of Order</FormLabel>
             <FormControl>
               <Select
                 value={field.value ? String(field.value) : undefined}
                 onValueChange={field.onChange}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select type of credit" />
+                  <SelectValue placeholder="Select type of order" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Work Order">Work Order</SelectItem>
