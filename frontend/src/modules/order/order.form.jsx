@@ -39,7 +39,7 @@ export default function OrderForm({
   departments = [],
   shops = [],
   BillingItemSearchCombobox,
-  searchProducts
+  searchProducts,
 }) {
   const { user } = useAuth();
   const isSuperAdmin = user?.role === "super_admin";
@@ -147,6 +147,32 @@ export default function OrderForm({
         )}
       />
 
+      {/* Type of Credit */}
+      <FormField
+        control={form.control}
+        name="creditType"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Type of credit</FormLabel>
+            <FormControl>
+              <Select
+                value={field.value ? String(field.value) : undefined}
+                onValueChange={field.onChange}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type of credit" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Work Order">Work Order</SelectItem>
+                  <SelectItem value="Xerox order">Xerox order</SelectItem>
+                </SelectContent>
+              </Select>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
       {/* Purpose */}
       <FormField
         control={form.control}
@@ -170,14 +196,16 @@ export default function OrderForm({
           <FormItem>
             <FormLabel>Attachment Sender Email</FormLabel>
             <FormControl>
-              <Input type="email" placeholder="Email address from which you sent the attachments" {...field} />
+              <Input
+                type="email"
+                placeholder="Email address from which you sent the attachments"
+                {...field}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
         )}
       />
-
-
 
       {/* Items – search & add */}
       <div className="space-y-3">
@@ -382,7 +410,9 @@ export default function OrderForm({
               const currentSponsorAmt = Number(sponsors[index]?.amount) || 0;
               const maxSponsorAmt = Math.max(
                 0,
-                totalCost - Number(managementAmount || 0) - (totalSponsorship - currentSponsorAmt)
+                totalCost -
+                  Number(managementAmount || 0) -
+                  (totalSponsorship - currentSponsorAmt)
               );
               return (
                 <FormItem className="w-32">

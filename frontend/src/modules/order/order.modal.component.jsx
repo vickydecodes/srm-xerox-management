@@ -34,19 +34,29 @@ import { useEffect } from "react";
 import { Mail } from "lucide-react";
 
 const statusStyles = {
-  draft: "border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400",
-  pending: "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-400",
-  in_progress: "border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-900/50 dark:bg-blue-950/20 dark:text-blue-400",
-  ready_for_pickup: "border-indigo-200 bg-indigo-50 text-indigo-800 dark:border-indigo-900/50 dark:bg-indigo-950/20 dark:text-indigo-400",
-  delivered: "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-indigo-900/50 dark:bg-indigo-950/20 dark:text-indigo-400",
-  completed: "border-green-200 bg-green-50 text-green-800 dark:border-green-900/50 dark:bg-green-950/20 dark:text-green-400",
-  rejected: "border-red-200 bg-red-50 text-red-800 dark:border-red-900/50 dark:bg-red-950/20 dark:text-red-400",
+  draft:
+    "border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400",
+  pending:
+    "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-400",
+  in_progress:
+    "border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-900/50 dark:bg-blue-950/20 dark:text-blue-400",
+  ready_for_pickup:
+    "border-indigo-200 bg-indigo-50 text-indigo-800 dark:border-indigo-900/50 dark:bg-indigo-950/20 dark:text-indigo-400",
+  delivered:
+    "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-indigo-900/50 dark:bg-indigo-950/20 dark:text-indigo-400",
+  completed:
+    "border-green-200 bg-green-50 text-green-800 dark:border-green-900/50 dark:bg-green-950/20 dark:text-green-400",
+  rejected:
+    "border-red-200 bg-red-50 text-red-800 dark:border-red-900/50 dark:bg-red-950/20 dark:text-red-400",
 };
 
 const approvalStatusStyles = {
-  approved: "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/20 dark:text-emerald-400",
-  rejected: "border-red-200 bg-red-50 text-red-800 dark:border-red-900/50 dark:bg-red-950/20 dark:text-red-400",
-  pending: "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-400",
+  approved:
+    "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/20 dark:text-emerald-400",
+  rejected:
+    "border-red-200 bg-red-50 text-red-800 dark:border-red-900/50 dark:bg-red-950/20 dark:text-red-400",
+  pending:
+    "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-400",
 };
 
 export const View = ({ order, exported, closeModal } = {}) => {
@@ -73,9 +83,11 @@ export const View = ({ order, exported, closeModal } = {}) => {
     branchStatus === "approved" &&
     isSuperAdmin;
 
-  const canDeliver = order?.status === "ready_for_pickup" && (isSuperAdmin || isShopOrStaff);
+  const canDeliver =
+    order?.status === "ready_for_pickup" && (isSuperAdmin || isShopOrStaff);
 
-  const canReadyForPickup = order?.status === "in_progress" && (isSuperAdmin || isShopOrStaff);
+  const canReadyForPickup =
+    order?.status === "in_progress" && (isSuperAdmin || isShopOrStaff);
 
   const canProcess =
     order?.status === "pending" &&
@@ -89,13 +101,18 @@ export const View = ({ order, exported, closeModal } = {}) => {
           {order?.code || "Draft Order"}
           <Badge
             variant="outline"
-            className={statusStyles[order?.status] || "border-gray-200 text-gray-700"}
+            className={
+              statusStyles[order?.status] || "border-gray-200 text-gray-700"
+            }
           >
-            {order?.status ? order.status.replace(/_/g, " ").toUpperCase() : "-"}
+            {order?.status
+              ? order.status.replace(/_/g, " ").toUpperCase()
+              : "-"}
           </Badge>
         </DialogTitle>
         <DialogDescription>
-          {order?.department?.name || "-"} · {order?.branch?.name || "-"} · Shop: {order?.shop?.name || "-"}
+          {order?.department?.name || "-"} · {order?.branch?.name || "-"} ·
+          Shop: {order?.shop?.name || "-"}
         </DialogDescription>
       </DialogHeader>
 
@@ -106,7 +123,9 @@ export const View = ({ order, exported, closeModal } = {}) => {
             <span>{order?.purpose || "-"}</span>
           </div>
           <div className="rounded-md border p-3">
-            <span className="text-muted-foreground block">Attachment Sender Email</span>
+            <span className="text-muted-foreground block">
+              Attachment Sender Email
+            </span>
             <span className="font-mono">{order?.attachmentEmail || "-"}</span>
           </div>
         </div>
@@ -120,7 +139,9 @@ export const View = ({ order, exported, closeModal } = {}) => {
               >
                 <span>
                   {item.name}{" "}
-                  <span className="text-muted-foreground">x{item.quantity}</span>
+                  <span className="text-muted-foreground">
+                    x{item.quantity}
+                  </span>
                 </span>
                 <span>{item.total?.toFixed(2)}</span>
               </div>
@@ -132,14 +153,18 @@ export const View = ({ order, exported, closeModal } = {}) => {
 
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-md border p-3">
-            <span className="text-muted-foreground block">Management Amount</span>
+            <span className="text-muted-foreground block">
+              Management Amount
+            </span>
             <span>{Number(order?.managementAmount || 0).toFixed(2)}</span>
           </div>
           <div className="rounded-md border p-3">
             <span className="text-muted-foreground block">Sponsors</span>
             <span>
               {order?.sponsors?.length
-                ? order.sponsors.map((s) => `${s.name} (${s.amount})`).join(", ")
+                ? order.sponsors
+                    .map((s) => `${s.name} (${s.amount})`)
+                    .join(", ")
                 : "-"}
             </span>
           </div>
@@ -152,7 +177,11 @@ export const View = ({ order, exported, closeModal } = {}) => {
             </span>
             <Badge
               variant="outline"
-              className={approvalStatusStyles[order?.branchAdminApproval?.status || "pending"]}
+              className={
+                approvalStatusStyles[
+                  order?.branchAdminApproval?.status || "pending"
+                ]
+              }
             >
               {(order?.branchAdminApproval?.status || "pending").toUpperCase()}
             </Badge>
@@ -163,10 +192,16 @@ export const View = ({ order, exported, closeModal } = {}) => {
             )}
           </div>
           <div className="rounded-md border p-3">
-            <span className="text-muted-foreground block">Super Admin Approval</span>
+            <span className="text-muted-foreground block">
+              Super Admin Approval
+            </span>
             <Badge
               variant="outline"
-              className={approvalStatusStyles[order?.superAdminApproval?.status || "pending"]}
+              className={
+                approvalStatusStyles[
+                  order?.superAdminApproval?.status || "pending"
+                ]
+              }
             >
               {(order?.superAdminApproval?.status || "pending").toUpperCase()}
             </Badge>
@@ -192,10 +227,10 @@ export const View = ({ order, exported, closeModal } = {}) => {
                       history.status === "approved"
                         ? "border-emerald-500 bg-emerald-50"
                         : history.status === "rejected"
-                        ? "border-red-500 bg-red-50"
-                        : history.status === "submitted"
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-400 bg-gray-50"
+                          ? "border-red-500 bg-red-50"
+                          : history.status === "submitted"
+                            ? "border-blue-500 bg-blue-50"
+                            : "border-gray-400 bg-gray-50"
                     }`}
                   />
                   <div className="flex justify-between font-semibold text-foreground">
@@ -203,27 +238,27 @@ export const View = ({ order, exported, closeModal } = {}) => {
                       {history.approver?.role === "branch_admin"
                         ? "Branch Admin"
                         : history.approver?.role === "super_admin"
-                        ? "Super Admin"
-                        : history.approver?.role === "department_admin"
-                        ? "Department Admin"
-                        : "User"}
+                          ? "Super Admin"
+                          : history.approver?.role === "department_admin"
+                            ? "Department Admin"
+                            : "User"}
                       :{" "}
                       <span
                         className={
                           history.status === "approved"
                             ? "text-emerald-600 dark:text-emerald-400"
                             : history.status === "rejected"
-                            ? "text-red-600 dark:text-red-400"
-                            : history.status === "submitted"
-                            ? "text-blue-600 dark:text-blue-400"
-                            : "text-gray-600 dark:text-gray-400"
+                              ? "text-red-600 dark:text-red-400"
+                              : history.status === "submitted"
+                                ? "text-blue-600 dark:text-blue-400"
+                                : "text-gray-600 dark:text-gray-400"
                         }
                       >
                         {history.status === "draft"
                           ? "Draft Created"
                           : history.status === "submitted"
-                          ? "Submitted for Approval"
-                          : history.status.toUpperCase()}
+                            ? "Submitted for Approval"
+                            : history.status.toUpperCase()}
                       </span>
                     </span>
                     <span className="text-[10px] text-muted-foreground font-normal">
@@ -316,29 +351,33 @@ export const View = ({ order, exported, closeModal } = {}) => {
       </DialogFooter>
     </DialogContent>
   );
-};;
+};
 
 export const Create = ({
-  submitFn = () => { },
-  closeModal = () => { },
+  submitFn = () => {},
+  closeModal = () => {},
   exported,
 } = {}) => {
   const { user } = useAuth();
 
-  const userBranchId = typeof user?.branch === "object" ? user.branch?._id : user?.branch || "";
-  const userDeptId = typeof user?.department === "object" ? user.department?._id : user?.department || "";
+  const userBranchId =
+    typeof user?.branch === "object" ? user.branch?._id : user?.branch || "";
+  const userDeptId =
+    typeof user?.department === "object"
+      ? user.department?._id
+      : user?.department || "";
 
   const form = useForm({
     resolver: zodResolver(orderCreateSchema),
     defaultValues: {
       shop: "",
-      branch: userBranchId,
-      department: userDeptId,
+      creditType: undefined, // ← add this
       purpose: "",
-      attachmentEmail: user?.email || "",
+      attachmentEmail: "",
       managementAmount: 0,
       sponsors: [],
       items: [],
+      // ...
     },
   });
 
@@ -362,7 +401,8 @@ export const Create = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const collegeEmail = exported?.settings?.config?.srmCollegeEmail || "srmxerox@srmist.edu.in";
+  const collegeEmail =
+    exported?.settings?.config?.srmCollegeEmail || "srmxerox@srmist.edu.in";
 
   return (
     <DialogContent className="w-2xl max-h-[85vh] overflow-y-auto">
@@ -374,11 +414,16 @@ export const Create = ({
       <div className="rounded-lg border border-indigo-200 bg-indigo-50/50 p-4 text-sm text-indigo-900 flex items-start gap-3 shadow-sm dark:border-indigo-950 dark:bg-indigo-950/20 dark:text-indigo-200 my-2">
         <Mail className="h-5 w-5 text-indigo-600 shrink-0 mt-0.5 dark:text-indigo-400" />
         <div className="flex-1">
-          <h5 className="font-semibold mb-1 text-xs uppercase tracking-wider text-indigo-700 dark:text-indigo-300">Important Instruction</h5>
+          <h5 className="font-semibold mb-1 text-xs uppercase tracking-wider text-indigo-700 dark:text-indigo-300">
+            Important Instruction
+          </h5>
           <p className="text-xs leading-relaxed text-indigo-600 dark:text-indigo-400">
             Please email your attachments/files to:{" "}
-            <strong className="text-indigo-900 font-bold select-all underline decoration-dashed dark:text-indigo-200">{collegeEmail}</strong>.
-            Ensure you fill the email from which you sent them in the field below.
+            <strong className="text-indigo-900 font-bold select-all underline decoration-dashed dark:text-indigo-200">
+              {collegeEmail}
+            </strong>
+            . Ensure you fill the email from which you sent them in the field
+            below.
           </p>
         </div>
       </div>
@@ -415,8 +460,8 @@ export const Create = ({
 
 export const Edit = ({
   order,
-  submitFn = () => { },
-  closeModal = () => { },
+  submitFn = () => {},
+  closeModal = () => {},
   exported,
 } = {}) => {
   const form = useForm({
@@ -461,7 +506,8 @@ export const Edit = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const collegeEmail = exported?.settings?.config?.srmCollegeEmail || "srmxerox@srmist.edu.in";
+  const collegeEmail =
+    exported?.settings?.config?.srmCollegeEmail || "srmxerox@srmist.edu.in";
 
   return (
     <DialogContent className="w-2xl max-h-[85vh] overflow-y-auto">
@@ -473,11 +519,16 @@ export const Edit = ({
       <div className="rounded-lg border border-indigo-200 bg-indigo-50/50 p-4 text-sm text-indigo-900 flex items-start gap-3 shadow-sm dark:border-indigo-950 dark:bg-indigo-950/20 dark:text-indigo-200 my-2">
         <Mail className="h-5 w-5 text-indigo-600 shrink-0 mt-0.5 dark:text-indigo-400" />
         <div className="flex-1">
-          <h5 className="font-semibold mb-1 text-xs uppercase tracking-wider text-indigo-700 dark:text-indigo-300">Important Instruction</h5>
+          <h5 className="font-semibold mb-1 text-xs uppercase tracking-wider text-indigo-700 dark:text-indigo-300">
+            Important Instruction
+          </h5>
           <p className="text-xs leading-relaxed text-indigo-600 dark:text-indigo-400">
             Please email your attachments/files to:{" "}
-            <strong className="text-indigo-900 font-bold select-all underline decoration-dashed dark:text-indigo-200">{collegeEmail}</strong>.
-            Ensure you fill the email from which you sent them in the field below.
+            <strong className="text-indigo-900 font-bold select-all underline decoration-dashed dark:text-indigo-200">
+              {collegeEmail}
+            </strong>
+            . Ensure you fill the email from which you sent them in the field
+            below.
           </p>
         </div>
       </div>
@@ -515,8 +566,8 @@ export const Edit = ({
 export const Delete = ({
   id,
   code,
-  submitFn = () => { },
-  closeModal = () => { },
+  submitFn = () => {},
+  closeModal = () => {},
 }) => {
   const { run, loading, ErrorAlert } = useAsync(submitFn);
 
@@ -607,8 +658,8 @@ export const Retrieve = ({ id, submitFn, closeModal }) => {
 const ApprovalForm = ({
   title,
   id,
-  submitFn = () => { },
-  closeModal = () => { },
+  submitFn = () => {},
+  closeModal = () => {},
 }) => {
   const form = useForm({
     resolver: zodResolver(approvalSchema),
