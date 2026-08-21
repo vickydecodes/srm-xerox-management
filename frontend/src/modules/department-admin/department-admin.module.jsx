@@ -100,6 +100,10 @@ export const useDepartmentAdminModule = (exported) => {
     reset: baseReset,
     sortByColumn,
     presets,
+    csv,
+    xlsx,
+    pdf,
+    getQuery,
   } = createEntityQueryActions({
     crud,
     getQuery: () => useDepartmentAdminStore.getState().query,
@@ -138,5 +142,9 @@ export const useDepartmentAdminModule = (exported) => {
     reset,
     sortByColumn,
     filters: presets,
+    csv,
+    xlsx,
+    pdf,
+    getQuery,
   };
 };

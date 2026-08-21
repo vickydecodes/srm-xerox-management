@@ -18,10 +18,20 @@ export default function Product() {
   const columns = useProductColumns(products);
 
   const filters = [
-    { label: 'Latest', action: products.filters.latest },
-    { label: 'Oldest', action: products.filters.oldest },
-    { label: 'A - Z', action: () => products.filters.ascending('name') },
-    { label: 'Z - A', action: () => products.filters.descending('name') },
+    { label: 'Latest', action: (f) => products.filters.latest(f) },
+    { label: 'Oldest', action: (f) => products.filters.oldest(f) },
+    { label: 'A - Z', action: (f) => products.filters.ascending('name', f) },
+    { label: 'Z - A', action: (f) => products.filters.descending('name', f) },
+  ];
+
+  const customConfigs = [
+    {
+      title: 'Status',
+      filters: [
+        { label: 'Active', action: () => products.filters.filterByField('active', true) },
+        { label: 'Inactive', action: () => products.filters.filterByField('active', false) },
+      ],
+    },
   ];
 
   useEffect(() => {
@@ -42,6 +52,7 @@ export default function Product() {
       pageCount={products.pagination.pages}
       totalRows={products.pagination.total}
       filters={filters}
+      customs={customConfigs}
       onPaginationChange={(p) => paginator(products, p)}
       onSortChange={(p) => sorter(products, p)}
     />)

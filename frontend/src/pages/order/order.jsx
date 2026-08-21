@@ -16,12 +16,22 @@ export default function OrderPage() {
   const columns = useOrderColumns(orders);
 
   const filters = [
-    { label: "Latest", action: orders.filters.latest },
-    { label: "Oldest", action: orders.filters.oldest },
-    { label: "Pending Approval", action: () => orders.filters.where("status", "pending") },
-    { label: "Approved (Pending Bill)", action: () => orders.filters.where("status", "in_progress") },
-    { label: "Billed & Completed", action: () => orders.filters.where("status", "completed") },
-    { label: "Drafts", action: () => orders.filters.where("status", "draft") },
+    { label: "Latest", action: (f) => orders.filters.latest(f) },
+    { label: "Oldest", action: (f) => orders.filters.oldest(f) },
+  ];
+
+  const customConfigs = [
+    {
+      title: "Status",
+      filters: [
+        { label: "Draft", action: () => orders.filters.where("status", "draft") },
+        { label: "Pending Approval", action: () => orders.filters.where("status", "pending") },
+        { label: "In Progress", action: () => orders.filters.where("status", "in_progress") },
+        { label: "Ready for Pickup", action: () => orders.filters.where("status", "ready_for_pickup") },
+        { label: "Delivered", action: () => orders.filters.where("status", "delivered") },
+        { label: "Rejected", action: () => orders.filters.where("status", "rejected") },
+      ],
+    },
   ];
 
   useEffect(() => {
@@ -44,6 +54,7 @@ export default function OrderPage() {
       pageCount={orders.pagination.pages}
       totalRows={orders.pagination.total}
       filters={filters}
+      customs={customConfigs}
       onPaginationChange={(p) => paginator(orders, p)}
       onSortChange={(p) => sorter(orders, p)}
     />

@@ -75,6 +75,8 @@ export const View = ({ order, exported, closeModal } = {}) => {
 
   const canDeliver = order?.status === "ready_for_pickup" && (isSuperAdmin || isShopOrStaff);
 
+  const canReadyForPickup = order?.status === "in_progress" && (isSuperAdmin || isShopOrStaff);
+
   const canProcess =
     order?.status === "pending" &&
     superAdminStatus === "approved" &&
@@ -287,6 +289,16 @@ export const View = ({ order, exported, closeModal } = {}) => {
               Mark as Delivered
             </Button>
           )}
+          {canReadyForPickup && (
+            <Button
+              onClick={async () => {
+                await orders.readyForPickup(order._id);
+                if (closeModal) closeModal();
+              }}
+            >
+              Mark Ready for Pickup
+            </Button>
+          )}
           {canProcess && (
             <Button
               onClick={async () => {
@@ -319,6 +331,7 @@ export const Create = ({
   const form = useForm({
     resolver: zodResolver(orderCreateSchema),
     defaultValues: {
+      shop: "",
       branch: userBranchId,
       department: userDeptId,
       purpose: "",
@@ -333,6 +346,7 @@ export const Create = ({
   const loadBranches = createPreset(exported?.branches);
   const loadDepartments = createPreset(exported?.departments);
   const loadSettings = createPreset(exported?.settings);
+  const loadShops = createPreset(exported?.shops);
 
   const { run, loading, ErrorAlert, clearError } = useAsync(submitFn);
 
@@ -344,6 +358,7 @@ export const Create = ({
     if (exported?.branches) loadBranches();
     if (exported?.departments) loadDepartments();
     if (exported?.settings) loadSettings();
+    if (exported?.shops) loadShops();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -377,6 +392,7 @@ export const Create = ({
             form={form}
             branches={exported?.branches?.state || []}
             departments={exported?.departments?.state || []}
+            shops={exported?.shops?.state || []}
             BillingItemSearchCombobox={
               exported?.search?.BillingItemSearchCombobox
             }
@@ -406,6 +422,7 @@ export const Edit = ({
   const form = useForm({
     resolver: zodResolver(orderEditSchema),
     defaultValues: {
+      shop: order?.shop?._id || order?.shop || "",
       branch: order?.branch?._id || order?.branch || "",
       department: order?.department?._id || order?.department || "",
       purpose: order?.purpose || "",
@@ -428,6 +445,7 @@ export const Edit = ({
   const loadBranches = createPreset(exported?.branches);
   const loadDepartments = createPreset(exported?.departments);
   const loadSettings = createPreset(exported?.settings);
+  const loadShops = createPreset(exported?.shops);
 
   const { run, loading, ErrorAlert, clearError } = useAsync(submitFn);
 
@@ -439,6 +457,7 @@ export const Edit = ({
     if (exported?.branches) loadBranches();
     if (exported?.departments) loadDepartments();
     if (exported?.settings) loadSettings();
+    if (exported?.shops) loadShops();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -472,6 +491,7 @@ export const Edit = ({
             form={form}
             branches={exported?.branches?.state || []}
             departments={exported?.departments?.state || []}
+            shops={exported?.shops?.state || []}
             BillingItemSearchCombobox={
               exported?.search?.BillingItemSearchCombobox
             }

@@ -93,6 +93,14 @@ const controllers = {
     if (!bill) return sendResponse.notFound(res, 'bill');
     return sendResponse.updated(res, 'bill', bill);
   },
+
+  downloadBillPdf: async (req: Request<{ id: string }>, res: Response) => {
+    const { id } = req.params;
+    const pdfBuffer = await service.generateBillPdf(id);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename=bill-${id}.pdf`);
+    res.send(pdfBuffer);
+  },
 };
 
 export const {
@@ -107,4 +115,5 @@ export const {
   eraseBill,
   approveCreditBill,
   rejectCreditBill,
+  downloadBillPdf,
 } = wrapControllers(controllers);

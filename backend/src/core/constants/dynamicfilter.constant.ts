@@ -96,7 +96,7 @@ export async function dynamicFilter<T extends Document>(
   filterable.forEach((field) => {
     const key = field as string;
     const value = queryParams[key];
-    if (!value) return;
+    if (value === undefined || value === null || value === '') return;
 
     const isId = Types.ObjectId.isValid(value);
 
@@ -151,13 +151,19 @@ export async function dynamicFilter<T extends Document>(
     query.$or = orConditions;
   }
 
-  const sort: Record<string, 1 | -1> = { createdAt: -1 };
+  const sort: Record<string, 1 | -1> = {};
   const sortBy = queryParams.sortBy;
 
   if (sortBy && sortable.includes(sortBy)) {
     sort[sortBy] = queryParams.order === 'asc' ? 1 : -1;
   } else {
-    sort[defaultSort as string] = 1;
+    let finalDefault = (defaultSort as string) || 'createdAt';
+    let defaultOrder: 1 | -1 = 1;
+    if (finalDefault.startsWith('-')) {
+      defaultOrder = -1;
+      finalDefault = finalDefault.slice(1);
+    }
+    sort[finalDefault] = queryParams.order ? (queryParams.order === 'asc' ? 1 : -1) : defaultOrder;
   }
 
   const page = isFullFetch ? 1 : Math.max(1, Number(queryParams.page) || 1);

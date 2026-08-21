@@ -103,7 +103,7 @@ export const useOrderModule = (exported) => {
   const readyForPickup = (id) => crud.readyForPickup(id);
   const inProgress = (id) => crud.inProgress(id);
 
-  const { fetch, reset, sortByColumn, presets } = createEntityQueryActions({
+  const { fetch, reset, sortByColumn, presets, csv, xlsx, pdf, getQuery } = createEntityQueryActions({
     crud,
     getQuery: () => useOrderStore.getState().query,
     setQuery,
@@ -140,5 +140,9 @@ export const useOrderModule = (exported) => {
     reset,
     sortByColumn,
     filters: presets,
+    csv,
+    xlsx,
+    pdf,
+    getQuery,
   };
 };

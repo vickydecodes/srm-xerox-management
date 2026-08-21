@@ -98,6 +98,10 @@ export const useBranchAdminModule = (exported) => {
     reset: baseReset,
     sortByColumn,
     presets,
+    csv,
+    xlsx,
+    pdf,
+    getQuery,
   } = createEntityQueryActions({
     crud,
     getQuery: () => useBranchAdminStore.getState().query,
@@ -137,5 +141,9 @@ export const useBranchAdminModule = (exported) => {
     reset,
     sortByColumn,
     filters: presets,
+    csv,
+    xlsx,
+    pdf,
+    getQuery,
   };
 };

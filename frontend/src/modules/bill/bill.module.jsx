@@ -74,7 +74,7 @@ export const useBillModule = (exported) => {
     };
 
 
-  const { fetch, reset, sortByColumn, presets } = createEntityQueryActions({
+  const { fetch, reset, sortByColumn, presets, csv, xlsx, pdf, getQuery } = createEntityQueryActions({
     crud,
     getQuery: () => useBillStore.getState().query,
     setQuery,
@@ -107,5 +107,9 @@ export const useBillModule = (exported) => {
     reset,
     sortByColumn,
     filters: presets,
+    csv,
+    xlsx,
+    pdf,
+    getQuery,
   };
 };

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { BillForm } from "@/modules/bill/bill.form";
 import { defaultBillValues } from "@/modules/bill/bill.schema";
 import { useBillStore } from "@/modules/bill/bill.store";
+import { printBillPdf } from "@/modules/bill/bill.coulmns";
 
 const getFormDefaultValues = (bill) => {
   if (!bill) return defaultBillValues;
@@ -138,7 +139,10 @@ export default function BillCreation() {
         await bills.crud.edit(editingBill._id, payload);
         navigate(`/${user.role}/bills`);
       } else {
-        await bills.create(payload);
+        const newBill = await bills.create(payload);
+        if (newBill && newBill._id) {
+          printBillPdf(newBill._id, newBill.code);
+        }
         navigate(`/${user.role}/bill`);
       }
     } catch {

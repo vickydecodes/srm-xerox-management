@@ -8,7 +8,10 @@ import { apiRequest } from '../api/api.request';
 import { camelToTitle } from '../utils/helper.utils';
 
 export const createCrud = ({ entity, urls, store, getRole }) => {
-  const crud = {};
+  const crud = {
+    entity,
+    __urls: urls,
+  };
 
   const customtoasts = {
     setActiveStatus: (entity, res) =>

@@ -45,7 +45,7 @@ export const useCreditModule = (exported) => {
     });
   };
 
-  const { fetch, reset, sortByColumn, presets } = createEntityQueryActions({
+  const { fetch, reset, sortByColumn, presets, csv, xlsx, pdf, getQuery } = createEntityQueryActions({
     crud,
     getQuery: () => useCreditStore.getState().query,
     setQuery,
@@ -69,5 +69,9 @@ export const useCreditModule = (exported) => {
     reset,
     sortByColumn,
     filters: presets,
+    csv,
+    xlsx,
+    pdf,
+    getQuery,
   };
 };

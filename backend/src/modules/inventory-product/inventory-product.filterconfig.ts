@@ -20,6 +20,8 @@ export const inventoryProductFilterConfig: FilterConfig<IInventoryProduct> = {
         "updatedAt",
         "quantity",
         "price",
+        "product",
+        "active",
     ],
 
     defaultSort: "createdAt",

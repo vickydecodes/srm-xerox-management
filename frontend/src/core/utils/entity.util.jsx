@@ -1,11 +1,17 @@
 export const createEntityQueryActions = ({ crud, getQuery, setQuery }) => {
   const fetch = (incoming = {}) => {
     const currentQuery = getQuery();
-
     const nextQuery = {
       ...currentQuery,
       ...incoming,
     };
+
+    // Remove empty parameters
+    Object.keys(nextQuery).forEach(key => {
+      if (nextQuery[key] === null || nextQuery[key] === '') {
+        delete nextQuery[key];
+      }
+    });
 
     setQuery(nextQuery);
     return crud.getAll(nextQuery);
@@ -19,7 +25,7 @@ export const createEntityQueryActions = ({ crud, getQuery, setQuery }) => {
       order: null,
       search: undefined,
 
-      
+      // Clear common entity specific filters explicitly
       branch: undefined,
       batch: undefined,
       batches: undefined,
@@ -30,7 +36,6 @@ export const createEntityQueryActions = ({ crud, getQuery, setQuery }) => {
       updatedAt: undefined,
       'paymentHistory.paymentMethodId': undefined,
 
-      
       product: undefined,
       inventory: undefined,
       'requestedBy.inventory': undefined,
@@ -39,13 +44,11 @@ export const createEntityQueryActions = ({ crud, getQuery, setQuery }) => {
       'history.type': undefined,
       'history.source': undefined,
 
-      
       event: undefined,
       direction: undefined,
       'reference.model': undefined,
       'reference.id': undefined,
 
-      
       student: undefined,
       allocatedBy: undefined,
       collected: undefined,
@@ -58,7 +61,9 @@ export const createEntityQueryActions = ({ crud, getQuery, setQuery }) => {
   };
 
   const sortByColumn = (sortBy, order, limit = 10) => {
+    const currentQuery = getQuery();
     const nextQuery = {
+      ...currentQuery,
       page: 1,
       limit,
       sortBy,
@@ -97,14 +102,12 @@ export const createEntityQueryActions = ({ crud, getQuery, setQuery }) => {
   };
 
   const presets = {
-    
     latest: (f = {}) => fetch({ sortBy: 'createdAt', order: 'desc', page: 1, ...f }),
     oldest: (f = {}) => fetch({ sortBy: 'createdAt', order: 'asc', page: 1, ...f }),
     ascending: (field = 'name', f = {}) => fetch({ sortBy: field, order: 'asc', page: 1, ...f }),
     descending: (field = 'name', f = {}) => fetch({ sortBy: field, order: 'desc', page: 1, ...f }),
     search: (term, f = {}) => fetch({ search: term, page: 1, ...f }),
 
-    
     filterByBranch: (branch, f = {}) => fetch({ branch, page: 1, ...f }),
     filterByBatch: (batch, f = {}) => fetch({ batch, page: 1, ...f }),
     filterByBatches: (batches, f = {}) => fetch({ batches, page: 1, ...f }),
@@ -116,7 +119,6 @@ export const createEntityQueryActions = ({ crud, getQuery, setQuery }) => {
     filterByPaymentMethodId: (payment, f = {}) =>
       fetch({ 'paymentHistory.paymentMethodId': payment, page: 1, ...f }),
 
-    
     filterByInventory: (inventory, f = {}) => fetch({ inventory, page: 1, ...f }),
     filterByProduct: (product, f = {}) => fetch({ product, page: 1, ...f }),
     filterByRequestingInventory: (inventoryId, f = {}) =>
@@ -130,17 +132,14 @@ export const createEntityQueryActions = ({ crud, getQuery, setQuery }) => {
     filterByLegSource: (inventoryId, f = {}) =>
       fetch({ 'history.source': inventoryId, page: 1, ...f }),
 
-    
     filterByDirection: (direction, f = {}) => fetch({ direction, page: 1, ...f }),
     filterByEvent: (event, f = {}) => fetch({ event, page: 1, ...f }),
     filterByReferenceModel: (model, f = {}) => fetch({ 'reference.model': model, page: 1, ...f }),
 
-    
     filterByStudent: (student, f = {}) => fetch({ student, page: 1, ...f }),
     filterByAllocatedBy: (userId, f = {}) => fetch({ allocatedBy: userId, page: 1, ...f }),
     filterByCollected: (collected, f = {}) => fetch({ collected, page: 1, ...f }),
 
-    
     filterByField: (field, value, f = {}) => fetch({ [field]: value, page: 1, ...f }),
     where: (field, value, f = {}) => fetch({ [field]: value, page: 1, ...f }),
   };
@@ -150,6 +149,7 @@ export const createEntityQueryActions = ({ crud, getQuery, setQuery }) => {
     reset,
     sortByColumn,
     presets,
-    csv, xlsx, pdf, marksheetCsv, marksheetXlsx, marksheetPdf
+    csv, xlsx, pdf, marksheetCsv, marksheetXlsx, marksheetPdf,
+    getQuery,
   };
 };

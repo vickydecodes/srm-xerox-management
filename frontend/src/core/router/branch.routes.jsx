@@ -42,7 +42,7 @@ export const branchAdminRoutes = {
             title: 'Department admin Page',
             description: 'Manage department admin and their details',
             element: <DepartmentAdmin />,
-            icon: <IconBuildingCommunity className="h-5 w-5 shrink-0" />
+            icon: <IconUser className="h-5 w-5 shrink-0" />
         },
         {
               path: "/branch_admin/changepassword",

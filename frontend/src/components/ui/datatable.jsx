@@ -34,7 +34,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-import { ChevronDown, PlusCircle, RefreshCcw } from 'lucide-react';
+import { ChevronDown, PlusCircle, RefreshCcw, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { camelToTitle } from '@/core/utils/helper.utils';
 import { TableMenubar } from './tablemenubar';
 import { EmptyDemo } from './emptycomp';
@@ -274,12 +274,12 @@ export default function DataTable({
               {table.getHeaderGroups().map((hg) => (
                 <TableRow key={hg.id}>
                   {hg.headers.map((header) => {
-                    const canSort = !!onSortChange && header.column.columnDef.enableSorting;
+                    const canSort = !!onSortChange && header.column.columnDef.enableSorting !== false && !['actions', 'variants', 'menu'].includes(header.column.id);
 
                     return (
                       <TableHead
                         key={header.id}
-                        className={canSort ? 'cursor-pointer select-none' : ''}
+                        className={canSort ? 'cursor-pointer select-none hover:bg-muted/50 transition-colors' : ''}
                         onClick={() => {
                           if (!canSort) return;
                           skipPaginationRef.current = true;
@@ -296,7 +296,20 @@ export default function DataTable({
                           });
                         }}
                       >
-                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        <div className="flex items-center gap-1">
+                          {flexRender(header.column.columnDef.header, header.getContext())}
+                          {canSort && (
+                            <span className="inline-block ml-1 text-muted-foreground">
+                              {header.column.getIsSorted() === 'asc' ? (
+                                <ArrowUp className="w-3.5 h-3.5" />
+                              ) : header.column.getIsSorted() === 'desc' ? (
+                                <ArrowDown className="w-3.5 h-3.5" />
+                              ) : (
+                                <ArrowUpDown className="w-3.5 h-3.5 opacity-40 hover:opacity-100 transition-opacity" />
+                              )}
+                            </span>
+                          )}
+                        </div>
                       </TableHead>
                     );
                   })}

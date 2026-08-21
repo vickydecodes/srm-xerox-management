@@ -15,10 +15,20 @@ export default function Shop() {
   const columns = useShopColumns(shops);
 
   const filters = [
-    { label: "Latest", action: shops.filters.latest },
-    { label: "Oldest", action: shops.filters.oldest },
-    { label: "A - Z", action: () => shops.filters.ascending("name") },
-    { label: "Z - A", action: () => shops.filters.descending("name") },
+    { label: "Latest", action: (f) => shops.filters.latest(f) },
+    { label: "Oldest", action: (f) => shops.filters.oldest(f) },
+    { label: "A - Z", action: (f) => shops.filters.ascending("name", f) },
+    { label: "Z - A", action: (f) => shops.filters.descending("name", f) },
+  ];
+
+  const customConfigs = [
+    {
+      title: "Status",
+      filters: [
+        { label: "Active", action: () => shops.filters.filterByField("active", true) },
+        { label: "Inactive", action: () => shops.filters.filterByField("active", false) },
+      ],
+    },
   ];
 
   useEffect(() => {
@@ -39,6 +49,7 @@ export default function Shop() {
       pageCount={shops.pagination.pages}
       totalRows={shops.pagination.total}
       filters={filters}
+      customs={customConfigs}
       onPaginationChange={(p) => paginator(shops, p)}
       onSortChange={(p) => sorter(shops, p)}
     />

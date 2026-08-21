@@ -83,7 +83,7 @@ export const useServiceModule = (exported) => {
     });
   };
 
-  const { fetch, reset, sortByColumn, presets } = createEntityQueryActions({
+  const { fetch, reset, sortByColumn, presets, csv, xlsx, pdf, getQuery } = createEntityQueryActions({
     crud,
     getQuery: () => useServiceStore.getState().query,
     setQuery,
@@ -112,5 +112,9 @@ export const useServiceModule = (exported) => {
     reset,
     sortByColumn,
     filters: presets,
+    csv,
+    xlsx,
+    pdf,
+    getQuery,
   };
 };

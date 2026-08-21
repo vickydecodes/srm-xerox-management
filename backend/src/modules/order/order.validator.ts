@@ -11,7 +11,7 @@ const approvalSchema = z.object({
 });
 
 export const createOrderSchema = z.object({
-  shop: objectId.optional(),
+  shop: objectId,
 
   purpose: z
     .string()

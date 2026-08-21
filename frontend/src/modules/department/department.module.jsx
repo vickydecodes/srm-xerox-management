@@ -89,7 +89,7 @@ export const useDepartmentModule = (exported) => {
     });
   };
 
-  const { fetch, reset, sortByColumn, presets } = createEntityQueryActions({
+  const { fetch, reset, sortByColumn, presets, csv, xlsx, pdf, getQuery } = createEntityQueryActions({
     crud,
     getQuery: () => useDepartmentStore.getState().query,
     setQuery,
@@ -123,5 +123,9 @@ export const useDepartmentModule = (exported) => {
     reset,
     sortByColumn,
     filters: presets,
+    csv,
+    xlsx,
+    pdf,
+    getQuery,
   };
 };

@@ -1,12 +1,13 @@
-export default function paginator(module, params, ) {
+export default function paginator(module, params) {
   if (!module) return;
 
   if (params.__replace) {
+    const currentQuery = module.getQuery ? module.getQuery() : {};
     module?.fetch({
+      ...currentQuery,
       page: params.page,
       limit: params.limit,
-      search: params.search,
-      type: params.type,
+      search: params.search !== undefined ? params.search : currentQuery.search,
     });
     return;
   }

@@ -14,6 +14,7 @@ const sponsorSchema = z.object({
 });
 
 export const orderCreateSchema = z.object({
+  shop: z.string().min(1, { message: 'Please select a shop' }),
   department: z.string().optional(),
   branch: z.string().optional(),
   purpose: z.string().optional(),

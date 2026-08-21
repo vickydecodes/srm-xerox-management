@@ -72,7 +72,7 @@ export const useInventoryProductModule = (exported) => {
       });
     };
 
-  const { fetch, reset, sortByColumn, presets } = createEntityQueryActions({
+  const { fetch, reset, sortByColumn, presets, csv, xlsx, pdf, getQuery } = createEntityQueryActions({
       crud,
       getQuery: () => useInventoryProductStore.getState().query,
       setQuery,
@@ -91,6 +91,10 @@ export const useInventoryProductModule = (exported) => {
       return useInventoryProductStore.getState().current;
     },
     set,add,update, remove, setCurrent, crud, fetch, reset, sortByColumn, filters: presets,
+    csv,
+    xlsx,
+    pdf,
+    getQuery,
     useInventoryProductColumns,
     openCreate,
     openEdit,
@@ -98,6 +102,6 @@ export const useInventoryProductModule = (exported) => {
     openErase,
     openRetrieve,
     openActiveStatus,
-}
+};
 
 }

@@ -16,6 +16,7 @@ import {
   approveCreditBill,
   rejectCreditBill,
   getBillsByDepartment,
+  downloadBillPdf,
 } from './bill.controller.js';
 
 const router = Router();
@@ -28,6 +29,7 @@ router.get('/', getAllBills);
 
 router.get('/department/:id', getBillsByDepartment);
 router.get('/:id', getBillById);
+router.get('/:id/pdf', downloadBillPdf);
 
 router.put('/:id', zodValidate(updateBillSchema, 'body', 'UpdateBillSchema'), updateBill);
 

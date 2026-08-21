@@ -8,10 +8,15 @@ export default defineConfig({
   server: {
     port: 5175,
   },
-   resolve: {
+  resolve: {
     alias: {
       // eslint-disable-next-line 
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/tests/setup.js',
   },
 })

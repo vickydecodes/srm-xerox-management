@@ -8,6 +8,7 @@ import Inventory from '@db/models/inventory.model.ts';
 import Product from '@db/models/product.model.ts';
 import InventoryProduct from '@db/models/inventory-product.model.ts';
 import User from '@db/models/user.model.ts';
+import Shop from '@db/models/shop.model.ts';
 import { generateToken } from '../lib/jwt.ts';
 import { tester } from '@core/constants/tester.constant.ts';
 
@@ -21,6 +22,7 @@ let testDepartmentId: string;
 let testInventoryId: string;
 let testProductId: string;
 let testInventoryProductId: string;
+let testShopId: string;
 
 let createdOrderId: string = '';
 
@@ -55,6 +57,14 @@ beforeAll(async () => {
     active: true,
   });
   userId = user._id.toString();
+
+  const shop = await Shop.create({
+    name: `Test Order Shop ${timestamp}`,
+    phone: '9876543210',
+    createdBy: user._id,
+    active: true,
+  });
+  testShopId = shop._id.toString();
   token = generateToken({
     id: user._id,
     role: 'super_admin',
@@ -110,6 +120,9 @@ afterAll(async () => {
   if (testBranchId) {
     await Branch.findByIdAndDelete(testBranchId);
   }
+  if (testShopId) {
+    await Shop.findByIdAndDelete(testShopId);
+  }
 });
 
 describe('Order API Endpoint Suite', () => {
@@ -123,6 +136,7 @@ describe('Order API Endpoint Suite', () => {
     const res = await tester.post(
       baseRoute,
       {
+        shop: testShopId,
         purpose: 'Annual Conference Materials',
         attachmentEmail: 'conference@srmist.edu.in',
         managementAmount: 500,

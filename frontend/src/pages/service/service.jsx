@@ -15,10 +15,20 @@ export default function Service() {
   const columns = useServiceColumns(services);
 
   const filters = [
-    { label: 'Latest', action: services.filters.latest },
-    { label: 'Oldest', action: services.filters.oldest },
-    { label: 'A - Z', action: () => services.filters.ascending('name') },
-    { label: 'Z - A', action: () => services.filters.descending('name') },
+    { label: 'Latest', action: (f) => services.filters.latest(f) },
+    { label: 'Oldest', action: (f) => services.filters.oldest(f) },
+    { label: 'A - Z', action: (f) => services.filters.ascending('name', f) },
+    { label: 'Z - A', action: (f) => services.filters.descending('name', f) },
+  ];
+
+  const customConfigs = [
+    {
+      title: 'Status',
+      filters: [
+        { label: 'Active', action: () => services.filters.filterByField('active', true) },
+        { label: 'Inactive', action: () => services.filters.filterByField('active', false) },
+      ],
+    },
   ];
 
   useEffect(() => {
@@ -39,6 +49,7 @@ export default function Service() {
       pageCount={services.pagination.pages}
       totalRows={services.pagination.total}
       filters={filters}
+      customs={customConfigs}
       onPaginationChange={(p) => paginator(services, p)}
       onSortChange={(p) => sorter(services, p)}
     />

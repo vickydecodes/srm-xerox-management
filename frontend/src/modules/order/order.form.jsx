@@ -37,6 +37,7 @@ export default function OrderForm({
   form,
   branches = [],
   departments = [],
+  shops = [],
   BillingItemSearchCombobox,
   searchProducts
 }) {
@@ -117,6 +118,35 @@ export default function OrderForm({
 
   return (
     <>
+      {/* Shop Select Dropdown */}
+      <FormField
+        control={form.control}
+        name="shop"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Attending Shop</FormLabel>
+            <FormControl>
+              <Select
+                value={field.value ? String(field.value) : undefined}
+                onValueChange={field.onChange}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a shop to deliver from" />
+                </SelectTrigger>
+                <SelectContent>
+                  {shops.map((shop) => (
+                    <SelectItem key={shop._id} value={String(shop._id)}>
+                      {shop.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
       {/* Purpose */}
       <FormField
         control={form.control}

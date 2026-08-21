@@ -146,6 +146,11 @@ export const useOrderColumns = (orders) => {
           order.status === "ready_for_pickup" &&
           (isSuperAdmin || isShopOrStaff);
 
+        const canReadyForPickup =
+          !isDeleted &&
+          order.status === "in_progress" &&
+          (isSuperAdmin || isShopOrStaff);
+
         const canProcess =
           !isDeleted &&
           order.status === "pending" &&
@@ -191,6 +196,12 @@ export const useOrderColumns = (orders) => {
               {canProcess && (
                 <DropdownMenuItem onClick={() => orders.inProgress(order._id)}>
                   Start Processing
+                </DropdownMenuItem>
+              )}
+
+              {canReadyForPickup && (
+                <DropdownMenuItem onClick={() => orders.readyForPickup(order._id)}>
+                  Mark Ready for Pickup
                 </DropdownMenuItem>
               )}
 

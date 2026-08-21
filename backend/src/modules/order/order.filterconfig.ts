@@ -14,6 +14,9 @@ export const orderFilterConfig: FilterConfig<IOrder> = {
     'status',
     'createdAt',
     'updatedAt',
+    'department',
+    'branch',
+    'shop',
   ],
   defaultSort: 'createdAt',
 };

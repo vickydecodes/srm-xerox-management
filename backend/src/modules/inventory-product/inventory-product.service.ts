@@ -19,9 +19,12 @@ import { inventoryProductFilterConfig } from './inventory-product.filterconfig.t
 export const createInventoryProduct = async (data: CreateInventoryProductPayload) => {
   let inventoryId = data.inventory;
   if (!inventoryId) {
-    const defaultInventory = await Inventory.findOne({});
+    let defaultInventory = await Inventory.findOne({});
     if (!defaultInventory) {
-      throw new Error('No default inventory found. Please run seed script.');
+      defaultInventory = await Inventory.create({
+        name: 'Default Inventory',
+        active: true,
+      });
     }
     inventoryId = defaultInventory._id.toString();
   }

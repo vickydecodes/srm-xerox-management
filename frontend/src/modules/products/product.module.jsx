@@ -81,7 +81,7 @@ export const useProductModule = (exported) => {
     return update(product._id ?? product.id, { active: !product.active });
   };
 
-  const { fetch, reset, sortByColumn, presets } = createEntityQueryActions({
+  const { fetch, reset, sortByColumn, presets, csv, xlsx, pdf, getQuery } = createEntityQueryActions({
     crud,
     getQuery: () => useProductStore.getState().query,
     setQuery,
@@ -119,6 +119,10 @@ export const useProductModule = (exported) => {
     reset,
     sortByColumn,
     filters: presets,
+    csv,
+    xlsx,
+    pdf,
+    getQuery,
     create: crud.create,
     edit: crud.edit,
     delete: crud.delete,

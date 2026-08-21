@@ -94,7 +94,7 @@ export const useShopAdminModule = (exported) => {
     });
   };
 
-  const { fetch: baseFetch, reset: baseReset, sortByColumn, presets } = createEntityQueryActions({
+  const { fetch: baseFetch, reset: baseReset, sortByColumn, presets, csv, xlsx, pdf, getQuery } = createEntityQueryActions({
     crud,
     getQuery: () => useShopAdminStore.getState().query,
     setQuery,
@@ -132,5 +132,9 @@ export const useShopAdminModule = (exported) => {
     reset,
     sortByColumn,
     filters: presets,
+    csv,
+    xlsx,
+    pdf,
+    getQuery,
   };
 };

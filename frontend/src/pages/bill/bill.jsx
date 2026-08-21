@@ -13,11 +13,22 @@ export default function Bill() {
 
   const columns = useBillColumns(bills);
 
- const filters = [
-    { label: 'Latest', action: bills.filters.latest },
-    { label: 'Oldest', action: bills.filters.oldest },
-    { label: 'A - Z', action: () => bills.filters.ascending('name') },
-    { label: 'Z - A', action: () => bills.filters.descending('name') },
+  const filters = [
+    { label: 'Latest', action: (f) => bills.filters.latest(f) },
+    { label: 'Oldest', action: (f) => bills.filters.oldest(f) },
+    { label: 'Highest Amount', action: (f) => bills.filters.descending('total', f) },
+    { label: 'Lowest Amount', action: (f) => bills.filters.ascending('total', f) },
+  ];
+
+  const customConfigs = [
+    {
+      title: 'Status',
+      filters: [
+        { label: 'Paid', action: () => bills.filters.filterByField('status', 'PAID') },
+        { label: 'Unpaid', action: () => bills.filters.filterByField('status', 'UNPAID') },
+        { label: 'Cancelled', action: () => bills.filters.filterByField('status', 'CANCELLED') },
+      ],
+    },
   ];
 
   useEffect(() => {
@@ -37,6 +48,7 @@ export default function Bill() {
       pageCount={bills.pagination.pages}
       totalRows={bills.pagination.total}
       filters={filters}
+      customs={customConfigs}
       onPaginationChange={(p) => paginator(bills, p)}
       onSortChange={(p) => sorter(bills, p)}
     />

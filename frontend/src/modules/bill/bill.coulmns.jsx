@@ -12,8 +12,18 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Printer } from "lucide-react";
 import { Hint } from "@/core/utils/tooltip.util";
+import { apiRequest } from "@/core/api/api.request";
+import { printPdf } from "@/core/api/api.service";
+
+export const printBillPdf = async (billId, code) => {
+  try {
+    await printPdf(`/bills/${billId}/pdf`);
+  } catch (err) {
+    console.error("Failed to print bill PDF:", err);
+  }
+};
 
 const statusVariant = {
   UNPAID: 'outline',
@@ -103,57 +113,71 @@ export const useBillColumns = (bills) => {
       header: () => Hint('Actions', 'View or manage this bill'),
       cell: ({ row }) => {
         const bill = row.original;
-
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="size-8">
-                <MoreHorizontal className="size-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => bills.openView(bill)}>
-                View
-              </DropdownMenuItem>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:text-indigo-200 dark:hover:bg-indigo-950/50"
+              onClick={() => printBillPdf(bill._id, bill.code)}
+            >
+              <Printer className="size-4" />
+            </Button>
 
-              <DropdownMenuItem onClick={() => bills.openEdit(bill)}>
-                Edit
-              </DropdownMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="size-8">
+                  <MoreHorizontal className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => bills.openView(bill)}>
+                  View
+                </DropdownMenuItem>
 
-              <DropdownMenuItem onClick={() => bills.togglePaymentStatus(bill)}>
-                Mark as {bill.status === 'PAID' ? 'Unpaid' : 'Paid'}
-              </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => bills.openEdit(bill)}>
+                  Edit
+                </DropdownMenuItem>
 
-              <DropdownMenuItem
-                onClick={() => bills.openActiveStatus(bill._id, bill.active)}
-              >
-                {bill.active ? 'Deactivate' : 'Activate'}
-              </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => printBillPdf(bill._id, bill.code)}>
+                  Print Bill
+                </DropdownMenuItem>
 
-              <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => bills.togglePaymentStatus(bill)}>
+                  Mark as {bill.status === 'PAID' ? 'Unpaid' : 'Paid'}
+                </DropdownMenuItem>
 
+                <DropdownMenuItem
+                  onClick={() => bills.openActiveStatus(bill._id, bill.active)}
+                >
+                  {bill.active ? 'Deactivate' : 'Activate'}
+                </DropdownMenuItem>
 
-              <DropdownMenuItem onClick={() => bills.openRetrieve(bill._id)}>
-                Retrieve
-              </DropdownMenuItem>
-
-
-              <DropdownMenuItem
-                variant="destructive"
-                onClick={() => bills.openDelete(bill._id, bill.code)}
-              >
-                Delete
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                variant="destructive"
-                onClick={() => bills.openErase(bill._id)}
-              >
-                Erase Permanently
-              </DropdownMenuItem>
+                <DropdownMenuSeparator />
 
 
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <DropdownMenuItem onClick={() => bills.openRetrieve(bill._id)}>
+                  Retrieve
+                </DropdownMenuItem>
+
+
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => bills.openDelete(bill._id, bill.code)}
+                >
+                  Delete
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => bills.openErase(bill._id)}
+                >
+                  Erase Permanently
+                </DropdownMenuItem>
+
+
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         );
       },
     },
