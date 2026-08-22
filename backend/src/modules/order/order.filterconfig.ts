@@ -4,6 +4,7 @@ import { IOrder } from '@db/models/order.model.ts';
 export const orderFilterConfig: FilterConfig<IOrder> = {
   searchable: ['code', 'purpose', 'attachmentEmail'],
   filterable: [
+    'orderType',
     'department',
     'branch',
     'status',

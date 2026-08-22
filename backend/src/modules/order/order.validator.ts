@@ -11,6 +11,7 @@ const approvalSchema = z.object({
 });
 
 export const createOrderSchema = z.object({
+  orderType: z.enum(['WORK_ORDER', 'XEROX_ORDER']),
   shop: objectId,
 
   purpose: z

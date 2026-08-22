@@ -6,6 +6,11 @@ export enum OrderItemType {
   SERVICE = 'Service',
 }
 
+export enum OrderType {
+  WORK_ORDER = 'WORK_ORDER',
+  XEROX_ORDER = 'XEROX_ORDER',
+}
+
 export interface IOrderItem {
   type: OrderItemType;
   item: Types.ObjectId;
@@ -76,6 +81,7 @@ const SponsorSchema = new Schema<ISponsor>(
 
 export interface IOrder extends Document {
   code?: string;
+  orderType: OrderType;
 
   department: Types.ObjectId;
   branch: Types.ObjectId;
@@ -116,6 +122,11 @@ export interface IOrder extends Document {
 const OrderSchema = new Schema<IOrder>(
   {
     code: { type: String, unique: true, sparse: true },
+    orderType: {
+      type: String,
+      enum: Object.values(OrderType),
+      required: true,
+    },
 
     department: { type: Schema.Types.ObjectId, ref: 'Department', required: true },
     branch: { type: Schema.Types.ObjectId, ref: 'Branch', required: true },
