@@ -110,10 +110,10 @@ export const Logo = ({role}) => (
             path: '#',
             icon: (
                 <img
-                    src="/logo.png"
-                    className="h-10 w-10 me-3 transition-all shrink-0 rounded-full object-cover"
-                    width={15}
-                    height={15}
+                    src="/logo1.png"
+                    className="h-20 w-20 me-3 transition-all shrink-0 rounded-full object-cover"
+                    width={40}
+                    height={40}
                     alt="Avatar"
                 />
             ),
@@ -127,10 +127,10 @@ export const LogoIcon = () => (
         className="relative z-20 flex items-center space-x-2 py-1 text-sm font-normal text-black"
     >
         <img
-            src="/logo.png"
+            src="/logo1.png"
             className="h-6 w-6 shrink-0 rounded-full object-cover"
-            width={6}
-            height={6}
+            width={8}
+            height={8}
             alt="Logo"
         />
     </Link>

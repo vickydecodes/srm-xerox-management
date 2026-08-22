@@ -58,7 +58,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-[100svh] grid lg:grid-cols-2 xrx-shell">
+    <div className="min-h-svh grid lg:grid-cols-2 xrx-shell">
       {}
       <div className="hidden lg:flex flex-col bg-[#14161A] text-[#F1F3F4] relative overflow-hidden">
         <div className="xrx-grid" />
@@ -110,7 +110,7 @@ export default function Login() {
       </div>
 
       {}
-      <div className="flex min-h-[100svh] items-center justify-center px-4 py-6 sm:px-6 bg-[#F1F3F4]">
+      <div className="flex min-h-svh items-center justify-center px-4 py-6 sm:px-6 bg-[#F1F3F4]">
         <div className="w-full max-w-md space-y-6">
 
           {}

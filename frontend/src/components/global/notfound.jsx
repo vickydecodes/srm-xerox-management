@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { AlertCircle } from 'lucide-react';
 
-import unserviceableImg from '/logo.png';
+import unserviceableImg from '/logo1.png';
 
 export default function PublicNotFound() {
   return (

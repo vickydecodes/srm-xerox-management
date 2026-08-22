@@ -4,7 +4,7 @@ export default function AppLoader({ size = 150 }) {
       <img
         src="/logo.png"
         alt="Loading"
-        style={{ width: size, height: size }}
+        style={{ width: size, height: 180 }}
         className="animate-logo-intro"
       />
     </div>
