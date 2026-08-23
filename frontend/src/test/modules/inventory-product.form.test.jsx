@@ -3,11 +3,14 @@ import { render, screen } from '@testing-library/react';
 import { useForm } from 'react-hook-form';
 import { Form } from '@/components/ui/form';
 import { InventoryProductForm } from '@/modules/inventory-product/inventory-product.form';
+import { SelectItem } from '@/components/ui/select';
 
 vi.mock('@/core/hooks/useSelect', () => ({
   useSelectItems: () => ({
-    items: [{ value: 'p1', label: 'A4 Paper' }],
-    props: {},
+    items: <SelectItem value="p1">A4 Paper</SelectItem>,
+    placeholder: 'Select a product',
+    hasItems: true,
+    disabled: false,
   }),
 }));
 
@@ -21,6 +24,7 @@ function Wrapper() {
       active: true,
     },
   });
+
   return (
     <Form {...form}>
       <InventoryProductForm
@@ -34,6 +38,9 @@ function Wrapper() {
 describe('InventoryProductForm', () => {
   it('renders product field', () => {
     render(<Wrapper />);
-    expect(screen.getByText(/product/i)).toBeInTheDocument();
+
+    expect(screen.getByText('Product')).toBeInTheDocument();
+    expect(screen.getByText('Quantity')).toBeInTheDocument();
+    expect(screen.getByText('Price')).toBeInTheDocument();
   });
 });
