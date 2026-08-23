@@ -1,7 +1,3 @@
-
-
-
-
 import { toast } from 'sonner';
 import handleApiError from '@/core/errors/error.handler';
 import { apiRequest } from '../api/api.request';

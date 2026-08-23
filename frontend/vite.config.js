@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 import path from "path"
 
 
+
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
@@ -18,6 +19,6 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: './src/tests/setup.js',
+    setupFiles: ['./src/test/setup.js'],
   },
 })
