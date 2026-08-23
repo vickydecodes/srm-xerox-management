@@ -17,7 +17,7 @@ export const useInventoryProductModule = (exported) => {
 
 
   const crud = createCrud({
-    entity: 'Branch',
+    entity: 'Inventory Product',
     urls: inventoryProducts,
     store: store,
     getRole: () => 'super_admin',

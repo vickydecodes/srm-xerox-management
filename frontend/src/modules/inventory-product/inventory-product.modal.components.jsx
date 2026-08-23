@@ -22,11 +22,14 @@ const findMatchingVariantId = (product, selectedAttributes) => {
   if (!product || !product.variants || !selectedAttributes) return null;
   const match = product.variants.find((v) => {
     const vAttrs = v.attributes || {};
-    const vEntries = typeof vAttrs.entries === 'function' 
-      ? [...vAttrs.entries()] 
-      : Object.entries(vAttrs);
+    const vEntries =
+      typeof vAttrs.entries === "function"
+        ? [...vAttrs.entries()]
+        : Object.entries(vAttrs);
     if (vEntries.length === 0) return false;
-    return vEntries.every(([k, val]) => String(selectedAttributes[k]) === String(val));
+    return vEntries.every(
+      ([k, val]) => String(selectedAttributes[k]) === String(val),
+    );
   });
   return match ? match._id : null;
 };
@@ -61,7 +64,7 @@ export const Create = ({ exported, submitFn, closeModal }) => {
     run,
     form,
     transform: (data) => {
-      const selectedProduct = products.find(p => String(p._id) === String(data.product));
+      const selectedProduct = products.find((p) => String(p._id) === String(data.product));
       const variantId = findMatchingVariantId(selectedProduct, data.variant);
       return {
         ...data,
@@ -103,24 +106,58 @@ export const Edit = ({ inventoryProduct, exported, submitFn = () => {}, closeMod
   const { createPreset } = useLoader();
   const preset = createPreset(exported.products);
 
-  console.log(inventoryProduct)
-
   useEffect(() => {
     preset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const products = exported.products.state;
 
+  const productId = inventoryProduct?.product?._id ?? inventoryProduct?.product ?? "";
+  const variantId = inventoryProduct?.variant?._id ?? inventoryProduct?.variant ?? null;
+
   const form = useForm({
     resolver: zodResolver(inventoryProductSchema),
     defaultValues: {
-      product: inventoryProduct?.product?._id ?? inventoryProduct?.product ?? "",
-      variant: inventoryProduct?.variant ?? {},
+      product: productId,
+      variant: {},
       quantity: inventoryProduct?.quantity ?? 0,
       price: inventoryProduct?.price ?? 0,
       active: inventoryProduct?.active ?? true,
     },
   });
+
+  // Once products (with their variants) load, find the matching variant sub-doc
+  // by ID and populate the form's variant.<attrKey> fields from its attributes.
+  useEffect(() => {
+    console.log("[Edit] products.length:", products.length, products);
+
+    if (!products.length || !variantId) {
+      console.log("[Edit] bailing early — no products or no variantId");
+      return;
+    }
+
+    const selectedProduct = products.find((p) => String(p._id) === String(productId));
+    console.log("[Edit] selectedProduct:", selectedProduct);
+
+    const matchedVariant = selectedProduct?.variants?.find(
+      (v) => String(v._id) === String(variantId)
+    );
+    console.log("[Edit] matchedVariant:", matchedVariant);
+
+    if (matchedVariant?.attributes) {
+      const attrs =
+        typeof matchedVariant.attributes.entries === "function"
+          ? Object.fromEntries(matchedVariant.attributes)
+          : matchedVariant.attributes;
+
+      console.log("[Edit] setting variant to:", attrs);
+      form.setValue("variant", attrs, { shouldValidate: false });
+    } else {
+      console.log("[Edit] no matched variant attributes found — variant stays empty");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [products, productId, variantId]);
 
   const { run, loading, ErrorAlert, clearError } = useAsync(submitFn);
 
@@ -130,11 +167,11 @@ export const Edit = ({ inventoryProduct, exported, submitFn = () => {}, closeMod
     run,
     form,
     transform: (data) => {
-      const selectedProduct = products.find(p => String(p._id) === String(data.product));
-      const variantId = findMatchingVariantId(selectedProduct, data.variant);
+      const selectedProduct = products.find((p) => String(p._id) === String(data.product));
+      const matchedVariantId = findMatchingVariantId(selectedProduct, data.variant);
       return {
         ...data,
-        variant: variantId,
+        variant: matchedVariantId,
       };
     },
     onSuccess: closeModal,
