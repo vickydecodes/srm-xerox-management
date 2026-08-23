@@ -42,7 +42,6 @@ export const AuthProvider = ({ children }) => {
   const [loggingIn, setLoggingIn] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  console.log(apiurls);
 
   const crud = useMemo(
     () => createCrud({ entity: "Auth", urls: apiurls.auth, store: null }),
