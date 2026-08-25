@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -39,22 +45,29 @@ export default function DaDashboard({ data, refreshData }) {
   const list = data?.departmentRevenue || [];
   const bills = data?.recentBills || [];
   const monthlyRevenue = data?.monthlyRevenue || [];
-  
+
   const [deptCredit, setDeptCredit] = useState(null);
+  const deptId = user?.department
+    ? typeof user.department === "object"
+      ? user.department._id
+      : user.department
+    : null;
 
   useEffect(() => {
-    if (user?.department && departmentsModule) {
-      const deptId = typeof user.department === "object" ? user.department._id : user.department;
-      departmentsModule.crud.getOne(deptId)
-        .then((res) => {
-          setDeptCredit(res);
-        })
-        .catch((err) => console.error("Error fetching department credit", err));
-    }
-  }, [user, departmentsModule]);
+    if (!deptId || !departmentsModule) return;
+    departmentsModule.crud
+      .getOne(deptId)
+      .then((res) => setDeptCredit(res))
+      .catch((err) => console.error("Error fetching department credit", err));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deptId]);
 
   const currencyFormatter = (val) =>
-    new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(val);
+    new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 0,
+    }).format(val);
 
   const kpis = [
     {
@@ -123,38 +136,56 @@ export default function DaDashboard({ data, refreshData }) {
   };
 
   // Monthly revenue trend data
-  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  const trendData = monthlyRevenue.length > 0 
-    ? monthlyRevenue.map(m => ({
-        name: `${monthNames[m.month - 1]} ${m.year}`,
-        Revenue: m.revenue,
-      }))
-    : [{ name: "No Data", Revenue: 0 }];
+  const monthNames = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+  const trendData =
+    monthlyRevenue.length > 0
+      ? monthlyRevenue.map((m) => ({
+          name: `${monthNames[m.month - 1]} ${m.year}`,
+          Revenue: m.revenue,
+        }))
+      : [{ name: "No Data", Revenue: 0 }];
 
   // Payment methods breakdown data
-  const pieData = methods.length > 0
-    ? methods.map(m => ({
-        name: m.method.toUpperCase(),
-        value: m.amount,
-      }))
-    : [{ name: "No Payments", value: 1 }];
+  const pieData =
+    methods.length > 0
+      ? methods.map((m) => ({
+          name: m.method.toUpperCase(),
+          value: m.amount,
+        }))
+      : [{ name: "No Payments", value: 1 }];
 
   const PIE_COLORS = ["#10b981", "#6366f1", "#f59e0b", "#ec4899"];
 
   // Department revenue share data
-  const barData = list.length > 0
-    ? list.map(item => ({
-        name: item.name,
-        Revenue: item.total,
-      }))
-    : [];
+  const barData =
+    list.length > 0
+      ? list.map((item) => ({
+          name: item.name,
+          Revenue: item.total,
+        }))
+      : [];
 
   return (
     <div className="flex flex-col gap-6">
       {/* Quick Actions Panel */}
       <Card className="border border-border shadow-sm bg-card">
         <CardContent className="p-6">
-          <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">Quick Activities</h4>
+          <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">
+            Quick Activities
+          </h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {quickActions.map((act, i) => (
               <Button
@@ -167,8 +198,12 @@ export default function DaDashboard({ data, refreshData }) {
                   {act.icon}
                 </div>
                 <div className="text-left">
-                  <span className="block text-sm font-bold text-foreground leading-none mb-1">{act.title}</span>
-                  <span className="block text-[11px] text-muted-foreground font-medium leading-none">{act.subtitle}</span>
+                  <span className="block text-sm font-bold text-foreground leading-none mb-1">
+                    {act.title}
+                  </span>
+                  <span className="block text-[11px] text-muted-foreground font-medium leading-none">
+                    {act.subtitle}
+                  </span>
                 </div>
               </Button>
             ))}
@@ -179,12 +214,21 @@ export default function DaDashboard({ data, refreshData }) {
       {/* KPI Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {kpis.map((card, i) => (
-          <Card key={i} className="border border-border shadow-sm bg-card hover:shadow-md transition-shadow duration-300">
+          <Card
+            key={i}
+            className="border border-border shadow-sm bg-card hover:shadow-md transition-shadow duration-300"
+          >
             <CardContent className="p-6 flex items-center justify-between">
               <div className="space-y-1">
-                <span className="text-xs text-muted-foreground font-bold uppercase tracking-wider">{card.title}</span>
-                <h3 className="text-2xl font-extrabold text-foreground tracking-tight leading-none">{card.value}</h3>
-                <p className="text-[11px] text-muted-foreground font-medium pt-0.5">{card.description}</p>
+                <span className="text-xs text-muted-foreground font-bold uppercase tracking-wider">
+                  {card.title}
+                </span>
+                <h3 className="text-2xl font-extrabold text-foreground tracking-tight leading-none">
+                  {card.value}
+                </h3>
+                <p className="text-[11px] text-muted-foreground font-medium pt-0.5">
+                  {card.description}
+                </p>
               </div>
               <div className={`p-3 rounded-2xl ${card.bgColor} shrink-0`}>
                 {card.icon}
@@ -196,10 +240,8 @@ export default function DaDashboard({ data, refreshData }) {
 
       {/* Main Analytics Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
         {/* Left Columns (Span 2) for Main Trends & Invoice Logs */}
         <div className="lg:col-span-2 space-y-6">
-          
           {/* Revenue Trend Chart */}
           <Card className="border border-border shadow-sm bg-card">
             <CardHeader>
@@ -207,32 +249,64 @@ export default function DaDashboard({ data, refreshData }) {
                 <IconCoin className="w-5 h-5 text-primary" />
                 Department Monthly Revenue
               </CardTitle>
-              <CardDescription>Paid sales trajectory over the last 6 months.</CardDescription>
+              <CardDescription>
+                Paid sales trajectory over the last 6 months.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-72 w-full text-xs">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <AreaChart
+                    data={trendData}
+                    margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                  >
                     <defs>
-                      <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="var(--color-primary, #3b82f6)" stopOpacity={0.2}/>
-                        <stop offset="95%" stopColor="var(--color-primary, #3b82f6)" stopOpacity={0}/>
+                      <linearGradient
+                        id="colorRevenue"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="5%"
+                          stopColor="var(--color-primary, #3b82f6)"
+                          stopOpacity={0.2}
+                        />
+                        <stop
+                          offset="95%"
+                          stopColor="var(--color-primary, #3b82f6)"
+                          stopOpacity={0}
+                        />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted/40" />
-                    <XAxis dataKey="name" stroke="var(--color-muted-foreground, #888888)" />
-                    <YAxis stroke="var(--color-muted-foreground, #888888)" tickFormatter={val => `₹${val}`} />
-                    <Tooltip 
-                      contentStyle={{ background: "var(--color-card, #ffffff)", borderColor: "var(--color-border, #e2e8f0)", borderRadius: "8px" }}
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      className="stroke-muted/40"
+                    />
+                    <XAxis
+                      dataKey="name"
+                      stroke="var(--color-muted-foreground, #888888)"
+                    />
+                    <YAxis
+                      stroke="var(--color-muted-foreground, #888888)"
+                      tickFormatter={(val) => `₹${val}`}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        background: "var(--color-card, #ffffff)",
+                        borderColor: "var(--color-border, #e2e8f0)",
+                        borderRadius: "8px",
+                      }}
                       formatter={(val) => [currencyFormatter(val), "Revenue"]}
                     />
-                    <Area 
-                      type="monotone" 
-                      dataKey="Revenue" 
-                      stroke="var(--color-primary, #3b82f6)" 
+                    <Area
+                      type="monotone"
+                      dataKey="Revenue"
+                      stroke="var(--color-primary, #3b82f6)"
                       strokeWidth={2}
-                      fillOpacity={1} 
-                      fill="url(#colorRevenue)" 
+                      fillOpacity={1}
+                      fill="url(#colorRevenue)"
                     />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -248,7 +322,9 @@ export default function DaDashboard({ data, refreshData }) {
                   <IconReceipt className="w-5 h-5 text-primary" />
                   Branch checkout Transactions
                 </CardTitle>
-                <CardDescription>Recent checkout invoices in your assigned branch.</CardDescription>
+                <CardDescription>
+                  Recent checkout invoices in your assigned branch.
+                </CardDescription>
               </div>
               <Button
                 variant="outline"
@@ -261,7 +337,9 @@ export default function DaDashboard({ data, refreshData }) {
             </CardHeader>
             <CardContent className="p-0 overflow-x-auto">
               {bills.length === 0 ? (
-                <div className="p-6 text-center text-sm text-muted-foreground">No recent invoices logged.</div>
+                <div className="p-6 text-center text-sm text-muted-foreground">
+                  No recent invoices logged.
+                </div>
               ) : (
                 <table className="w-full text-left border-collapse">
                   <thead>
@@ -277,22 +355,33 @@ export default function DaDashboard({ data, refreshData }) {
                   </thead>
                   <tbody>
                     {bills.map((b) => (
-                      <tr key={b._id} className="border-b border-border hover:bg-muted/10 transition text-sm">
-                        <td className="py-3 px-4 font-bold text-foreground">{b.code}</td>
-                        <td className="py-3 px-4 text-muted-foreground font-medium">{b.createdBy?.name || "System"}</td>
+                      <tr
+                        key={b._id}
+                        className="border-b border-border hover:bg-muted/10 transition text-sm"
+                      >
+                        <td className="py-3 px-4 font-bold text-foreground">
+                          {b.code}
+                        </td>
+                        <td className="py-3 px-4 text-muted-foreground font-medium">
+                          {b.createdBy?.name || "System"}
+                        </td>
                         <td className="py-3 px-4 text-muted-foreground text-xs font-semibold">
                           {b.department?.name || "Global / N/A"}
                         </td>
-                        <td className="py-3 px-4 text-xs font-bold uppercase text-muted-foreground">{b.paymentMethod || "N/A"}</td>
-                        <td className="py-3 px-4 font-extrabold text-foreground">{currencyFormatter(b.total)}</td>
+                        <td className="py-3 px-4 text-xs font-bold uppercase text-muted-foreground">
+                          {b.paymentMethod || "N/A"}
+                        </td>
+                        <td className="py-3 px-4 font-extrabold text-foreground">
+                          {currencyFormatter(b.total)}
+                        </td>
                         <td className="py-3 px-4 text-center">
                           <Badge
                             className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                               b.status === "PAID"
                                 ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                                 : b.status === "UNPAID"
-                                ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
-                                : "bg-red-500/10 text-red-600 border-red-500/20"
+                                  ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                                  : "bg-red-500/10 text-red-600 border-red-500/20"
                             }`}
                           >
                             {b.status}
@@ -325,7 +414,9 @@ export default function DaDashboard({ data, refreshData }) {
                               </Button>
                             </div>
                           ) : (
-                            <div className="text-center text-xs text-muted-foreground font-semibold">-</div>
+                            <div className="text-center text-xs text-muted-foreground font-semibold">
+                              -
+                            </div>
                           )}
                         </td>
                       </tr>
@@ -335,12 +426,10 @@ export default function DaDashboard({ data, refreshData }) {
               )}
             </CardContent>
           </Card>
-
         </div>
 
         {/* Right Columns (Span 1) for Payments & Comparisons */}
         <div className="space-y-6">
-          
           {/* Recharts Payment Methods Donut */}
           <Card className="border border-border shadow-sm bg-card">
             <CardHeader>
@@ -348,7 +437,9 @@ export default function DaDashboard({ data, refreshData }) {
                 <IconReceipt className="w-5 h-5 text-primary" />
                 Payment Mode Split
               </CardTitle>
-              <CardDescription>Distribution share of paid transactions.</CardDescription>
+              <CardDescription>
+                Distribution share of paid transactions.
+              </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center">
               <div className="h-56 w-full flex justify-center">
@@ -364,14 +455,26 @@ export default function DaDashboard({ data, refreshData }) {
                       dataKey="value"
                     >
                       {pieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={PIE_COLORS[index % PIE_COLORS.length]}
+                        />
                       ))}
                     </Pie>
-                    <Tooltip 
-                      contentStyle={{ background: "var(--color-card, #ffffff)", borderColor: "var(--color-border, #e2e8f0)", borderRadius: "8px" }}
+                    <Tooltip
+                      contentStyle={{
+                        background: "var(--color-card, #ffffff)",
+                        borderColor: "var(--color-border, #e2e8f0)",
+                        borderRadius: "8px",
+                      }}
                       formatter={(val) => [currencyFormatter(val), "Amount"]}
                     />
-                    <Legend verticalAlign="bottom" height={36} iconType="circle" className="text-xs" />
+                    <Legend
+                      verticalAlign="bottom"
+                      height={36}
+                      iconType="circle"
+                      className="text-xs"
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -385,7 +488,9 @@ export default function DaDashboard({ data, refreshData }) {
                 <IconBuildingCommunity className="w-5 h-5 text-primary" />
                 Sub-Department Sales comparison
               </CardTitle>
-              <CardDescription>Sales comparison across sub-departments.</CardDescription>
+              <CardDescription>
+                Sales comparison across sub-departments.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {barData.length === 0 ? (
@@ -395,22 +500,41 @@ export default function DaDashboard({ data, refreshData }) {
               ) : (
                 <div className="h-56 w-full text-xs">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={barData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted/40" />
-                      <XAxis dataKey="name" stroke="var(--color-muted-foreground, #888888)" />
-                      <YAxis stroke="var(--color-muted-foreground, #888888)" tickFormatter={val => `₹${val}`} />
-                      <Tooltip 
-                        contentStyle={{ background: "var(--color-card, #ffffff)", borderColor: "var(--color-border, #e2e8f0)", borderRadius: "8px" }}
+                    <BarChart
+                      data={barData}
+                      margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        className="stroke-muted/40"
+                      />
+                      <XAxis
+                        dataKey="name"
+                        stroke="var(--color-muted-foreground, #888888)"
+                      />
+                      <YAxis
+                        stroke="var(--color-muted-foreground, #888888)"
+                        tickFormatter={(val) => `₹${val}`}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          background: "var(--color-card, #ffffff)",
+                          borderColor: "var(--color-border, #e2e8f0)",
+                          borderRadius: "8px",
+                        }}
                         formatter={(val) => [currencyFormatter(val), "Sales"]}
                       />
-                      <Bar 
-                        dataKey="Revenue" 
-                        fill="var(--color-primary, #3b82f6)" 
+                      <Bar
+                        dataKey="Revenue"
+                        fill="var(--color-primary, #3b82f6)"
                         radius={[6, 6, 0, 0]}
                         maxBarSize={40}
                       >
                         {barData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={PIE_COLORS[index % PIE_COLORS.length]}
+                          />
                         ))}
                       </Bar>
                     </BarChart>
@@ -419,9 +543,7 @@ export default function DaDashboard({ data, refreshData }) {
               )}
             </CardContent>
           </Card>
-
         </div>
-
       </div>
     </div>
   );
