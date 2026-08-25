@@ -118,6 +118,71 @@ export default function OrderForm({
 
   return (
     <>
+      {/* Branch Select Dropdown */}
+      <FormField
+        control={form.control}
+        name="branch"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Branch</FormLabel>
+            <FormControl>
+              <Select
+                value={field.value ? String(field.value) : undefined}
+                onValueChange={field.onChange}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a branch" />
+                </SelectTrigger>
+                <SelectContent>
+                  {branches.map((branch) => (
+                    <SelectItem key={branch._id} value={String(branch._id)}>
+                      {branch.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      {/* Department Select Dropdown */}
+      <FormField
+        control={form.control}
+        name="department"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Department</FormLabel>
+            <FormControl>
+              <Select
+                value={field.value ? String(field.value) : undefined}
+                onValueChange={field.onChange}
+                disabled={!selectedBranch}
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={
+                      selectedBranch
+                        ? "Select a department"
+                        : "Select a branch first"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredDepartments.map((dept) => (
+                    <SelectItem key={dept._id} value={String(dept._id)}>
+                      {dept.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
       {/* Shop Select Dropdown */}
       <FormField
         control={form.control}
@@ -163,8 +228,8 @@ export default function OrderForm({
                   <SelectValue placeholder="Select type of order" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Work Order">Work Order</SelectItem>
-                  <SelectItem value="Xerox order">Xerox order</SelectItem>
+                  <SelectItem value="WORK_ORDER">Work Order</SelectItem>
+                  <SelectItem value="XEROX_ORDER">Xerox order</SelectItem>
                 </SelectContent>
               </Select>
             </FormControl>

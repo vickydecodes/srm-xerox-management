@@ -32,6 +32,13 @@ export default function OrderPage() {
         { label: "Rejected", action: () => orders.filters.where("status", "rejected") },
       ],
     },
+    {
+      title: "Order Type",
+      filters: [
+        { label: "Work Order", action: () => orders.filters.where("orderType", "WORK_ORDER") },
+        { label: "Xerox Order", action: () => orders.filters.where("orderType", "XEROX_ORDER") },
+      ],
+    },
   ];
 
   useEffect(() => {

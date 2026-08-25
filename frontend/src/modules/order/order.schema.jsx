@@ -15,11 +15,11 @@ const sponsorSchema = z.object({
 
 export const orderCreateSchema = z.object({
   shop: z.string().min(1, { message: 'Please select a shop' }),
-  orderType: z.enum(['Work Order', 'Xerox order'], {
+  orderType: z.enum(['WORK_ORDER', 'XEROX_ORDER'], {
     error: 'Please select type of order',
   }),
-  department: z.string().optional(),
-  branch: z.string().optional(),
+  department: z.string().min(1, { message: 'Please select a department' }),
+  branch: z.string().min(1, { message: 'Please select a branch' }),
   purpose: z.string().optional(),
   attachmentEmail: z
     .string()
