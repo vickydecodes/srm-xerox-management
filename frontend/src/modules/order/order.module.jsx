@@ -25,23 +25,6 @@ export const useOrderModule = (exported) => {
     getRole: () => role || "super_admin",
   });
 
-  // Department filter for department_admin
-  const getScopeFilter = () => {
-    if (role === "department_admin") {
-      const deptId =
-        typeof user?.department === "object"
-          ? user.department?._id
-          : user?.department;
-      return deptId ? { department: String(deptId) } : {};
-    }
-    // Optional: same idea for branch_admin
-    if (role === "branch_admin") {
-      const branchId =
-        typeof user?.branch === "object" ? user.branch?._id : user?.branch;
-      return branchId ? { branch: String(branchId) } : {};
-    }
-    return {};
-  };
 
   const openView = (order) => {
     return openModal(modals.view, { order, exported });
@@ -137,8 +120,8 @@ export const useOrderModule = (exported) => {
 
   // Always apply department scope for department_admin
   const fetch = (params = {}) => {
-    const scope = getScopeFilter();
-    return baseFetch({ ...scope, ...params });
+
+    return baseFetch({ ...params });
   };
 
   return {
