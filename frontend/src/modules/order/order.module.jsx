@@ -4,7 +4,6 @@ import { modals } from "./order.modals";
 import { useOrderStore } from "./order.store";
 import { useUI } from "@/core/contexts/ui.context";
 import { apiurls } from "@/core/api/api.urls";
-import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { createEntityQueryActions } from "@/core/utils/entity.util";
 import { useAuth } from "@/core/contexts/auth.context";
@@ -12,7 +11,7 @@ import { useBillStore } from "@/modules/bill/bill.store";
 
 export const useOrderModule = (exported) => {
   const { openModal } = useUI();
-  const {role} = useAuth();
+  const { user, role } = useAuth();
   const store = useOrderStore();
   const navigate = useNavigate();
 
@@ -23,8 +22,26 @@ export const useOrderModule = (exported) => {
     entity: "Order",
     urls: orderUrls,
     store: store,
-    getRole: () => "super_admin",
+    getRole: () => role || "super_admin",
   });
+
+  // Department filter for department_admin
+  const getScopeFilter = () => {
+    if (role === "department_admin") {
+      const deptId =
+        typeof user?.department === "object"
+          ? user.department?._id
+          : user?.department;
+      return deptId ? { department: String(deptId) } : {};
+    }
+    // Optional: same idea for branch_admin
+    if (role === "branch_admin") {
+      const branchId =
+        typeof user?.branch === "object" ? user.branch?._id : user?.branch;
+      return branchId ? { branch: String(branchId) } : {};
+    }
+    return {};
+  };
 
   const openView = (order) => {
     return openModal(modals.view, { order, exported });
@@ -103,11 +120,26 @@ export const useOrderModule = (exported) => {
   const readyForPickup = (id) => crud.readyForPickup(id);
   const inProgress = (id) => crud.inProgress(id);
 
-  const { fetch, reset, sortByColumn, presets, csv, xlsx, pdf, getQuery } = createEntityQueryActions({
+  const {
+    fetch: baseFetch,
+    reset,
+    sortByColumn,
+    presets,
+    csv,
+    xlsx,
+    pdf,
+    getQuery,
+  } = createEntityQueryActions({
     crud,
     getQuery: () => useOrderStore.getState().query,
     setQuery,
   });
+
+  // Always apply department scope for department_admin
+  const fetch = (params = {}) => {
+    const scope = getScopeFilter();
+    return baseFetch({ ...scope, ...params });
+  };
 
   return {
     get state() {

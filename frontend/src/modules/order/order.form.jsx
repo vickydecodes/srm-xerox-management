@@ -40,9 +40,9 @@ export default function OrderForm({
   shops = [],
   BillingItemSearchCombobox,
   searchProducts,
+  lockBranchDept = false,
 }) {
   const { user } = useAuth();
-  const isSuperAdmin = user?.role === "super_admin";
   const selectedBranch = useWatch({ control: form.control, name: "branch" });
 
   const filteredDepartments = selectedBranch
@@ -118,7 +118,7 @@ export default function OrderForm({
 
   return (
     <>
-      {/* Branch Select Dropdown */}
+      {/* Branch */}
       <FormField
         control={form.control}
         name="branch"
@@ -129,6 +129,7 @@ export default function OrderForm({
               <Select
                 value={field.value ? String(field.value) : undefined}
                 onValueChange={field.onChange}
+                disabled={lockBranchDept}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a branch" />
@@ -147,7 +148,7 @@ export default function OrderForm({
         )}
       />
 
-      {/* Department Select Dropdown */}
+      {/* Department */}
       <FormField
         control={form.control}
         name="department"
@@ -158,7 +159,7 @@ export default function OrderForm({
               <Select
                 value={field.value ? String(field.value) : undefined}
                 onValueChange={field.onChange}
-                disabled={!selectedBranch}
+                disabled={lockBranchDept || !selectedBranch}
               >
                 <SelectTrigger>
                   <SelectValue
@@ -183,7 +184,7 @@ export default function OrderForm({
         )}
       />
 
-      {/* Shop Select Dropdown */}
+      {/* Shop */}
       <FormField
         control={form.control}
         name="shop"
@@ -272,7 +273,7 @@ export default function OrderForm({
         )}
       />
 
-      {/* Items – search & add */}
+      {/* Items */}
       <div className="space-y-3">
         <FormLabel>Items</FormLabel>
 
@@ -316,7 +317,6 @@ export default function OrderForm({
                   key={fieldItem.id}
                   className="grid grid-cols-1 sm:grid-cols-[3fr_1fr_1.2fr_auto] gap-3 items-start border-b pb-3 last:border-0"
                 >
-                  {/* Name + type/variant */}
                   <div className="flex flex-col gap-0.5 min-w-0 sm:pt-2">
                     <span className="font-medium text-sm truncate">
                       {items[index]?.name}
@@ -334,7 +334,6 @@ export default function OrderForm({
                     </span>
                   </div>
 
-                  {/* Quantity */}
                   <FormField
                     control={form.control}
                     name={`items.${index}.quantity`}
@@ -356,7 +355,6 @@ export default function OrderForm({
                     )}
                   />
 
-                  {/* Price (read-only) */}
                   <FormField
                     control={form.control}
                     name={`items.${index}.price`}
@@ -382,7 +380,6 @@ export default function OrderForm({
                     )}
                   />
 
-                  {/* Line total + remove */}
                   <div className="flex items-center gap-2 pt-2">
                     <span className="text-xs text-muted-foreground whitespace-nowrap">
                       ₹{(qty * price).toFixed(2)}

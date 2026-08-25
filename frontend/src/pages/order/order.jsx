@@ -24,19 +24,43 @@ export default function OrderPage() {
     {
       title: "Status",
       filters: [
-        { label: "Draft", action: () => orders.filters.where("status", "draft") },
-        { label: "Pending Approval", action: () => orders.filters.where("status", "pending") },
-        { label: "In Progress", action: () => orders.filters.where("status", "in_progress") },
-        { label: "Ready for Pickup", action: () => orders.filters.where("status", "ready_for_pickup") },
-        { label: "Delivered", action: () => orders.filters.where("status", "delivered") },
-        { label: "Rejected", action: () => orders.filters.where("status", "rejected") },
+        {
+          label: "Draft",
+          action: () => orders.filters.where("status", "draft"),
+        },
+        {
+          label: "Pending Approval",
+          action: () => orders.filters.where("status", "pending"),
+        },
+        {
+          label: "In Progress",
+          action: () => orders.filters.where("status", "in_progress"),
+        },
+        {
+          label: "Ready for Pickup",
+          action: () => orders.filters.where("status", "ready_for_pickup"),
+        },
+        {
+          label: "Delivered",
+          action: () => orders.filters.where("status", "delivered"),
+        },
+        {
+          label: "Rejected",
+          action: () => orders.filters.where("status", "rejected"),
+        },
       ],
     },
     {
       title: "Order Type",
       filters: [
-        { label: "Work Order", action: () => orders.filters.where("orderType", "WORK_ORDER") },
-        { label: "Xerox Order", action: () => orders.filters.where("orderType", "XEROX_ORDER") },
+        {
+          label: "Work Order",
+          action: () => orders.filters.where("orderType", "WORK_ORDER"),
+        },
+        {
+          label: "Xerox Order",
+          action: () => orders.filters.where("orderType", "XEROX_ORDER"),
+        },
       ],
     },
   ];
@@ -45,14 +69,18 @@ export default function OrderPage() {
     load(orders);
   }, []);
 
-  const canCreate = role === "department_admin" || role === "super_admin";
+  const canCreate = role === "department_admin";
 
   return (
     <DataTable
       data={state}
       columns={columns}
       searchKey="purpose"
-      create={canCreate ? createbtn("Create Order", () => orders.openCreate(), true) : null}
+      create={
+        canCreate
+          ? createbtn("Create Order", () => orders.openCreate(), true)
+          : null
+      }
       manualPagination={true}
       reset={orders.reset}
       loading={orders.loading.getAll}

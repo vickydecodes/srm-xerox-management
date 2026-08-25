@@ -367,17 +367,20 @@ export const Create = ({
       ? user.department?._id
       : user?.department || "";
 
+  const isSuperAdmin = user?.role === "super_admin";
+
   const form = useForm({
     resolver: zodResolver(orderCreateSchema),
     defaultValues: {
+      branch: userBranchId ? String(userBranchId) : "",
+      department: userDeptId ? String(userDeptId) : "",
       shop: "",
-      orderType: undefined, // ← add this
+      orderType: undefined,
       purpose: "",
       attachmentEmail: "",
       managementAmount: 0,
       sponsors: [],
       items: [],
-      // ...
     },
   });
 
@@ -442,6 +445,7 @@ export const Create = ({
               exported?.search?.BillingItemSearchCombobox
             }
             searchProducts={exported?.search?.searchProducts}
+            lockBranchDept={!isSuperAdmin} // optional: lock for non-super-admin
           />
           {ErrorAlert}
           <DialogFooter>
