@@ -6,15 +6,12 @@ import {
   adminResetPasswordSchema,
 } from '@modules/auth/auth.validator.ts';
 
-export type Role = 'student' | 'teacher' | 'junior_admin' | 'super_admin';
-
+export type Role = 'super_admin' | 'branch_admin' | 'department_admin' | 'shop_admin' | 'staff';
 export interface AuthUser {
   id: string;
   branch: string;
-  permissions: string[];
+  department: string;
   role: Role;
-  batches?: string[] | { _id: string }[];
-  standard?: string | { _id: string }; // add this
 }
 
 // export interface LoginPayload {
