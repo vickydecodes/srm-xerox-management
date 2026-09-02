@@ -5,7 +5,7 @@ import Branch from '@db/models/branch.model.ts';
 import { generateToken } from '../lib/jwt.ts';
 import { tester } from '@core/constants/tester.constant.ts';
 
-const baseRoute = '/api/v1/dashboard';
+const baseRoute = '/api/v1/dashboards';
 
 let superAdminToken: string;
 let cleanupAdmin: () => Promise<void>;

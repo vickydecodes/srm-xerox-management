@@ -6,7 +6,7 @@ import InventoryProduct from '@db/models/inventory-product.model.ts';
 import Service from '@db/models/service.model.ts';
 import { tester } from '@core/constants/tester.constant.ts';
 
-const baseRoute = '/api/v1/search';
+const baseRoute = '/api/v1/searches';
 
 let token: string;
 let cleanupAdmin: () => Promise<void>;
