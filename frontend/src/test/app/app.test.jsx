@@ -49,8 +49,7 @@ vi.mock("@/core/router/app.routes", () => ({
 // css import is fine; Vite/Vitest usually handles it
 // if it errors, add: vi.mock("./app.css", () => ({}));
 
-import App from "@/app/App"; // adjust if file is app.jsx vs App.jsx
-
+import App from "@/app/app";
 // ---------- tests ----------
 
 describe("App", () => {

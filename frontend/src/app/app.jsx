@@ -9,13 +9,6 @@ import './app.css';
 import AppRoutes from '@/core/router/app.routes';
 
 export default function App() {
-  
-  
-
-
-
- 
-
   return (
     <Router>
       <AuthProvider>
