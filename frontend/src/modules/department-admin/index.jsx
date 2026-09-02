@@ -1,0 +1,1 @@
+export { useDepartmentAdminModule } from "./department-admin.module";

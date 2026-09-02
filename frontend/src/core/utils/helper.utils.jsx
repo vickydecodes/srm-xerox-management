@@ -19,3 +19,12 @@ export const capitalize = (str) => {
 
 export const money = (v) => Number(v || 0).toLocaleString();
 
+export function getRelativePath(fullPath, basePath) {
+  if (fullPath === basePath + '/') return '';
+  return fullPath.replace(basePath, '').replace(/^\//, '');
+}
+
+export function buildRoutePath(role, routePath) {
+  const relative = getRelativePath(routePath);
+  return relative ? `/${role}/${relative}` : `/${role}`;
+}

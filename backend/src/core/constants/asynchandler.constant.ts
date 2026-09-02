@@ -19,6 +19,7 @@ const asyncHandler = (name: string, fn: ControllerFn): ControllerFn => {
       err.caller = functionName;
       err.method = req.method || 'unknown method';
       err.route = req.originalUrl || 'unknown route';
+      err.requestId = req.requestId;
       next(err);
     }
   };

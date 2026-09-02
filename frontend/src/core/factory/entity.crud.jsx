@@ -1,16 +1,26 @@
-/* eslint-disable no-unused-vars */
-
-
-
 import { toast } from 'sonner';
 import handleApiError from '@/core/errors/error.handler';
 import { apiRequest } from '../api/api.request';
 import { camelToTitle } from '../utils/helper.utils';
 
 export const createCrud = ({ entity, urls, store, getRole }) => {
-  const crud = {};
+  const crud = {
+    entity,
+    __urls: urls,
+  };
 
-
+  const customtoasts = {
+    setActiveStatus: (entity, res) =>
+      res?.active
+        ? `${camelToTitle(entity)} is now active`
+        : `${camelToTitle(entity)} has been deactivated`,
+    submit: () => "Order submitted for approval",
+    branchApprove: (entity, res) => `Order successfully ${res?.branchAdminApproval?.status}`,
+    superAdminApprove: (entity, res) => `Order successfully ${res?.superAdminApproval?.status}`,
+    readyForPickup: () => "Order marked as ready for pickup",
+    deliver: () => "Order marked as delivered",
+    inProgress: () => "Order processing started",
+  };
 
   const defaultMessages = {
     create: 'created successfully',
@@ -18,15 +28,16 @@ export const createCrud = ({ entity, urls, store, getRole }) => {
     delete: 'deleted successfully',
     erase: 'deleted permanently',
     retrieve: 'retrieved successfully',
+
   };
 
   const DOWNLOAD_KEYS = ['download', 'exportCsv', 'exportXlsx', 'exportPdf', 'exportMarksheetCsv'];
-  const SET_KEYS = [];
-  const ADD_KEYS = [];
-  const UPDATE_KEYS = [];
-  const DELETE_KEYS = [];
-  const RETRIEVE_KEYS = [];
-  const ERASE_KEYS = [];
+  const SET_KEYS = ['getAll'];
+  const ADD_KEYS = ['create'];
+  const UPDATE_KEYS = ['edit', 'setActiveStatus', 'toggleStatus', 'branchApprove', 'branchAdminApprove', 'superAdminApprove', 'submit', 'readyForPickup', 'deliver', 'inProgress'];
+  const DELETE_KEYS = ['delete'];
+  const RETRIEVE_KEYS = ['retrieve'];
+  const ERASE_KEYS = ['erase'];
 
   Object.entries(urls).forEach(([key, config]) => {
     const { method, url } = config;
@@ -90,7 +101,7 @@ export const createCrud = ({ entity, urls, store, getRole }) => {
 
         const res = await apiRequest(method, finalUrl, options);
 
-        if (SET_KEYS.includes(key)) {
+        if (SET_KEYS.includes(key) && !callOptions.skipStore) {
           store.set(res.data || []);
           if (res.pagination) {
             store.setPagination(res.pagination);
@@ -129,7 +140,11 @@ export const createCrud = ({ entity, urls, store, getRole }) => {
 
         if (shouldToast) {
 
-          const message = defaultMessages[key]
+          const customMessage = customtoasts[key]?.(entity, res.data);
+          const message =
+            customMessage !== undefined && customMessage !== null
+              ? customMessage
+              : defaultMessages[key]
                 ? `${camelToTitle(entity)} ${defaultMessages[key]}`
                 : null;
 

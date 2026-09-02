@@ -1,0 +1,91 @@
+import { z } from 'zod';
+import { Types } from 'mongoose';
+
+const objectId = z.string().refine((val) => Types.ObjectId.isValid(val), {
+  message: 'Invalid ObjectId',
+});
+
+const approvalSchema = z.object({
+  status: z.enum(['pending', 'approved', 'rejected']),
+  remarks: z.string().trim().optional(),
+});
+
+export const createOrderSchema = z.object({
+  orderType: z.enum(['WORK_ORDER', 'XEROX_ORDER']),
+  shop: objectId,
+
+  purpose: z
+    .string()
+    .trim()
+    .optional(),
+
+  attachmentEmail: z
+    .string()
+    .trim()
+    .email('Invalid email address'),
+
+  managementAmount: z
+    .number()
+    .min(0, 'Management amount cannot be negative')
+    .optional(),
+
+  sponsors: z
+    .array(
+      z.object({
+        name: z
+          .string()
+          .trim()
+          .min(1, 'Sponsor name is required'),
+
+        amount: z
+          .number()
+          .min(0, 'Sponsor amount cannot be negative'),
+      })
+    )
+    .optional()
+    .default([]),
+
+  items: z
+    .array(
+      z.object({
+        type: z.enum(['InventoryProduct', 'Service']),
+
+        item: z
+          .string()
+          .trim()
+          .min(1, 'Item is required'),
+
+        name: z
+          .string()
+          .trim()
+          .min(1, 'Item name is required'),
+
+        quantity: z
+          .number()
+          .min(0, 'Quantity cannot be negative'),
+
+        price: z
+          .number()
+          .min(0, 'Price cannot be negative'),
+      })
+    )
+    .optional()
+    .default([]),
+
+  branchAdminApproval: approvalSchema.optional(),
+  superAdminApproval: approvalSchema.optional(),
+
+  status: z
+  .enum([
+    'draft',
+    'pending',
+    'in_progress',
+    'ready_for_pickup',
+    'delivered',
+    'rejected',
+  ])
+  .optional(),
+});
+
+export const updateOrderSchema =
+  createOrderSchema.partial();

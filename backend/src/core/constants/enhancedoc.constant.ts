@@ -9,6 +9,16 @@ export async function enhanceDoc(model: any, doc: any, refs: string[], options?:
   const finalSelect = baseSelect.join(' ');
 
   const populateList = refs.map((ref) => {
+    if (ref === 'materials.product') {
+      return {
+        path: 'materials.product',
+        select: '_id product variant price quantity active',
+        populate: [
+          { path: 'product', select: '_id name code' }
+        ]
+      };
+    }
+
     let select = '_id name';
 
     const extra = options?.extras?.populate?.[ref];

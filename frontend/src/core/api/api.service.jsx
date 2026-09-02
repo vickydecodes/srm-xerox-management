@@ -56,7 +56,7 @@ export const downloadFile = async (url, params) => {
   let filename = 'download';
   const response = await api.get(url, {
     responseType: 'blob',
-    params: {...params, _t: Date.now()}, // prevent caching
+    params: {...params, _t: Date.now()}, 
     validateStatus: null,
   });
 
@@ -66,7 +66,7 @@ export const downloadFile = async (url, params) => {
     try {
       const json = JSON.parse(text);
       message = json.message || json.error || message;
-    } catch { /* not JSON */ }
+    } catch {  }
     
     const err = new Error(message);
     err.response = { status: response.status, data: { message } };
@@ -87,6 +87,50 @@ export const downloadFile = async (url, params) => {
   window.URL.revokeObjectURL(blobUrl);
 
   return filename;
+};
+
+export const printPdf = async (url, params = {}) => {
+  const response = await api.get(url, {
+    responseType: 'blob',
+    params: { ...params, _t: Date.now() },
+    validateStatus: null,
+  });
+
+  if (response.status >= 400) {
+    const text = await response.data.text();
+    let message = 'Fetch PDF failed';
+    try {
+      const json = JSON.parse(text);
+      message = json.message || json.error || message;
+    } catch { }
+
+    const err = new Error(message);
+    err.response = { status: response.status, data: { message } };
+    throw err;
+  }
+
+  const blob = new Blob([response.data], { type: 'application/pdf' });
+  const blobUrl = window.URL.createObjectURL(blob);
+
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  iframe.src = blobUrl;
+
+  iframe.onload = () => {
+    iframe.contentWindow.focus();
+    iframe.contentWindow.print();
+    setTimeout(() => {
+      iframe.remove();
+      window.URL.revokeObjectURL(blobUrl);
+    }, 60000);
+  };
+
+  document.body.appendChild(iframe);
 };
 
 

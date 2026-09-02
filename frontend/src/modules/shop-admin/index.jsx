@@ -1,0 +1,1 @@
+export { useShopAdminModule } from "./shop-admin.module";

@@ -1,0 +1,115 @@
+import { createCrud } from "@/core/factory/entity.crud";
+import { useBillColumns } from "./bill.coulmns";
+import { modals } from "./bill.modals";
+import { useBillStore } from "./bill.store";
+import { useUI } from "@/core/contexts/ui.context";
+import { apiurls } from "@/core/api/api.urls";
+import { createEntityQueryActions } from "@/core/utils/entity.util";
+import { useAction } from "@/core/hooks/useAction";
+
+export const useBillModule = (exported) => {
+  const { openModal } = useUI();
+  const { navigateWith } = useAction();
+  const store = useBillStore();
+  const { setQuery } = store;
+  const { bills } = apiurls;
+
+  const crud = createCrud({
+    entity: 'Bill',
+    urls: bills,
+    store: store,
+    getRole: () => 'super_admin',
+  });
+
+  const openView = (bill) => {
+    return openModal(modals.view, { bill, exported });
+  };
+
+  const openEdit = async (bill) => {
+    try {
+      const fullBill = await crud.getOne(bill._id);
+      navigateWith('bill-creation').edit(fullBill);
+    } catch {
+      
+    }
+  };
+
+  const togglePaymentStatus = (bill) => {
+    const newStatus = bill.status === 'PAID' ? 'UNPAID' : 'PAID';
+    return crud.edit(bill._id, { status: newStatus });
+  };
+
+  const openDelete = (id, code) => {
+    return openModal(modals.delete, {
+      id,
+      code,
+      onConfirm: (id) => crud.delete(id),
+      exported,
+    });
+  };
+
+   const openErase = (id) => {
+      return openModal(modals.erase, {
+        id,
+        submitFn: (id) => crud.erase(id),
+        exported,
+      });
+    };
+  
+    const openRetrieve = (id) => {
+      return openModal(modals.retrieve, {
+        id,
+        submitFn: (id) => crud.retrieve(id),
+        exported,
+      });
+    };
+  
+    const openActiveStatus = (id, status) => {
+      return openModal(modals.activeStatus, {
+        id,
+        status,
+        submitFn: (id, data) => crud.setActiveStatus(id, data),
+        exported,
+      });
+    };
+
+
+  const { fetch, reset, sortByColumn, presets, csv, xlsx, pdf, getQuery } = createEntityQueryActions({
+    crud,
+    getQuery: () => useBillStore.getState().query,
+    setQuery,
+  });
+
+  return {
+    get state() {
+      return useBillStore.getState().list;
+    },
+    get loading() {
+      return useBillStore.getState().loading;
+    },
+    get pagination() {
+      return useBillStore.getState().pagination;
+    },
+    get current() {
+      return useBillStore.getState().current;
+    },
+    useBillColumns,
+    openView,
+    openEdit,
+    openDelete,
+    openErase,
+    openRetrieve,
+    openActiveStatus,
+    togglePaymentStatus,
+    crud,
+    create: crud.create,
+    fetch,
+    reset,
+    sortByColumn,
+    filters: presets,
+    csv,
+    xlsx,
+    pdf,
+    getQuery,
+  };
+};

@@ -1,0 +1,1 @@
+export { useBranchAdminModule } from "./branch-admin.module";

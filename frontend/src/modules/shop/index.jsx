@@ -1,0 +1,1 @@
+export { useShopModule } from "./shop.module";

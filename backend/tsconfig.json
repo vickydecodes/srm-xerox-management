@@ -38,6 +38,9 @@
             ],
             "@modules/*": [
                 "./src/modules/*"
+            ],
+            "@lib/*": [
+                "./src/lib/*"
             ]
         }
     },
