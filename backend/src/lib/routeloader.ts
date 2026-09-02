@@ -1,9 +1,23 @@
-import { glob } from 'glob';
-import path from 'path';
+import { Application } from 'express';
 import listEndpoints from 'express-list-endpoints';
 import chalk from 'chalk';
-import { Application } from 'express';
 import pluralize from 'pluralize';
+
+// Static Route Imports
+import userRoute from '../modules/user/user.route.ts';
+import shopRoute from '../modules/shop/shop.route.ts';
+import settingRoute from '../modules/setting/setting.route.ts';
+import serviceRoute from '../modules/service/service.route.ts';
+import searchRoute from '../modules/search/search.route.ts';
+import productRoute from '../modules/product/product.route.ts';
+import orderRoute from '../modules/order/order.route.ts';
+import inventoryProductRoute from '../modules/inventory-product/inventory-product.route.ts';
+import departmentRoute from '../modules/department/department.route.ts';
+import creditRoute from '../modules/credit/credit.route.ts';
+import dashboardRoute from '../modules/dashboard/dashboard.route.ts';
+import branchRoute from '../modules/branch/branch.route.ts';
+import billRoute from '../modules/bill/bill.route.ts';
+import authRoute from '../modules/auth/auth.route.ts';
 
 const API_VERSION = 'v1';
 
@@ -12,9 +26,22 @@ export const loadRoutes = async (app: Application): Promise<void> => {
 
   console.log('\n' + chalk.bgBlue.white.bold(' 🚀 ROUTE LOADER INITIALIZING ') + '\n');
 
-  const routes = await glob('src/modules/**/*.route.ts', {
-    ignore: ['node_modules/**', 'dist/**'],
-  });
+  const routes = [
+    { name: 'user', router: userRoute },
+    { name: 'shop', router: shopRoute },
+    { name: 'setting', router: settingRoute },
+    { name: 'service', router: serviceRoute },
+    { name: 'search', router: searchRoute },
+    { name: 'product', router: productRoute },
+    { name: 'order', router: orderRoute },
+    { name: 'inventory-product', router: inventoryProductRoute },
+    { name: 'department', router: departmentRoute },
+    { name: 'credit', router: creditRoute },
+    { name: 'dashboard', router: dashboardRoute },
+    { name: 'branch', router: branchRoute },
+    { name: 'bill', router: billRoute },
+    { name: 'auth', router: authRoute },
+  ];
 
   console.log(
     chalk.cyanBright(
@@ -26,39 +53,32 @@ export const loadRoutes = async (app: Application): Promise<void> => {
   let skipped = 0;
   let failed = 0;
 
-  for (const [index, file] of routes.entries()) {
-    const fileName = path.basename(file, '.route.ts');
-
+  for (const [index, { name: fileName, router: defaultExport }] of routes.entries()) {
     try {
-      const fileUrl = new URL(`file://${path.resolve(file)}`).href;
-      const mod = await import(fileUrl);
+      const isRouter = defaultExport && typeof defaultExport === 'function';
 
-      const hasDefault = 'default' in mod;
-      const isRouter = mod?.default && typeof mod.default === 'function';
-
-      if (!hasDefault || !isRouter) {
+      if (!isRouter) {
         skipped++;
         console.log(
           chalk.yellow(
-            `⚠️  ${chalk.bold(fileName)} skipped ${
-              !hasDefault ? '(no default export)' : '(invalid router)'
-            }`
+            `⚠️  ${chalk.bold(fileName)} skipped (invalid router)`
           )
         );
         continue;
       }
 
-      const basePath = mod.basePath || `/${pluralize(fileName.replace(/_/g, '-').toLowerCase())}`;
+      // We explicitly cast here to allow checking for a custom basePath if one was attached
+      const customBasePath = (defaultExport as any).basePath;
+      const basePath = customBasePath || `/${pluralize(fileName.replace(/_/g, '-').toLowerCase())}`;
       const baseRoute = `/api/${API_VERSION}${basePath}`;
 
       console.log(chalk.whiteBright(`\n[${index + 1}/${routes.length}] ${chalk.bold(fileName)}`));
+      console.log(chalk.magentaBright(`   🔗 ${baseRoute}`));
 
-      console.log(chalk.gray(`   📂 ${file}`) + '\n' + chalk.magentaBright(`   🔗 ${baseRoute}`));
-
-      app.use(baseRoute, mod.default);
+      app.use(baseRoute, defaultExport);
       loaded++;
 
-      const endpoints = listEndpoints(mod.default);
+      const endpoints = listEndpoints(defaultExport as any);
 
       if (!endpoints.length) {
         console.log(chalk.yellow('   ⚠️  No routes found\n'));
