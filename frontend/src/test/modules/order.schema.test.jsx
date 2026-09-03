@@ -15,7 +15,9 @@ const validItem = {
 
 const validOrder = {
   shop: 'shop-1',
-  orderType: 'Xerox order',
+  orderType: 'XEROX_ORDER', // was 'Xerox order' — invalid enum
+  department: 'dept-1',     // required
+  branch: 'branch-1',       // required
   attachmentEmail: 'user@example.com',
   items: [validItem],
   sponsors: [],
@@ -28,6 +30,16 @@ describe('orderCreateSchema', () => {
 
   it('requires shop', () => {
     const r = orderCreateSchema.safeParse({ ...validOrder, shop: '' });
+    expect(r.success).toBe(false);
+  });
+
+  it('requires department', () => {
+    const r = orderCreateSchema.safeParse({ ...validOrder, department: '' });
+    expect(r.success).toBe(false);
+  });
+
+  it('requires branch', () => {
+    const r = orderCreateSchema.safeParse({ ...validOrder, branch: '' });
     expect(r.success).toBe(false);
   });
 
@@ -77,9 +89,7 @@ describe('orderEditSchema', () => {
 
 describe('approvalSchema', () => {
   it('accepts approved / rejected', () => {
-    expect(
-      approvalSchema.safeParse({ status: 'approved' }).success
-    ).toBe(true);
+    expect(approvalSchema.safeParse({ status: 'approved' }).success).toBe(true);
     expect(
       approvalSchema.safeParse({ status: 'rejected', remarks: 'No budget' })
         .success
@@ -87,8 +97,6 @@ describe('approvalSchema', () => {
   });
 
   it('rejects unknown status', () => {
-    expect(
-      approvalSchema.safeParse({ status: 'pending' }).success
-    ).toBe(false);
+    expect(approvalSchema.safeParse({ status: 'pending' }).success).toBe(false);
   });
 });
