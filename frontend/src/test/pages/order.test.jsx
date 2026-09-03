@@ -98,28 +98,30 @@ describe('OrderPage', () => {
     expect(lastDataTableProps.reset).toBe(orders.reset);
   });
 
-  it.each(['department_admin', 'super_admin'])(
-    'shows a "Create Order" action for %s',
-    (role) => {
-      setup({ role });
-      expect(lastDataTableProps.create).toMatchObject({
-        label: 'Create Order',
-        provision: true,
-        permission: true,
-      });
-    }
-  );
+  // Page: canCreate = role === "department_admin" only
+  it('shows a "Create Order" action for department_admin', () => {
+    setup({ role: 'department_admin' });
+    expect(lastDataTableProps.create).toMatchObject({
+      label: 'Create Order',
+      provision: true,
+      permission: true,
+    });
+  });
 
-  it.each(['staff', 'shop_admin', 'branch_admin', undefined, null])(
-    'hides the create action for role=%s',
-    (role) => {
-      setup({ role });
-      expect(lastDataTableProps.create).toBeNull();
-    }
-  );
+  it.each([
+    'super_admin',
+    'staff',
+    'shop_admin',
+    'branch_admin',
+    undefined,
+    null,
+  ])('hides the create action for role=%s', (role) => {
+    setup({ role });
+    expect(lastDataTableProps.create).toBeNull();
+  });
 
   it('invoking the create action opens the create modal', () => {
-    const { orders } = setup({ role: 'super_admin' });
+    const { orders } = setup({ role: 'department_admin' });
     lastDataTableProps.create.action();
     expect(orders.openCreate).toHaveBeenCalledTimes(1);
   });
@@ -162,6 +164,9 @@ describe('OrderPage', () => {
     expect(orders.fetch).toHaveBeenCalledWith({ page: 2, limit: 10 });
 
     lastDataTableProps.onSortChange({ sortBy: 'purpose', order: 'asc' });
-    expect(orders.fetch).toHaveBeenCalledWith({ sortBy: 'purpose', order: 'asc' });
+    expect(orders.fetch).toHaveBeenCalledWith({
+      sortBy: 'purpose',
+      order: 'asc',
+    });
   });
 });
