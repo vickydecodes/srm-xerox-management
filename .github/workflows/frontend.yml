@@ -12,6 +12,9 @@ jobs:
   build-test-deploy:
     runs-on: ubuntu-latest
 
+    env:
+      VITE_BASE_URL: https://srm-xerox-management.onrender.com/api/v1
+
     defaults:
       run:
         working-directory: frontend
