@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "ignoreDeprecations": "6.0",
     "jsx": "react",
     "baseUrl": ".",
     "paths": {
@@ -10,6 +9,10 @@
     }
   },
   "include": [
-    "src"
-, "src/modules/test/test.module/.jsx", "backups/Schemas.jsx", "backups/StateManager.jsx", "../card.jsx"  ]
+    "src",
+    "src/modules/test/test.module/.jsx",
+    "backups/Schemas.jsx",
+    "backups/StateManager.jsx",
+    "../card.jsx"
+  ]
 }
