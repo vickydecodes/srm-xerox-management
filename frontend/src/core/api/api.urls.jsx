@@ -226,18 +226,18 @@ const apiurls = {
   dashboard: {
     superAdmin: {
       method: "get",
-      url: () => `${base_url}/dashboard/super-admin`,
+      url: () => `${base_url}/dashboards/super-admin`,
     },
     branchAdmin: {
       method: "get",
-      url: () => `${base_url}/dashboard/branch-admin`,
+      url: () => `${base_url}/dashboards/branch-admin`,
     },
     departmentAdmin: {
       method: "get",
-      url: () => `${base_url}/dashboard/department-admin`,
+      url: () => `${base_url}/dashboards/department-admin`,
     },
-    shopAdmin: { method: "get", url: () => `${base_url}/dashboard/shop-admin` },
-    staff: { method: "get", url: () => `${base_url}/dashboard/staff` },
+    shopAdmin: { method: "get", url: () => `${base_url}/dashboards/shop-admin` },
+    staff: { method: "get", url: () => `${base_url}/dashboards/staff` },
   },
 
   shops: {
