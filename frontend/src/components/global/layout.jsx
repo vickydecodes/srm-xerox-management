@@ -1,4 +1,3 @@
-
 'use client';
 import { useEffect } from 'react';
 import { Sidebar, SidebarBody, SidebarLink } from '@/components/ui/sidebar';
@@ -33,16 +32,12 @@ export default function Layout({ routes, logoutComponent }) {
                 'mx-auto flex w-full flex-1 flex-col overflow-hidden rounded-md border border-neutral-200 bg-gray-100 md:flex-row dark:border-neutral-700 dark:bg-neutral-800 h-[100vh]'
             )}
         >
-            {}
             <Sidebar open={sidebarOpen} setOpen={setSidebarOpen}>
                 <SidebarBody className="justify-between gap-10">
                     <div className="flex flex-1 flex-col overflow-x-hidden overflow-y-auto scrollbar-none">
-                        {sidebarOpen ? <Logo role={role}/> : <LogoIcon />}
-
-                        
+                        {sidebarOpen ? <Logo role={role} /> : <LogoIcon />}
 
                         <div className="mt-8 flex flex-col gap-2">
-                            {}
                             {routes.map((route) => (
                                 <SidebarLink key={route.path} link={route} />
                             ))}
@@ -68,7 +63,6 @@ export default function Layout({ routes, logoutComponent }) {
                 role={role}
             />
 
-            {}
             <div
                 className={
                     currentRoute?.title
@@ -76,12 +70,16 @@ export default function Layout({ routes, logoutComponent }) {
                         : 'relative w-full  bg-gray-50 dark:bg-gray-900 overflow-auto scrollbar-none'
                 }
             >
-                {}
                 {currentRoute?.title && currentRoute?.description && (
                     <div className="flex justify-between items-center md:m-[20px] mb-[40px]">
                         <div className="">
                             <h1 className="text-3xl font-bold text-gray-900">{currentRoute.title}</h1>
                             <p className="text-gray-600 mt-2">{currentRoute.description}</p>
+                            <img
+                                src="../../../public/logo1.png" // add your image path here
+                                alt=""
+                                className="mt-4 max-w-full h-auto rounded-md"
+                            />
                         </div>
 
                         <button
@@ -94,7 +92,6 @@ export default function Layout({ routes, logoutComponent }) {
                     </div>
                 )}
 
-                {}
                 <div className="m-1 md:m-10 overflow-auto">
                     <Outlet />
                 </div>
@@ -103,14 +100,14 @@ export default function Layout({ routes, logoutComponent }) {
     );
 }
 
-export const Logo = ({role}) => (
+export const Logo = ({ role }) => (
     <SidebarLink
         link={{
             label: `${camelToTitle(role)} Menu`,
             path: '#',
             icon: (
                 <img
-                    src="/logo1.png"
+                    src="../../../public/logo1.png"
                     className="h-20 w-20 me-3 transition-all shrink-0 rounded-full object-cover"
                     width={40}
                     height={40}
@@ -127,7 +124,7 @@ export const LogoIcon = () => (
         className="relative z-20 flex items-center space-x-2 py-1 text-sm font-normal text-black"
     >
         <img
-            src="/logo1.png"
+            src="../../../public/logo1.png"
             className="h-6 w-6 shrink-0 rounded-full object-cover"
             width={8}
             height={8}
