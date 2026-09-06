@@ -1,4 +1,5 @@
 'use client';
+
 import { useEffect } from 'react';
 import { Sidebar, SidebarBody, SidebarLink } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
@@ -18,13 +19,15 @@ export default function Layout({ routes, logoutComponent }) {
         commandOpen,
         commands,
     } = useUI();
+
     const location = useLocation();
 
-    const currentRoute = routes.find((r) => location.pathname === r.path) || null;
+    const currentRoute =
+        routes.find((r) => location.pathname === r.path) || null;
 
     useEffect(() => {
         setSidebarOpen(false);
-    }, [location.pathname]);
+    }, [location.pathname, setSidebarOpen]);
 
     return (
         <div
@@ -59,7 +62,9 @@ export default function Layout({ routes, logoutComponent }) {
             <CommandMenu
                 open={commandOpen}
                 setOpen={setCommandOpen}
-                commands={commands && commands.length > 0 ? commands : routes}
+                commands={
+                    commands && commands.length > 0 ? commands : routes
+                }
                 role={role}
             />
 
@@ -67,23 +72,35 @@ export default function Layout({ routes, logoutComponent }) {
                 className={
                     currentRoute?.title
                         ? 'relative w-full min-h-screen md:p-6 p-4 bg-gray-50 dark:bg-gray-900 overflow-auto scrollbar-none'
-                        : 'relative w-full  bg-gray-50 dark:bg-gray-900 overflow-auto scrollbar-none'
+                        : 'relative w-full bg-gray-50 dark:bg-gray-900 overflow-auto scrollbar-none'
                 }
             >
                 {currentRoute?.title && currentRoute?.description && (
-                    <div className="flex justify-between items-center md:m-[20px] mb-[40px]">
-                        <div className="">
-                            <h1 className="text-3xl font-bold text-gray-900">{currentRoute.title}</h1>
-                            <p className="text-gray-600 mt-2">{currentRoute.description}</p>
+                    <div className="flex justify-between items-start md:m-[20px] mb-[40px]">
+                        {/* Left side: Logo + Title */}
+                        <div className="flex items-center gap-5">
                             <img
-                                src="../../../public/logo1.png" // add your image path here
-                                alt=""
-                                className="mt-4 max-w-full h-auto rounded-md"
+                                src="/logo1.png"
+                                alt="SRM Logo"
+                                className="w-30 h-30 object-contain shrink-0"
                             />
+
+                            <div>
+                                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                                    {currentRoute.title}
+                                </h1>
+
+                                <p className="text-gray-600 dark:text-gray-300 mt-2">
+                                    {currentRoute.description}
+                                </p>
+                            </div>
                         </div>
 
+                        {/* Search button */}
                         <button
-                            onClick={() => setCommandOpen((prev) => !prev)}
+                            onClick={() =>
+                                setCommandOpen((prev) => !prev)
+                            }
                             className="hidden lg:flex p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-800 transition"
                             aria-label="Open command menu"
                         >
@@ -107,11 +124,9 @@ export const Logo = ({ role }) => (
             path: '#',
             icon: (
                 <img
-                    src="../../../public/logo1.png"
-                    className="h-20 w-20 me-3 transition-all shrink-0 rounded-full object-cover"
-                    width={40}
-                    height={40}
-                    alt="Avatar"
+                    src="/logo.png"
+                    alt="Logo"
+                    className="h-12 w-12 shrink-0 object-contain"
                 />
             ),
         }}
@@ -121,14 +136,12 @@ export const Logo = ({ role }) => (
 export const LogoIcon = () => (
     <Link
         to="#"
-        className="relative z-20 flex items-center space-x-2 py-1 text-sm font-normal text-black"
+        className="relative z-20 flex items-center justify-center py-1"
     >
         <img
-            src="../../../public/logo1.png"
-            className="h-6 w-6 shrink-0 rounded-full object-cover"
-            width={8}
-            height={8}
+            src="/logo.png"
             alt="Logo"
+            className="h-8 w-8 shrink-0 object-contain"
         />
     </Link>
 );
