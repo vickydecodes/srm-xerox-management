@@ -1,11 +1,10 @@
-export default function AppLoader({ size = 150 }) {
+export default function AppLoader({ size = 500 }) {
   return (
     <div className="flex items-center justify-center h-screen w-screen">
       <img
-        src="/logo.png"
+        src="/logo1.png"
         alt="Loading"
-        style={{ width: size, height: 180 }}
-        className="animate-logo-intro"
+        className="w-[500px] h-auto object-contain animate-logo-intro"
       />
     </div>
   );
