@@ -7,7 +7,7 @@ export const useDashboardStore = create((set) => ({
   data: null,
   loading: false,
 
-  fetchDashboard: async (role) => {
+  fetchDashboard: async (role, dateRange) => {
     set({ loading: true });
     try {
       let config;
@@ -31,7 +31,16 @@ export const useDashboardStore = create((set) => ({
           throw new Error("Invalid role for dashboard fetch");
       }
 
-      const res = await apiRequest("get", config.url());
+      let lt = undefined;
+      let gt = undefined;
+      if (dateRange?.to) {
+        lt = new Date(dateRange.to).toISOString();
+      }
+      if (dateRange?.from) {
+        gt = new Date(dateRange.from).toISOString();
+      }
+
+      const res = await apiRequest("get", config.url(lt, gt));
       set({ data: res.data, loading: false });
       return res.data;
     } catch (err) {

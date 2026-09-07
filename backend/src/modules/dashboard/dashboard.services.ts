@@ -8,7 +8,19 @@ import Bill from '@db/models/bill.model.ts';
 import InventoryProduct from '@db/models/inventory-product.model.ts';
 import Order from '@db/models/order.model.ts';
 
-export const getSuperAdminDashboard = async () => {
+const buildDateFilter = (lt?: string, gt?: string) => {
+  const filter: any = {};
+  if (lt || gt) {
+    filter.createdAt = {};
+    if (lt) filter.createdAt.$lte = new Date(lt);
+    if (gt) filter.createdAt.$gte = new Date(gt);
+  }
+  return filter;
+};
+
+export const getSuperAdminDashboard = async (lt?: string, gt?: string) => {
+  const dateFilter = buildDateFilter(lt, gt);
+
   const [
     branchCount,
     departmentCount,
@@ -29,17 +41,17 @@ export const getSuperAdminDashboard = async () => {
     User.countDocuments({ active: true, deleted: false }),
     Product.countDocuments({ active: true, deleted: false }),
     Service.countDocuments({ active: true, deleted: false }),
-    Bill.countDocuments({ active: true, deleted: false }),
+    Bill.countDocuments({ deleted: false, ...dateFilter }),
 
     // Total revenue from paid bills
     Bill.aggregate([
-      { $match: { status: 'PAID', active: true, deleted: false } },
+      { $match: { status: 'PAID', deleted: false, ...dateFilter } },
       { $group: { _id: null, total: { $sum: '$total' } } },
     ]),
 
     // Monthly revenue trend (last 6 months)
     Bill.aggregate([
-      { $match: { status: 'PAID', active: true, deleted: false } },
+      { $match: { status: 'PAID', deleted: false, ...dateFilter } },
       {
         $group: {
           _id: {
@@ -56,7 +68,7 @@ export const getSuperAdminDashboard = async () => {
 
     // Payment methods breakdown
     Bill.aggregate([
-      { $match: { status: 'PAID', active: true, deleted: false } },
+      { $match: { status: 'PAID', deleted: false, ...dateFilter } },
       {
         $group: {
           _id: '$paymentMethod',
@@ -68,7 +80,7 @@ export const getSuperAdminDashboard = async () => {
 
     // Branch-wise revenue breakdown
     Bill.aggregate([
-      { $match: { status: 'PAID', active: true, deleted: false, branch: { $ne: null } } },
+      { $match: { status: 'PAID', deleted: false, branch: { $ne: null }, ...dateFilter } },
       {
         $group: {
           _id: '$branch',
@@ -97,7 +109,7 @@ export const getSuperAdminDashboard = async () => {
     ]),
 
     // Recent bills
-    Bill.find({ active: true, deleted: false })
+    Bill.find({ deleted: false, ...dateFilter })
       .sort({ createdAt: -1 })
       .limit(10)
       .populate('branch', 'name')
@@ -106,10 +118,10 @@ export const getSuperAdminDashboard = async () => {
       .lean(),
 
     // Pending credit bills needing Super Admin approval
-    Bill.countDocuments({ paymentMethod: 'CREDIT', approvalStatus: 'pending', active: true, deleted: false }),
+    Bill.countDocuments({ paymentMethod: 'CREDIT', approvalStatus: 'pending', deleted: false, ...dateFilter }),
 
     // Unbilled approved requisitions
-    Order.countDocuments({ status: 'in_progress', deleted: false }),
+    Order.countDocuments({ status: 'in_progress', deleted: false, ...dateFilter }),
   ]);
 
 
@@ -142,8 +154,9 @@ export const getSuperAdminDashboard = async () => {
   };
 };
 
-export const getBranchAdminDashboard = async (branchId: string) => {
+export const getBranchAdminDashboard = async (branchId: string, lt?: string, gt?: string) => {
   const branchObjectId = new mongoose.Types.ObjectId(branchId);
+  const dateFilter = buildDateFilter(lt, gt);
 
   const [
     departmentCount,
@@ -158,19 +171,19 @@ export const getBranchAdminDashboard = async (branchId: string) => {
   ] = await Promise.all([
     Department.countDocuments({ branch: branchObjectId, active: true, deleted: false }),
     User.countDocuments({ branch: branchObjectId, active: true, deleted: false }),
-    Bill.countDocuments({ branch: branchObjectId, active: true, deleted: false }),
+    Bill.countDocuments({ branch: branchObjectId, deleted: false, ...dateFilter }),
     // Count distinct inventory products in this branch
     InventoryProduct.countDocuments({ active: true }),
 
     // Total branch revenue from paid bills
     Bill.aggregate([
-      { $match: { branch: branchObjectId, status: 'PAID', active: true, deleted: false } },
+      { $match: { branch: branchObjectId, status: 'PAID', deleted: false, ...dateFilter } },
       { $group: { _id: null, total: { $sum: '$total' } } },
     ]),
 
     // Monthly branch revenue trend (last 6 months)
     Bill.aggregate([
-      { $match: { branch: branchObjectId, status: 'PAID', active: true, deleted: false } },
+      { $match: { branch: branchObjectId, status: 'PAID', deleted: false, ...dateFilter } },
       {
         $group: {
           _id: {
@@ -187,7 +200,7 @@ export const getBranchAdminDashboard = async (branchId: string) => {
 
     // Payment methods breakdown for this branch
     Bill.aggregate([
-      { $match: { branch: branchObjectId, status: 'PAID', active: true, deleted: false } },
+      { $match: { branch: branchObjectId, status: 'PAID', deleted: false, ...dateFilter } },
       {
         $group: {
           _id: '$paymentMethod',
@@ -203,9 +216,9 @@ export const getBranchAdminDashboard = async (branchId: string) => {
         $match: {
           branch: branchObjectId,
           status: 'PAID',
-          active: true,
           deleted: false,
           department: { $ne: null },
+          ...dateFilter,
         },
       },
       {
@@ -236,7 +249,7 @@ export const getBranchAdminDashboard = async (branchId: string) => {
     ]),
 
     // Recent branch bills
-    Bill.find({ branch: branchObjectId, active: true, deleted: false })
+    Bill.find({ branch: branchObjectId, deleted: false, ...dateFilter })
       .sort({ createdAt: -1 })
       .limit(10)
       .populate('department', 'name')
@@ -268,8 +281,9 @@ export const getBranchAdminDashboard = async (branchId: string) => {
   };
 };
 
-export const getStaffDashboard = async (userId: string) => {
+export const getStaffDashboard = async (userId: string, lt?: string, gt?: string) => {
   const userObjectId = new mongoose.Types.ObjectId(userId);
+  const dateFilter = buildDateFilter(lt, gt);
 
   const [
     totalBills,
@@ -279,17 +293,17 @@ export const getStaffDashboard = async (userId: string) => {
     paymentMethods,
     monthlyRevenue,
   ] = await Promise.all([
-    Bill.countDocuments({ createdBy: userObjectId, active: true, deleted: false }),
-    Bill.countDocuments({ createdBy: userObjectId, status: 'PAID', active: true, deleted: false }),
+    Bill.countDocuments({ createdBy: userObjectId, deleted: false, ...dateFilter }),
+    Bill.countDocuments({ createdBy: userObjectId, status: 'PAID', deleted: false, ...dateFilter }),
 
     // Total staff revenue generated
     Bill.aggregate([
-      { $match: { createdBy: userObjectId, status: 'PAID', active: true, deleted: false } },
+      { $match: { createdBy: userObjectId, status: 'PAID', deleted: false, ...dateFilter } },
       { $group: { _id: null, total: { $sum: '$total' } } },
     ]),
 
     // Recent staff bills
-    Bill.find({ createdBy: userObjectId, active: true, deleted: false })
+    Bill.find({ createdBy: userObjectId, deleted: false, ...dateFilter })
       .sort({ createdAt: -1 })
       .limit(10)
       .populate('branch', 'name')
@@ -298,7 +312,7 @@ export const getStaffDashboard = async (userId: string) => {
 
     // Payment methods breakdown for this staff member
     Bill.aggregate([
-      { $match: { createdBy: userObjectId, status: 'PAID', active: true, deleted: false } },
+      { $match: { createdBy: userObjectId, status: 'PAID', deleted: false, ...dateFilter } },
       {
         $group: {
           _id: '$paymentMethod',
@@ -310,7 +324,7 @@ export const getStaffDashboard = async (userId: string) => {
 
     // Monthly staff revenue trend (last 6 months)
     Bill.aggregate([
-      { $match: { createdBy: userObjectId, status: 'PAID', active: true, deleted: false } },
+      { $match: { createdBy: userObjectId, status: 'PAID', deleted: false, ...dateFilter } },
       {
         $group: {
           _id: {

@@ -1,10 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/core/contexts/auth.context";
 import { useApi } from "@/core/contexts/api.context";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { IconFileInvoice } from "@tabler/icons-react";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 
 import SaDashboard from "./sa.dashboard";
 import BaDashboard from "./ba.dashboard";
@@ -16,16 +17,17 @@ export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { dashboard } = useApi();
+  const [dateRange, setDateRange] = useState({ from: undefined, to: undefined });
 
   const fetchDashboard = () => {
     if (dashboard && user?.role) {
-      dashboard.fetch(user.role);
+      dashboard.fetch(user.role, dateRange);
     }
   };
 
   useEffect(() => {
     fetchDashboard();
-  }, [user?.role]);
+  }, [user?.role, dateRange]);
 
   const data = dashboard?.data;
   const loading = dashboard?.loading;
@@ -79,8 +81,8 @@ export default function Dashboard() {
       {/* Welcome Banner */}
       <Card className="border border-border shadow-sm bg-card relative overflow-hidden">
         <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-primary to-secondary" />
-        <CardContent className="py-6 px-6 md:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="space-y-1 text-center sm:text-left">
+        <CardContent className="py-6 px-6 md:px-8 flex flex-col lg:flex-row items-center justify-between gap-4">
+          <div className="space-y-1 text-center lg:text-left">
             <h1 className="text-2xl font-extrabold text-foreground tracking-tight">
               Hello, {user.name}!
             </h1>
@@ -88,13 +90,16 @@ export default function Dashboard() {
               Welcome back to your {getRoleLabel(user.role)} Dashboard. Here's a summary of the Xerox operational activities.
             </p>
           </div>
-          <Button
-            onClick={() => navigate(`/${user.role}/bill-creation`)}
-            className="flex items-center gap-2 cursor-pointer font-bold px-4 py-2 bg-primary hover:bg-primary/95 text-primary-foreground shadow transition duration-200"
-          >
-            <IconFileInvoice className="w-4.5 h-4.5" />
-            New Invoice
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-4 items-center">
+            <DateRangePicker date={dateRange} setDate={setDateRange} />
+            <Button
+              onClick={() => navigate(`/${user.role}/bill-creation`)}
+              className="flex items-center gap-2 cursor-pointer font-bold px-4 py-2 bg-primary hover:bg-primary/95 text-primary-foreground shadow transition duration-200"
+            >
+              <IconFileInvoice className="w-4.5 h-4.5" />
+              New Invoice
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
