@@ -41,52 +41,49 @@ describe('Settings page', () => {
 
   it('shows a loading skeleton while settings are loading and no config is present yet', () => {
     setup(buildSettingsModule({ loading: true, config: null }));
-    expect(screen.queryByLabelText(/SRM College Email/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/SRM College Official Email/i)).not.toBeInTheDocument();
   });
 
   it('populates the email field from the fetched config', () => {
     const settings = setup();
-    expect(screen.getByLabelText(/SRM College Email/i)).toHaveValue(
+    expect(screen.getByLabelText(/SRM College Official Email/i)).toHaveValue(
       settings.config.srmCollegeEmail
     );
   });
 
-  it('renders the field as disabled and hides the Edit button when editing is not allowed', () => {
+  it('renders the field as disabled when editing is not allowed', () => {
     setup(buildSettingsModule({ allowEdit: false }));
-    expect(screen.getByLabelText(/SRM College Email/i)).toBeDisabled();
-    expect(screen.queryByRole('button', { name: /edit settings/i })).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/SRM College Official Email/i)).toBeDisabled();
   });
 
-  it('enables the field and shows Save/Cancel once Edit Settings is clicked', async () => {
+  it('shows Save Changes/Discard when a field is edited', async () => {
     const user = userEvent.setup();
     setup();
 
-    expect(screen.getByLabelText(/SRM College Email/i)).toBeDisabled();
+    expect(screen.getByLabelText(/SRM College Official Email/i)).toBeEnabled();
+    expect(screen.queryByRole('button', { name: /save changes/i })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /edit settings/i }));
+    const input = screen.getByLabelText(/SRM College Official Email/i);
+    await user.clear(input);
+    await user.type(input, 'new@srmist.edu.in');
 
-    expect(screen.getByLabelText(/SRM College Email/i)).toBeEnabled();
-    expect(screen.getByRole('button', { name: /save config/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /save changes/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /discard/i })).toBeInTheDocument();
   });
 
-  it('saves the trimmed email and exits edit mode on Save', async () => {
+  it('saves the trimmed email on Save Changes', async () => {
     const user = userEvent.setup();
     const settings = setup();
 
-    await user.click(screen.getByRole('button', { name: /edit settings/i }));
-    const input = screen.getByLabelText(/SRM College Email/i);
+    const input = screen.getByLabelText(/SRM College Official Email/i);
     await user.clear(input);
     await user.type(input, '  new-office@srmist.edu.in  ');
-    await user.click(screen.getByRole('button', { name: /save config/i }));
+    await user.click(screen.getByRole('button', { name: /save changes/i }));
 
     await waitFor(() => {
-      expect(settings.update).toHaveBeenCalledWith({
+      expect(settings.update).toHaveBeenCalledWith(expect.objectContaining({
         srmCollegeEmail: 'new-office@srmist.edu.in',
-      });
-    });
-    await waitFor(() => {
-      expect(screen.queryByRole('button', { name: /save config/i })).not.toBeInTheDocument();
+      }));
     });
   });
 
@@ -94,29 +91,26 @@ describe('Settings page', () => {
     const user = userEvent.setup();
     const settings = setup();
 
-    await user.click(screen.getByRole('button', { name: /edit settings/i }));
-    const input = screen.getByLabelText(/SRM College Email/i);
+    const input = screen.getByLabelText(/SRM College Official Email/i);
     await user.clear(input);
-    await user.click(screen.getByRole('button', { name: /save config/i }));
+    await user.click(screen.getByRole('button', { name: /save changes/i }));
 
     expect(settings.update).not.toHaveBeenCalled();
   });
 
-  it('discards changes and exits edit mode on Cancel', async () => {
+  it('discards changes on Discard', async () => {
     const user = userEvent.setup();
     const settings = setup();
 
-    await user.click(screen.getByRole('button', { name: /edit settings/i }));
-    const input = screen.getByLabelText(/SRM College Email/i);
+    const input = screen.getByLabelText(/SRM College Official Email/i);
     await user.clear(input);
     await user.type(input, 'discard-me@srmist.edu.in');
 
-    await user.click(screen.getByRole('button', { name: /cancel/i }));
+    await user.click(screen.getByRole('button', { name: /discard/i }));
 
-    expect(screen.getByLabelText(/SRM College Email/i)).toHaveValue(
+    expect(screen.getByLabelText(/SRM College Official Email/i)).toHaveValue(
       settings.config.srmCollegeEmail
     );
-    expect(screen.getByRole('button', { name: /edit settings/i })).toBeInTheDocument();
     expect(settings.update).not.toHaveBeenCalled();
   });
 });
