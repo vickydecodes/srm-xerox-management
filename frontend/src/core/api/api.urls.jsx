@@ -219,25 +219,32 @@ const apiurls = {
   settings: {
     get: { method: "get", url: () => `${base_url}/settings` },
     update: { method: "put", url: () => `${base_url}/settings` },
+    previewPdf: { method: "post", url: () => `${base_url}/settings/preview-pdf` },
   },
   search: {
-    products: { method: "get", url: () => `${base_url}/search/products` },
+    products: { method: "get", url: () => `${base_url}/searches/products` },
   },
   dashboard: {
     superAdmin: {
       method: "get",
-      url: () => `${base_url}/dashboards/super-admin`,
+      url: (lt, gt) => `${base_url}/dashboards/super-admin${lt || gt ? '?' : ''}${lt ? 'lt=' + lt + '&' : ''}${gt ? 'gt=' + gt : ''}`,
     },
     branchAdmin: {
       method: "get",
-      url: () => `${base_url}/dashboards/branch-admin`,
+      url: (lt, gt) => `${base_url}/dashboards/branch-admin${lt || gt ? '?' : ''}${lt ? 'lt=' + lt + '&' : ''}${gt ? 'gt=' + gt : ''}`,
     },
     departmentAdmin: {
       method: "get",
-      url: () => `${base_url}/dashboards/department-admin`,
+      url: (lt, gt) => `${base_url}/dashboards/department-admin${lt || gt ? '?' : ''}${lt ? 'lt=' + lt + '&' : ''}${gt ? 'gt=' + gt : ''}`,
     },
-    shopAdmin: { method: "get", url: () => `${base_url}/dashboards/shop-admin` },
-    staff: { method: "get", url: () => `${base_url}/dashboards/staff` },
+    shopAdmin: {
+      method: "get",
+      url: (lt, gt) => `${base_url}/dashboards/shop-admin${lt || gt ? '?' : ''}${lt ? 'lt=' + lt + '&' : ''}${gt ? 'gt=' + gt : ''}`,
+    },
+    staff: {
+      method: "get",
+      url: (lt, gt) => `${base_url}/dashboards/staff${lt || gt ? '?' : ''}${lt ? 'lt=' + lt + '&' : ''}${gt ? 'gt=' + gt : ''}`,
+    },
   },
 
   shops: {

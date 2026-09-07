@@ -96,7 +96,8 @@ const controllers = {
 
   downloadBillPdf: async (req: Request<{ id: string }>, res: Response) => {
     const { id } = req.params;
-    const pdfBuffer = await service.generateBillPdf(id);
+    const { generateBillPdf } = await import('./exportbill.util.ts');
+    const pdfBuffer = await generateBillPdf(id);
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `inline; filename=bill-${id}.pdf`);
     res.send(pdfBuffer);

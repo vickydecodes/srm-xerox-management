@@ -37,7 +37,7 @@ export default function Layout({ routes, logoutComponent }) {
         >
             <Sidebar open={sidebarOpen} setOpen={setSidebarOpen}>
                 <SidebarBody className="justify-between gap-10">
-                    <div className="flex flex-1 flex-col overflow-x-hidden overflow-y-auto scrollbar-none">
+                    <div className="flex flex-1 mt-4 flex-col overflow-x-hidden overflow-y-auto scrollbar-none">
                         {sidebarOpen ? <Logo role={role} /> : <LogoIcon />}
 
                         <div className="mt-8 flex flex-col gap-2">
@@ -76,38 +76,39 @@ export default function Layout({ routes, logoutComponent }) {
                 }
             >
                 {currentRoute?.title && currentRoute?.description && (
-                    <div className="flex justify-between items-start md:m-[20px] mb-[40px]">
-                        {/* Left side: Logo + Title */}
-                        <div className="flex items-center gap-5">
-                            <img
-                                src="/logo1.png"
-                                alt="SRM Logo"
-                                className="w-30 h-30 object-contain shrink-0"
-                            />
+    <div className="flex items-start justify-between md:mx-[20px] mb-8 mt-4 pb-5 border-b border-gray-200 dark:border-neutral-700">
+        <div>
+            {/* Breadcrumb row */}
+            <div className="flex items-center gap-3">
+                <img
+                    src="/logo.png"
+                    alt="SRM Logo"
+                    className="h-6 w-6 object-contain shrink-0"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-500">
+                    SRM DTP &amp; Xerox
+                </span>
+                <span className="text-gray-300 dark:text-neutral-700">/</span>
+                <h1 className="text-base font-semibold text-gray-900 dark:text-white">
+                    {currentRoute.title}
+                </h1>
+            </div>
 
-                            <div>
-                                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                                    {currentRoute.title}
-                                </h1>
+            {/* Description below */}
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                {currentRoute.description}
+            </p>
+        </div>
 
-                                <p className="text-gray-600 dark:text-gray-300 mt-2">
-                                    {currentRoute.description}
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Search button */}
-                        <button
-                            onClick={() =>
-                                setCommandOpen((prev) => !prev)
-                            }
-                            className="hidden lg:flex p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-800 transition"
-                            aria-label="Open command menu"
-                        >
-                            <Search className="w-5 h-5" />
-                        </button>
-                    </div>
-                )}
+        <button
+            onClick={() => setCommandOpen((prev) => !prev)}
+            className="hidden lg:flex items-center justify-center w-9 h-9 rounded-md border border-gray-200 dark:border-neutral-700 text-gray-400 dark:text-gray-500 hover:bg-white dark:hover:bg-neutral-800 hover:text-gray-600 dark:hover:text-gray-300 transition shrink-0"
+            aria-label="Open command menu"
+        >
+            <Search className="w-4 h-4" />
+        </button>
+    </div>
+)}
 
                 <div className="m-1 md:m-10 overflow-auto">
                     <Outlet />
@@ -121,12 +122,12 @@ export const Logo = ({ role }) => (
     <SidebarLink
         link={{
             label: `${camelToTitle(role)} Menu`,
-            path: '#',
+            path: `/`,
             icon: (
                 <img
                     src="/logo.png"
                     alt="Logo"
-                    className="h-12 w-12 shrink-0 object-contain"
+                    className="h-8 w-8 shrink-0 object-contain"
                 />
             ),
         }}
