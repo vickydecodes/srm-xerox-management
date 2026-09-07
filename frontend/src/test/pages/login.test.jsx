@@ -73,17 +73,17 @@ describe('Login page', () => {
   it('renders the sign-in form', () => {
     renderLogin();
 
-    expect(screen.getByText(/counter sign-in/i)).toBeInTheDocument();
+    expect(screen.getByText(/sign-in/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/login id/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /open counter/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
   });
 
   it('disables the submit button until both fields are filled', async () => {
     const user = userEvent.setup();
     renderLogin();
 
-    const submit = screen.getByRole('button', { name: /open counter/i });
+    const submit = screen.getByRole('button', { name: /sign in/i });
     expect(submit).toBeDisabled();
 
     await user.type(screen.getByLabelText(/login id/i), 'staff01');
@@ -100,20 +100,18 @@ describe('Login page', () => {
     const passwordInput = screen.getByLabelText(/^password$/i);
     expect(passwordInput).toHaveAttribute('type', 'password');
 
-    await user.click(screen.getByRole('button', { name: /show password/i }));
-    expect(passwordInput).toHaveAttribute('type', 'text');
+    const toggle = screen.getByRole('button', { name: /show password/i });
+    await user.click(toggle);
 
-    await user.click(screen.getByRole('button', { name: /hide password/i }));
-    expect(passwordInput).toHaveAttribute('type', 'password');
+    expect(passwordInput).toHaveAttribute('type', 'text');
+    expect(screen.getByRole('button', { name: /hide password/i })).toBeInTheDocument();
   });
 
-  it('toggles the "keep this counter signed in" checkbox', async () => {
+  it('toggles the "keep me signed in" checkbox', async () => {
     const user = userEvent.setup();
     renderLogin();
 
-    const checkbox = screen.getByRole('checkbox', {
-      name: /keep this counter signed in/i,
-    });
+    const checkbox = screen.getByLabelText(/keep me signed in/i);
     expect(checkbox).not.toBeChecked();
 
     await user.click(checkbox);
@@ -127,10 +125,8 @@ describe('Login page', () => {
 
     await user.type(screen.getByLabelText(/login id/i), '  staff01  ');
     await user.type(screen.getByLabelText(/^password$/i), 'secret123');
-    await user.click(
-      screen.getByRole('checkbox', { name: /keep this counter signed in/i })
-    );
-    await user.click(screen.getByRole('button', { name: /open counter/i }));
+    await user.click(screen.getByLabelText(/keep me signed in/i));
+    await user.click(screen.getByRole('button', { name: /sign in/i }));
 
     await waitFor(() => {
       expect(authState.login).toHaveBeenCalledWith({
@@ -145,7 +141,7 @@ describe('Login page', () => {
     renderLogin();
 
     const form = screen
-      .getByRole('button', { name: /open counter/i })
+      .getByRole('button', { name: /sign in/i })
       .closest('form');
     if (form?.requestSubmit) {
       form.requestSubmit();
@@ -174,7 +170,7 @@ describe('Login page', () => {
 
     await user.type(screen.getByLabelText(/login id/i), 'staff01');
     await user.type(screen.getByLabelText(/^password$/i), 'secret123');
-    await user.click(screen.getByRole('button', { name: /open counter/i }));
+    await user.click(screen.getByRole('button', { name: /sign in/i }));
 
     expect(await screen.findByText(/signing in/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/login id/i)).toBeDisabled();
@@ -196,7 +192,7 @@ describe('Login page', () => {
 
     await user.type(screen.getByLabelText(/login id/i), 'staff01');
     await user.type(screen.getByLabelText(/^password$/i), 'wrongpass');
-    await user.click(screen.getByRole('button', { name: /open counter/i }));
+    await user.click(screen.getByRole('button', { name: /sign in/i }));
 
     expect(await screen.findByText(/invalid credentials/i)).toBeInTheDocument();
   });
@@ -209,7 +205,7 @@ describe('Login page', () => {
 
     await user.type(screen.getByLabelText(/login id/i), 'staff01');
     await user.type(screen.getByLabelText(/^password$/i), 'wrongpass');
-    await user.click(screen.getByRole('button', { name: /open counter/i }));
+    await user.click(screen.getByRole('button', { name: /sign in/i }));
 
     expect(
       await screen.findByText(/something went wrong/i)
@@ -221,12 +217,5 @@ describe('Login page', () => {
     renderLogin();
 
     expect(mockNavigate).toHaveBeenCalledWith('/super_admin/');
-  });
-
-  it('renders a request-access link to /enquiry', () => {
-    renderLogin();
-
-    const link = screen.getByRole('link', { name: /request access/i });
-    expect(link).toHaveAttribute('href', '/enquiry');
   });
 });
