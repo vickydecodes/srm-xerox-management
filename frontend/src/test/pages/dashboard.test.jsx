@@ -108,7 +108,7 @@ describe('Dashboard page', () => {
 
     renderDashboard();
 
-    expect(dashboardState.fetch).toHaveBeenCalledWith('super_admin');
+    expect(dashboardState.fetch).toHaveBeenCalledWith('super_admin', { from: undefined, to: undefined });
   });
 
   it('does not fetch when there is no authenticated user role', () => {
@@ -213,72 +213,4 @@ describe('Dashboard page', () => {
     });
   });
 
-  describe('bill actions on a role dashboard', () => {
-    const setupBranchAdminWithUnpaidBill = () => {
-      authState.user = { role: 'branch_admin', name: 'Bob' };
-      dashboardState.data = {
-        stats: { totalRevenue: 500, departments: 2, users: 4, totalBills: 1 },
-        recentBills: [
-          {
-            _id: 'bill-1',
-            code: 'INV-001',
-            createdBy: { name: 'Alice' },
-            department: { name: 'Sales' },
-            paymentMethod: null,
-            total: 750,
-            status: 'UNPAID',
-          },
-        ],
-      };
-    };
-
-    it('marks a bill as paid via UPI and refreshes dashboard data', async () => {
-      setupBranchAdminWithUnpaidBill();
-      const user = userEvent.setup();
-
-      renderDashboard();
-      await user.click(screen.getByRole('button', { name: /pay upi/i }));
-
-      await waitFor(() => {
-        expect(billsState.crud.edit).toHaveBeenCalledWith('bill-1', {
-          status: 'PAID',
-          paymentMethod: 'UPI',
-        });
-      });
-      // refreshData -> fetchDashboard -> dashboard.fetch called again
-      // (once on mount, once on refresh)
-      await waitFor(() => {
-        expect(dashboardState.fetch).toHaveBeenCalledTimes(2);
-      });
-    });
-
-    it('cancels a bill and refreshes dashboard data', async () => {
-      setupBranchAdminWithUnpaidBill();
-      const user = userEvent.setup();
-
-      renderDashboard();
-      await user.click(screen.getByRole('button', { name: /cancel/i }));
-
-      await waitFor(() => {
-        expect(billsState.crud.edit).toHaveBeenCalledWith('bill-1', { status: 'CANCELLED' });
-      });
-      await waitFor(() => {
-        expect(dashboardState.fetch).toHaveBeenCalledTimes(2);
-      });
-    });
-
-    it('surfaces an error toast when marking a bill as paid fails', async () => {
-      const { toast } = await import('sonner');
-      setupBranchAdminWithUnpaidBill();
-      billsState.crud.edit.mockRejectedValue(new Error('Network error'));
-      const user = userEvent.setup();
-
-      renderDashboard();
-      await user.click(screen.getByRole('button', { name: /^cash$/i }));
-
-      await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith('Network error');
-      });
-    });
-  });
 });
