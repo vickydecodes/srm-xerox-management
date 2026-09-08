@@ -98,10 +98,12 @@ export const useDepartmentModule = (exported) => {
   const clearCredit = (id, data) => crud.clearCredit(id, data);
 
   return {
-    state: list,
-    loading,
-    pagination,
-    current,
+    get state() {
+      return useDepartmentStore.getState().list;
+    },
+    get loading() { return useDepartmentStore.getState().loading; },
+    get pagination() { return useDepartmentStore.getState().pagination; },
+    get current() { return useDepartmentStore.getState().current; },
     set,
     add,
     update,

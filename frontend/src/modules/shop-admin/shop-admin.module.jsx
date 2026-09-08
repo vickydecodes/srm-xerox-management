@@ -104,18 +104,10 @@ export const useShopAdminModule = (exported) => {
   const reset = (extras = {}) => baseReset({ role: ROLE, ...extras });
 
   return {
-    get state() {
-      return list;
-    },
-    get loading() {
-      return loading;
-    },
-    get pagination() {
-      return pagination;
-    },
-    get current() {
-      return current;
-    },
+    get state() { return useShopAdminStore.getState().list; },
+    get loading() { return useShopAdminStore.getState().loading; },
+    get pagination() { return useShopAdminStore.getState().pagination; },
+    get current() { return useShopAdminStore.getState().current; },
     set,
     setCurrent,
     useShopAdminColumns,

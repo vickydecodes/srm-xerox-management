@@ -46,8 +46,8 @@ export const generatePdfBuffer = (bill: any, docSetting: any): Promise<Buffer> =
       margin: pdfMargin, 
       size: pdfSize, 
       layout: pdfLayout,
-      autoPageBreak: false
-    });
+      autoFirstPage: true
+    } as any);
     const buffers: Uint8Array[] = [];
 
     doc.on('data', (chunk) => buffers.push(chunk));

@@ -90,10 +90,10 @@ export const useServiceModule = (exported) => {
   });
 
   return {
-    state: list,
-    loading,
-    pagination,
-    current,
+    get state() { return useServiceStore.getState().list; },
+    get loading() { return useServiceStore.getState().loading; },
+    get pagination() { return useServiceStore.getState().pagination; },
+    get current() { return useServiceStore.getState().current; },
     set,
     add,
     update,

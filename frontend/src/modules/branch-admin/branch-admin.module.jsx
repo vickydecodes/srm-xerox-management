@@ -113,18 +113,10 @@ export const useBranchAdminModule = (exported) => {
   const reset = (extras = {}) => baseReset({ role: ROLE, ...extras });
 
   return {
-    get state() {
-      return list;
-    },
-    get loading() {
-      return loading;
-    },
-    get pagination() {
-      return pagination;
-    },
-    get current() {
-      return current;
-    },
+    get state() { return useBranchAdminStore.getState().list; },
+    get loading() { return useBranchAdminStore.getState().loading; },
+    get pagination() { return useBranchAdminStore.getState().pagination; },
+    get current() { return useBranchAdminStore.getState().current; },
     set,
     setCurrent,
     useBranchAdminColumns,

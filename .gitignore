@@ -8,4 +8,3 @@ frontend/.env
 frontend/dist
 
 gitstats.py
-git_summary.csv

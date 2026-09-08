@@ -82,6 +82,7 @@ beforeAll(async () => {
 
   const shop = await Shop.create({
     name: `Test Order Shop ${timestamp}`,
+    code: `TOS-${timestamp}`,
     phone: '9876543210',
     createdBy: user._id,
     active: true,

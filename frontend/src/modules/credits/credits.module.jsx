@@ -52,10 +52,10 @@ export const useCreditModule = (exported) => {
   });
 
   return {
-    state: list,
-    loading,
-    pagination,
-    current,
+    get state() { return useCreditStore.getState().list; },
+    get loading() { return useCreditStore.getState().loading; },
+    get pagination() { return useCreditStore.getState().pagination; },
+    get current() { return useCreditStore.getState().current; },
     set,
     add,
     update,

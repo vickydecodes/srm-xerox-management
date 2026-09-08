@@ -12,7 +12,8 @@ export const baseUserSchema = z.object({
 
   password: z
     .string()
-    .min(6, 'Password must be at least 6 characters'),
+    .min(6, 'Password must be at least 6 characters')
+    .optional(),
 
   role: z.enum([
     'super_admin',
@@ -24,6 +25,8 @@ export const baseUserSchema = z.object({
 
   branch: z.string().trim().optional(),
 
+  department: z.string().trim().optional(),
+
   shop: z.string().trim().optional(),
 });
 
@@ -31,10 +34,16 @@ export const createUserSchema = baseUserSchema.refine((data) => {
   if (data.role === 'shop_admin') {
     return !!data.shop;
   }
+  if (data.role === 'department_admin') {
+    return !!data.department && !!data.branch;
+  }
+  if (data.role === 'branch_admin') {
+    return !!data.branch;
+  }
   return true;
 }, {
-  message: 'Shop is required for shop admin role',
-  path: ['shop'],
+  message: 'Required fields are missing for the selected role',
+  path: ['role'],
 });
 
 export const updateUserSchema =

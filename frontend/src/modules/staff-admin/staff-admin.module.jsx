@@ -102,18 +102,10 @@ export const useStaffModule = (exported) => {
   const reset = (extras = {}) => baseReset({ role: ROLE, ...extras });
 
   return {
-    get state() {
-      return list;
-    },
-    get loading() {
-      return loading;
-    },
-    get pagination() {
-      return pagination;
-    },
-    get current() {
-      return current;
-    },
+    get state() { return useStaffStore.getState().list; },
+    get loading() { return useStaffStore.getState().loading; },
+    get pagination() { return useStaffStore.getState().pagination; },
+    get current() { return useStaffStore.getState().current; },
     set,
     setCurrent,
     useStaffColumns,
