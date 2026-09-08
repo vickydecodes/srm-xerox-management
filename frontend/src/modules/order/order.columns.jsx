@@ -121,13 +121,15 @@ export const useOrderColumns = (orders) => {
         const superAdminStatus = order.superAdminApproval?.status || "pending";
 
         // Action permissions
-        const canSubmit = !isDeleted && order.status === "draft" && (isSuperAdmin || isDeptAdmin);
-        const canEdit = !isDeleted && order.status === "draft" && (isSuperAdmin || isDeptAdmin);
+        const canSubmit = !isDeleted && order.status === "draft" && isDeptAdmin;
+        const canEdit = !isDeleted && order.status === "draft" && isDeptAdmin;
+        
         const canBranchApprove =
           !isDeleted &&
           order.status !== "draft" &&
           order.status !== "completed" &&
-          (isSuperAdmin || isBranchAdmin);
+          isBranchAdmin;
+          
         const canSuperAdminApprove =
           !isDeleted &&
           order.status !== "draft" &&
@@ -135,27 +137,27 @@ export const useOrderColumns = (orders) => {
           branchStatus === "approved" &&
           isSuperAdmin;
 
-        // Shop Admin and Staff (and Super Admin) can convert to bill if approved
+        // Shop Admin and Staff can convert to bill if approved
         const canConvertToBill =
           !isDeleted &&
           (order.status === "in_progress" || order.status === "pending" || order.status === "approved") &&
-          (isSuperAdmin || isShopOrStaff);
+          isShopOrStaff;
 
         const canDeliver =
           !isDeleted &&
           order.status === "ready_for_pickup" &&
-          (isSuperAdmin || isShopOrStaff);
+          isShopOrStaff;
 
         const canReadyForPickup =
           !isDeleted &&
           order.status === "in_progress" &&
-          (isSuperAdmin || isShopOrStaff);
+          isShopOrStaff;
 
         const canProcess =
           !isDeleted &&
           order.status === "pending" &&
           superAdminStatus === "approved" &&
-          (isSuperAdmin || isShopOrStaff);
+          isShopOrStaff;
 
         return (
           <DropdownMenu>

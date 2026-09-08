@@ -76,39 +76,44 @@ export default function Layout({ routes, logoutComponent }) {
                 }
             >
                 {currentRoute?.title && currentRoute?.description && (
-    <div className="flex items-start justify-between md:mx-[20px] mb-8 mt-4 pb-5 border-b border-gray-200 dark:border-neutral-700">
-        <div>
-            {/* Breadcrumb row */}
-            <div className="flex items-center gap-3">
-                <img
-                    src="/logo.png"
-                    alt="SRM Logo"
-                    className="h-6 w-6 object-contain shrink-0"
-                />
-                <span className="text-sm text-gray-700 dark:text-gray-500">
-                    SRM DTP &amp; Xerox
-                </span>
-                <span className="text-gray-300 dark:text-neutral-700">/</span>
-                <h1 className="text-base font-semibold text-gray-900 dark:text-white">
-                    {currentRoute.title}
-                </h1>
-            </div>
+                    <div className="flex items-start justify-between md:mx-[20px] mb-8 mt-4 pb-5 border-b border-gray-200 dark:border-neutral-700">
+                        <div>
+                            {/* Breadcrumb row */}
+                            <div className="flex items-center gap-3">
+                                <img
+                                    src="/logo1.png"
+                                    alt="SRM Logo"
+                                    className="h-10 w-fit object-contain shrink-0"
+                                />
+                                <div className='flex flex-col'>
+                                    <div className='flex flex-row items-center gap-3'>
+                                        <span className="text-sm text-gray-700 dark:text-gray-500">
+                                            SRM DTP &amp; Xerox
+                                        </span>
+                                        <span className="text-gray-300 dark:text-neutral-700">/</span>
+                                        <h1 className="text-base font-semibold text-gray-900 dark:text-white">
+                                            {currentRoute.title}
+                                        </h1>
+                                    </div>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                        {currentRoute.description}
+                                    </p>
+                                </div>
+                            </div>
 
-            {/* Description below */}
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                {currentRoute.description}
-            </p>
-        </div>
+                            {/* Description below */}
 
-        <button
-            onClick={() => setCommandOpen((prev) => !prev)}
-            className="hidden lg:flex items-center justify-center w-9 h-9 rounded-md border border-gray-200 dark:border-neutral-700 text-gray-400 dark:text-gray-500 hover:bg-white dark:hover:bg-neutral-800 hover:text-gray-600 dark:hover:text-gray-300 transition shrink-0"
-            aria-label="Open command menu"
-        >
-            <Search className="w-4 h-4" />
-        </button>
-    </div>
-)}
+                        </div>
+
+                        <button
+                            onClick={() => setCommandOpen((prev) => !prev)}
+                            className="hidden lg:flex items-center justify-center w-9 h-9 rounded-md border border-gray-200 dark:border-neutral-700 text-gray-400 dark:text-gray-500 hover:bg-white dark:hover:bg-neutral-800 hover:text-gray-600 dark:hover:text-gray-300 transition shrink-0"
+                            aria-label="Open command menu"
+                        >
+                            <Search className="w-4 h-4" />
+                        </button>
+                    </div>
+                )}
 
                 <div className="m-1 md:m-10 overflow-auto">
                     <Outlet />

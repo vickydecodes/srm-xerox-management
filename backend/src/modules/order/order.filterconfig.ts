@@ -7,6 +7,8 @@ export const orderFilterConfig: FilterConfig<IOrder> = {
     'orderType',
     'department',
     'branch',
+    'shop',
+    'createdBy',
     'status',
     'deleted',
   ],

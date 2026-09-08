@@ -22,22 +22,22 @@ const controllers = {
   },
 
   getDepartmentAdminDashboard: async (req: AuthRequest, res: Response) => {
-    const { branch } = req.user;
+    const { department } = req.user;
     const { lt, gt } = req.query;
-    if (!branch) {
-      return sendResponse.badRequest(res, 'User is not assigned to any branch');
+    if (!department) {
+      return sendResponse.badRequest(res, 'User is not assigned to any department');
     }
-    const data = await service.getBranchAdminDashboard(branch, lt as string, gt as string);
+    const data = await service.getDepartmentAdminDashboard(department, lt as string, gt as string);
     return sendResponse.success(res, 'Department Admin Dashboard metrics fetched successfully', data);
   },
 
   getShopAdminDashboard: async (req: AuthRequest, res: Response) => {
-    const { branch } = req.user;
+    const { shop } = req.user;
     const { lt, gt } = req.query;
-    if (!branch) {
-      return sendResponse.badRequest(res, 'User is not assigned to any branch');
+    if (!shop) {
+      return sendResponse.badRequest(res, 'User is not assigned to any shop');
     }
-    const data = await service.getBranchAdminDashboard(branch, lt as string, gt as string);
+    const data = await service.getShopAdminDashboard(shop, lt as string, gt as string);
     return sendResponse.success(res, 'Shop Admin Dashboard metrics fetched successfully', data);
   },
 

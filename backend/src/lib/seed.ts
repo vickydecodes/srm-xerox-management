@@ -41,6 +41,7 @@ import { Counter } from '@db/models/counter.model.ts';
 import CreditPayment from '@db/models/credit.model.ts';
 import Order from '@db/models/order.model.ts';
 import Setting from '@db/models/setting.model.ts';
+import Shop from '@db/models/shop.model.ts';
 import { applyCreditBalance } from '../modules/department/department.services.ts';
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/srm_xerox_db';
@@ -138,6 +139,7 @@ async function clearCollections() {
     Inventory.deleteMany({}),
     InventoryProduct.deleteMany({}),
     Service.deleteMany({}),
+    Shop.deleteMany({}),
     Bill.deleteMany({}),
     Counter.deleteMany({}),
     CreditPayment.deleteMany({}),
@@ -299,6 +301,7 @@ async function seedUsers(branches: any[], departments: any[]) {
   };
 
   // Super Admin (no branch)
+  let superAdmin;
   {
     const user = new User({
       name: 'Super Admin',
@@ -308,6 +311,7 @@ async function seedUsers(branches: any[], departments: any[]) {
       role: 'super_admin',
     });
     await user.save();
+    superAdmin = user;
     users.push(user);
   }
 
@@ -320,6 +324,14 @@ async function seedUsers(branches: any[], departments: any[]) {
         : branch.name.includes('Arts')
           ? 'asc'
           : 'fsh';
+
+    // Create a Shop for this branch
+    const shop = new Shop({
+      name: `${branch.name} Central Store`,
+      phone: randomPhone(),
+      createdBy: superAdmin._id,
+    });
+    await shop.save();
 
     // Branch Admin
     {
@@ -345,6 +357,8 @@ async function seedUsers(branches: any[], departments: any[]) {
         phone: randomPhone(),
         password: defaultPassword,
         role: 'shop_admin',
+        branch: branch._id,
+        shop: shop._id,
       });
       await user.save();
       users.push(user);
@@ -359,6 +373,8 @@ async function seedUsers(branches: any[], departments: any[]) {
         phone: randomPhone(),
         password: defaultPassword,
         role: 'staff',
+        branch: branch._id,
+        shop: shop._id,
       });
       await user.save();
       users.push(user);

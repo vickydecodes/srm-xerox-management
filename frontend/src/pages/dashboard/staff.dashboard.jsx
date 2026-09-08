@@ -1,3 +1,4 @@
+import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -5,10 +6,10 @@ import { useNavigate } from "react-router-dom";
 import { useApi } from "@/core/contexts/api.context";
 import { toast } from "sonner";
 import {
+  IconBuildingCommunity,
+  IconUsers,
   IconReceipt,
   IconCoin,
-  IconCircleCheck,
-  IconBox,
   IconClipboardList,
 } from "@tabler/icons-react";
 import {
@@ -19,7 +20,6 @@ import {
   CartesianGrid,
   PieChart,
   Pie,
-  Cell,
 } from "recharts";
 import {
   ChartContainer,
@@ -56,306 +56,183 @@ const chartConfig = {
   },
 };
 
-
 export default function StaffDashboard({ data, refreshData }) {
   const navigate = useNavigate();
-  const { bills: billsModule } = useApi();
   const stats = data?.stats || {};
-  const methods = data?.paymentMethods || [];
-  const bills = data?.recentBills || [];
+  const recentBills = data?.recentBills || [];
   const monthlyRevenue = data?.monthlyRevenue || [];
+  const paymentMethods = data?.paymentMethods || [];
 
   const currencyFormatter = (val) =>
     new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(val);
 
-  const kpis = [
+  const kpisMain = [
     {
-      title: "Your Revenue Generated",
-      value: currencyFormatter(stats.totalRevenue),
-      description: "Your checkout sales value",
-      icon: <IconCoin className="w-6 h-6 text-emerald-500" />,
-      bgColor: "bg-emerald-500/10",
+      title: "My Total Revenue",
+      value: currencyFormatter(stats.totalRevenue || 0),
+      description: "Revenue from paid transactions",
+      icon: <IconCoin className="w-8 h-8 text-primary opacity-80" />,
     },
     {
-      title: "Your Bills",
-      value: stats.totalBills,
-      description: "Invoice count created by you",
-      icon: <IconReceipt className="w-6 h-6 text-primary" />,
-      bgColor: "bg-primary/10",
+      title: "Total Bills Billed",
+      value: stats.totalBills || 0,
+      description: "All transactions processed by you",
+      icon: <IconReceipt className="w-8 h-8 text-primary opacity-80" />,
     },
     {
       title: "Paid Invoices",
-      value: stats.totalPaidBills,
-      description: "Completed cash/UPI receipts",
-      icon: <IconCircleCheck className="w-6 h-6 text-indigo-500" />,
-      bgColor: "bg-indigo-500/10",
+      value: stats.totalPaidBills || 0,
+      description: "Successful cash/UPI collections",
+      icon: <IconClipboardList className="w-8 h-8 text-emerald-500 opacity-80" />,
     },
   ];
 
   const quickActions = [
-    {
-      title: "Create Invoice",
-      subtitle: "Open checkout counter",
-      icon: <IconReceipt className="w-5 h-5" />,
-      path: "/staff/bill-creation",
-    },
-    {
-      title: "Product Stock",
-      subtitle: "Review item availability",
-      icon: <IconBox className="w-5 h-5" />,
-      path: "/staff/product",
-    },
-    {
-      title: "Service Catalog",
-      subtitle: "View service pricing sheet",
-      icon: <IconClipboardList className="w-5 h-5" />,
-      path: "/staff/services",
-    },
+    { title: "New Invoice", icon: <IconReceipt className="w-5 h-5" />, path: "/staff/bill-creation" },
+    { title: "My Shift Reports", icon: <IconClipboardList className="w-5 h-5" />, path: "/staff/reports" },
   ];
 
-
-
-  // Monthly revenue trend data
+  // Data preps
   const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const trendData = monthlyRevenue.length > 0 
-    ? monthlyRevenue.map(m => ({
-        name: `${monthNames[m.month - 1]} ${m.year}`,
-        Revenue: m.revenue,
-      }))
+    ? monthlyRevenue.map(m => ({ name: `${monthNames[m.month - 1]} ${m.year}`, Revenue: m.revenue }))
     : [{ name: "No Data", Revenue: 0 }];
 
-  // Payment methods breakdown data
-  const pieData = methods.length > 0
-    ? methods.map((m, idx) => ({
-        name: m.method.toUpperCase(),
-        amount: m.amount,
-        fill: `var(--color-${m.method.toUpperCase()})`,
+  const paymentPieData = paymentMethods.length > 0
+    ? paymentMethods.map(m => ({
+        name: m.method, amount: m.amount, count: m.count,
+        fill: `var(--color-${m.method})`,
       }))
-    : [{ name: "No Payments", amount: 1, fill: "hsl(var(--muted))" }];
+    : [{ name: "No Data", amount: 1, fill: "hsl(var(--muted))" }];
 
-  // Efficiency calculation
-  const efficiency = stats.totalBills > 0 ? Math.round((stats.totalPaidBills / stats.totalBills) * 100) : 0;
-  const unpaidCount = stats.totalBills - stats.totalPaidBills;
-  const avgBillValue = stats.totalPaidBills > 0 ? Math.round(stats.totalRevenue / stats.totalPaidBills) : 0;
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Quick Actions Panel */}
-      <Card className="border border-border shadow-sm bg-card">
-        <CardContent className="p-6">
-          <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">Quick Activities</h4>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-bold">
-            {quickActions.map((act, i) => (
-              <Button
-                key={i}
-                variant="outline"
-                onClick={() => navigate(act.path)}
-                className="flex items-center gap-3 justify-start p-4 h-auto cursor-pointer border-border hover:border-primary/50 hover:bg-primary/5 transition duration-200"
-              >
-                <div className="p-2 bg-primary/10 rounded-xl text-primary shrink-0">
-                  {act.icon}
-                </div>
-                <div className="text-left">
-                  <span className="block text-sm font-bold text-foreground leading-none mb-1">{act.title}</span>
-                  <span className="block text-[11px] text-muted-foreground font-medium leading-none">{act.subtitle}</span>
-                </div>
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* KPI Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        {kpis.map((card, i) => (
-          <Card key={i} className="border border-border shadow-sm bg-card hover:shadow-md transition-shadow duration-300">
-            <CardContent className="p-6 flex items-center justify-between">
-              <div className="space-y-1">
-                <span className="text-xs text-muted-foreground font-bold uppercase tracking-wider">{card.title}</span>
-                <h3 className="text-2xl font-extrabold text-foreground tracking-tight leading-none">{card.value}</h3>
-                <p className="text-[11px] text-muted-foreground font-medium pt-0.5">{card.description}</p>
-              </div>
-              <div className={`p-3 rounded-2xl ${card.bgColor} shrink-0`}>
-                {card.icon}
-              </div>
-            </CardContent>
-          </Card>
+    <div className="flex flex-col gap-6 animate-in fade-in duration-500">
+      
+      {/* Quick Actions Bar - Minimalist */}
+      <div className="flex flex-wrap items-center gap-2">
+        {quickActions.map((act, i) => (
+          <Button
+            key={i}
+            variant="outline"
+            size="sm"
+            onClick={() => navigate(act.path)}
+            className="flex items-center gap-2 text-xs font-medium h-8 border-border/60 shadow-none text-muted-foreground hover:text-foreground"
+          >
+            {React.cloneElement(act.icon, { className: "w-3.5 h-3.5" })}
+            {act.title}
+          </Button>
         ))}
       </div>
 
-      {/* Main Analytics Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Main KPIs - Vercel Style Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+        {kpisMain.map((kpi, i) => (
+          <div key={i} className="flex flex-col p-5 bg-card border border-border/60 rounded-lg shadow-sm">
+            <div className="flex items-center justify-between pb-2">
+              <span className="text-sm font-medium text-muted-foreground">{kpi.title}</span>
+              {React.cloneElement(kpi.icon, { className: "w-4 h-4 text-muted-foreground/50" })}
+            </div>
+            <div className="flex flex-col gap-1">
+              <h3 className="text-2xl font-bold text-foreground tracking-tight">{kpi.value}</h3>
+              <p className="text-xs text-muted-foreground">{kpi.description}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Analytics Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
         
-        {/* Left Columns (Span 2) for Main Trends & Invoice Logs */}
-        <div className="lg:col-span-2 space-y-6">
+        {/* Left Column (Span 2) */}
+        <div className="lg:col-span-2 space-y-4 lg:space-y-6">
           
-          {/* Revenue Trend Chart */}
-          <Card className="border border-border shadow-sm bg-card">
-            <CardHeader>
-              <CardTitle className="text-lg font-bold flex items-center gap-2">
-                <IconCoin className="w-5 h-5 text-primary" />
-                Your Sales Performance Trend
-              </CardTitle>
-              <CardDescription>Your monthly checkout sales value over the last 6 months.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ChartContainer config={chartConfig} className="h-72 w-full">
-                <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          {/* Revenue Area Chart */}
+          <div className="flex flex-col p-5 bg-card border border-border/60 rounded-lg shadow-sm">
+            <div className="mb-4 space-y-1">
+              <h3 className="text-sm font-medium text-foreground">My Collection Trajectory</h3>
+              <p className="text-xs text-muted-foreground">My individual sales performance.</p>
+            </div>
+            <div className="h-[250px] w-full">
+              <ChartContainer config={chartConfig} className="h-full w-full">
+                <AreaChart data={trendData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                   <defs>
-                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--color-Revenue)" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="var(--color-Revenue)" stopOpacity={0.1}/>
+                    <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--color-Revenue)" stopOpacity={0.2}/>
+                      <stop offset="100%" stopColor="var(--color-Revenue)" stopOpacity={0.0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="name" tickLine={false} axisLine={false} />
-                  <YAxis tickFormatter={val => `₹${val}`} tickLine={false} axisLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.4} />
+                  <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{fontSize: 12, fill: "var(--muted-foreground)"}} />
+                  <YAxis tickFormatter={val => `₹${val}`} tickLine={false} axisLine={false} tick={{fontSize: 12, fill: "var(--muted-foreground)"}} />
                   <ChartTooltip content={<ChartTooltipContent formatter={(value) => currencyFormatter(value)} />} />
-                  <Area 
-                    type="monotone" 
-                    dataKey="Revenue" 
-                    stroke="var(--color-Revenue)" 
-                    fillOpacity={1} 
-                    fill="url(#colorRevenue)" 
-                  />
+                  <Area type="monotone" dataKey="Revenue" stroke="var(--color-Revenue)" strokeWidth={2} fillOpacity={1} fill="url(#colorRev)" />
                 </AreaChart>
               </ChartContainer>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          {/* Recent Invoices */}
-          <Card className="border border-border shadow-sm bg-card">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-lg font-bold flex items-center gap-2">
-                  <IconReceipt className="w-5 h-5 text-primary" />
-                  Your Recent Invoices
-                </CardTitle>
-                <CardDescription>Invoices generated by you under your operator account.</CardDescription>
+          {/* Recent Invoices Table */}
+          <div className="flex flex-col bg-card border border-border/60 rounded-lg shadow-sm overflow-hidden">
+            <div className="p-5 border-b border-border/60 flex items-center justify-between">
+              <div className="space-y-1">
+                <h3 className="text-sm font-medium text-foreground">Recent Invoices I Generated</h3>
+                <p className="text-xs text-muted-foreground">Latest checkout logs by me.</p>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate("/staff/bill")}
-                className="text-xs font-bold cursor-pointer"
-              >
-                View All
-              </Button>
-            </CardHeader>
-            <CardContent className="p-0 overflow-x-auto">
-              {bills.length === 0 ? (
-                <div className="p-6 text-center text-sm text-muted-foreground">No recent invoices logged by you.</div>
-              ) : (
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-muted/40 border-y border-border text-[10px] text-muted-foreground font-bold uppercase tracking-wider">
-                      <th className="py-3 px-4">Invoice</th>
-                      <th className="py-3 px-4">Branch/Dept</th>
-                      <th className="py-3 px-4">Method</th>
-                      <th className="py-3 px-4">Total</th>
-                      <th className="py-3 px-4 text-center">Status</th>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-border/60 text-xs text-muted-foreground">
+                    <th className="font-medium py-3 px-5">Invoice</th>
+                    <th className="font-medium py-3 px-5">Method</th>
+                    <th className="font-medium py-3 px-5">Total</th>
+                    <th className="font-medium py-3 px-5 text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentBills.slice(0, 5).map((b, idx) => (
+                    <tr key={b._id} className={`${idx !== recentBills.length - 1 ? 'border-b border-border/40' : ''} hover:bg-muted/30 transition-colors`}>
+                      <td className="py-3 px-5 font-medium">{b.code}</td>
+                      <td className="py-3 px-5 text-xs text-muted-foreground">{b.paymentMethod || "N/A"}</td>
+                      <td className="py-3 px-5 font-medium">{currencyFormatter(b.total)}</td>
+                      <td className="py-3 px-5 text-right">
+                        <Badge variant="outline" className={`text-[10px] font-medium px-2 py-0 h-5 rounded-md ${
+                          b.status === "PAID" ? "text-emerald-600 border-emerald-200 bg-emerald-50" :
+                          b.status === "UNPAID" ? "text-amber-600 border-amber-200 bg-amber-50" :
+                          "text-red-600 border-red-200 bg-red-50"
+                        }`}>
+                          {b.status}
+                        </Badge>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {bills.map((b) => (
-                      <tr key={b._id} className="border-b border-border hover:bg-muted/10 transition text-sm">
-                        <td className="py-3 px-4 font-bold text-foreground">{b.code}</td>
-                        <td className="py-3 px-4 text-muted-foreground text-xs font-semibold">
-                          {b.branch?.name || "Global"}{b.department ? ` / ${b.department.name}` : ""}
-                        </td>
-                        <td className="py-3 px-4 text-xs font-bold uppercase text-muted-foreground">{b.paymentMethod || "N/A"}</td>
-                        <td className="py-3 px-4 font-extrabold text-foreground">{currencyFormatter(b.total)}</td>
-                        <td className="py-3 px-4 text-center">
-                          <Badge
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                              b.status === "PAID"
-                                ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                                : b.status === "UNPAID"
-                                ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
-                                : "bg-red-500/10 text-red-600 border-red-500/20"
-                            }`}
-                          >
-                            {b.status}
-                          </Badge>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </CardContent>
-          </Card>
-
+                  ))}
+                </tbody>
+              </table>
+              {recentBills.length === 0 && <div className="p-8 text-center text-sm text-muted-foreground">No recent invoices logged.</div>}
+            </div>
+          </div>
         </div>
 
-        {/* Right Columns (Span 1) for Payments & Personal KPIs */}
-        <div className="space-y-6">
+        {/* Right Column (Span 1) */}
+        <div className="space-y-4 lg:space-y-6">
           
-          {/* Recharts Payment Methods Donut */}
-          <Card className="border border-border shadow-sm bg-card">
-            <CardHeader>
-              <CardTitle className="text-lg font-bold flex items-center gap-2">
-                <IconReceipt className="w-5 h-5 text-primary" />
-                Payment Mode Split
-              </CardTitle>
-              <CardDescription>Distribution share of paid transactions.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center">
-              <ChartContainer config={chartConfig} className="h-56 w-full">
+          {/* Method Donut Chart */}
+          <div className="flex flex-col p-5 bg-card border border-border/60 rounded-lg shadow-sm">
+            <div className="mb-2 space-y-1">
+              <h3 className="text-sm font-medium text-foreground">My Payment Methods</h3>
+              <p className="text-xs text-muted-foreground">Cash vs UPI distribution.</p>
+            </div>
+            <div className="flex-1 flex flex-col justify-center h-[200px]">
+              <ChartContainer config={chartConfig} className="h-full w-full">
                 <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={4}
-                    dataKey="amount"
-                  >
-                  </Pie>
+                  <Pie data={paymentPieData} cx="50%" cy="50%" innerRadius={50} outerRadius={70} paddingAngle={2} dataKey="amount" stroke="none" />
                   <ChartTooltip content={<ChartTooltipContent formatter={(value) => currencyFormatter(value)} />} />
                   <ChartLegend content={<ChartLegendContent />} />
                 </PieChart>
               </ChartContainer>
-            </CardContent>
-          </Card>
-
-          {/* Personal Performance Targets Widget */}
-          <Card className="border border-border shadow-sm bg-card">
-            <CardHeader>
-              <CardTitle className="text-lg font-bold flex items-center gap-2">
-                <IconCircleCheck className="w-5 h-5 text-primary" />
-                Billing metrics
-              </CardTitle>
-              <CardDescription>Your personal checkout collections summary.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-1">
-                <div className="flex justify-between text-xs font-semibold">
-                  <span className="text-muted-foreground">Payment Collection Rate</span>
-                  <span className="text-foreground">{efficiency}%</span>
-                </div>
-                <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-emerald-500 rounded-full transition-all duration-500" 
-                    style={{ width: `${efficiency}%` }} 
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 pt-2">
-                <div className="p-3 bg-muted/40 rounded-xl space-y-0.5">
-                  <span className="text-[10px] text-muted-foreground uppercase font-bold">Avg Order Value</span>
-                  <span className="block text-sm font-extrabold text-foreground">{currencyFormatter(avgBillValue)}</span>
-                </div>
-                <div className="p-3 bg-muted/40 rounded-xl space-y-0.5">
-                  <span className="text-[10px] text-muted-foreground uppercase font-bold">Unpaid Invoices</span>
-                  <span className="block text-sm font-extrabold text-amber-500">{unpaidCount}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
+            </div>
+          </div>
         </div>
 
       </div>

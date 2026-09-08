@@ -116,9 +116,11 @@ export const printPdf = async (url, params = {}) => {
   iframe.style.position = 'fixed';
   iframe.style.right = '0';
   iframe.style.bottom = '0';
-  iframe.style.width = '0';
-  iframe.style.height = '0';
+  iframe.style.width = '100vw';
+  iframe.style.height = '100vh';
+  iframe.style.opacity = '0';
   iframe.style.border = '0';
+  iframe.style.pointerEvents = 'none';
   iframe.src = blobUrl;
 
   iframe.onload = () => {
