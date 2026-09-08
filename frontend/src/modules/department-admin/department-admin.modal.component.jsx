@@ -20,6 +20,8 @@ import { departmentAdminCreateSchema, departmentAdminEditSchema,resetPasswordSch
 import DepartmentAdminForm from "./department-admin.form";
 import { useLoader } from "@/core/hooks/useLoader";
 import { useEffect } from "react";
+import { useBranchStore } from "@/modules/branch/branch.store";
+import { useDepartmentStore } from "@/modules/department/department.store";
 
 export const View = ({ admin } = {}) => (
   <DialogContent className="w-xl">
@@ -80,8 +82,7 @@ export const Create = ({ submitFn = () => {}, closeModal = () => {}, exported } 
   const loadDepartments = createPreset(exported?.departments);
 
   const { run, loading, ErrorAlert, clearError } = useAsync((formData) => {
-    const { branch, ...rest } = formData; // branch was only for filtering; drop before submit
-    return submitFn(rest);
+    return submitFn(formData);
   });
 
   useClearError(form, clearError);
@@ -98,6 +99,9 @@ export const Create = ({ submitFn = () => {}, closeModal = () => {}, exported } 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const branches = useBranchStore((s) => s.list);
+  const departments = useDepartmentStore((s) => s.list);
+
   return (
     <DialogContent className="w-xl max-h-[85vh] overflow-y-auto">
       <DialogHeader>
@@ -109,8 +113,8 @@ export const Create = ({ submitFn = () => {}, closeModal = () => {}, exported } 
         <form className="grid gap-4 py-2" onSubmit={form.handleSubmit(onSubmit)}>
           <DepartmentAdminForm
             form={form}
-            branches={exported?.branches?.state || []}
-            departments={exported?.departments?.state || []}
+            branches={branches}
+            departments={departments}
           />
           {ErrorAlert}
           <DialogFooter>
@@ -136,7 +140,7 @@ export const Edit = ({ admin, submitFn = () => {}, closeModal = () => {}, export
       email: admin?.email || "",
       phone: admin?.phone || "",
       address: admin?.address || "",
-      branch: admin?.department?.branch?._id || admin?.department?.branch || "",
+      branch: admin?.branch?._id || admin?.branch || "",
       department: admin?.department?._id || admin?.department || "",
       active: admin?.active ?? true,
     },
@@ -147,8 +151,7 @@ export const Edit = ({ admin, submitFn = () => {}, closeModal = () => {}, export
   const loadDepartments = createPreset(exported?.departments);
 
   const { run, loading, ErrorAlert, clearError } = useAsync((formData) => {
-    const { branch, ...rest } = formData;
-    return submitFn(rest);
+    return submitFn(formData);
   });
 
   useClearError(form, clearError);
@@ -165,6 +168,9 @@ export const Edit = ({ admin, submitFn = () => {}, closeModal = () => {}, export
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const branches = useBranchStore((s) => s.list);
+  const departments = useDepartmentStore((s) => s.list);
+
   return (
     <DialogContent className="w-xl max-h-[85vh] overflow-y-auto">
       <DialogHeader>
@@ -177,8 +183,8 @@ export const Edit = ({ admin, submitFn = () => {}, closeModal = () => {}, export
           <DepartmentAdminForm
             form={form}
             isEdit
-            branches={exported?.branches?.state || []}
-            departments={exported?.departments?.state || []}
+            branches={branches}
+            departments={departments}
           />
           {ErrorAlert}
           <DialogFooter>

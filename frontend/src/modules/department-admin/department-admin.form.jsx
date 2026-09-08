@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useWatch } from "react-hook-form";
+import { useFilteredBy } from "@/core/hooks/useFilterBy";
 import {
   FormControl,
   FormField,
@@ -25,15 +26,15 @@ export default function DepartmentAdminForm({
   branches = [],
   departments = [],
 }) {
-  const fields = isEdit
-    ? ["name", "email", "phone", "address"]
-    : ["name", "email", "phone", "address", "password"];
+  const fields = ["name", "email", "phone", "address"];
 
   const selectedBranch = useWatch({ control: form.control, name: "branch" });
 
-  const filteredDepartments = selectedBranch
-    ? departments.filter((d) => (d.branch?._id || d.branch) === selectedBranch)
-    : departments;
+  const filteredDepartments = useFilteredBy(
+    departments,
+    { branch: selectedBranch },
+    { full: false }
+  );
 
   // reset department if it no longer belongs to the newly selected branch
   useEffect(() => {

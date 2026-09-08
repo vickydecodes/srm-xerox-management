@@ -87,10 +87,10 @@ export const useShopModule = (exported) => {
   });
 
   return {
-    state: list,
-    loading,
-    pagination,
-    current,
+    get state() { return useShopStore.getState().list; },
+    get loading() { return useShopStore.getState().loading; },
+    get pagination() { return useShopStore.getState().pagination; },
+    get current() { return useShopStore.getState().current; },
     set,
     add,
     update,

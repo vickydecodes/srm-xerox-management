@@ -11,9 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 
 export default function StaffForm({ form, isEdit = false }) {
-  const fields = isEdit
-    ? ["name", "email", "phone", "address"]
-    : ["name", "email", "phone", "address", "password"];
+  const fields = ["name", "email", "phone", "address"];
 
   return (
     <>

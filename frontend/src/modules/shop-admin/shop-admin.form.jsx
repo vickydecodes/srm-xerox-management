@@ -18,9 +18,7 @@ import {
 } from "@/components/ui/select";
 
 export default function ShopAdminForm({ form, isEdit = false, shops = [] }) {
-  const fields = isEdit
-    ? ["name", "email", "phone", "address"]
-    : ["name", "email", "phone", "address", "password"];
+  const fields = ["name", "email", "phone", "address"];
 
   return (
     <>
