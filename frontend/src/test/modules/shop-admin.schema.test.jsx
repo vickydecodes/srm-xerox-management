@@ -12,23 +12,10 @@ describe('shopAdminCreateSchema', () => {
         name: 'John Doe',
         email: 'john@example.com',
         phone: '9876543210',
-        password: 'secret1',
         shop: 's1',
         active: true,
       }).success
     ).toBe(true);
-  });
-
-  it('requires password min 6', () => {
-    expect(
-      shopAdminCreateSchema.safeParse({
-        name: 'John Doe',
-        email: 'john@example.com',
-        phone: '9876543210',
-        password: '123',
-        shop: 's1',
-      }).success
-    ).toBe(false);
   });
 
   it('requires shop', () => {
@@ -37,7 +24,6 @@ describe('shopAdminCreateSchema', () => {
         name: 'John Doe',
         email: 'john@example.com',
         phone: '9876543210',
-        password: 'secret1',
         shop: '',
       }).success
     ).toBe(false);
@@ -49,7 +35,6 @@ describe('shopAdminCreateSchema', () => {
         name: 'John Doe',
         email: 'not-an-email',
         phone: '9876543210',
-        password: 'secret1',
         shop: 's1',
       }).success
     ).toBe(false);
