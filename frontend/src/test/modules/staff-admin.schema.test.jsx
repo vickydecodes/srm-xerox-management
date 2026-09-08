@@ -12,7 +12,6 @@ describe('staffCreateSchema', () => {
         name: 'Jane Doe',
         email: 'jane@example.com',
         phone: '9876543210',
-        password: 'secret1',
         active: true,
       }).success
     ).toBe(true);
@@ -24,18 +23,6 @@ describe('staffCreateSchema', () => {
         name: 'J',
         email: 'jane@example.com',
         phone: '9876543210',
-        password: 'secret1',
-      }).success
-    ).toBe(false);
-  });
-
-  it('requires password min 6', () => {
-    expect(
-      staffCreateSchema.safeParse({
-        name: 'Jane Doe',
-        email: 'jane@example.com',
-        phone: '9876543210',
-        password: '123',
       }).success
     ).toBe(false);
   });
@@ -46,7 +33,6 @@ describe('staffCreateSchema', () => {
         name: 'Jane Doe',
         email: 'jane@example.com',
         phone: '123',
-        password: 'secret1',
       }).success
     ).toBe(false);
   });
