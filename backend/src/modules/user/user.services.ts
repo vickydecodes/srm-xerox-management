@@ -20,6 +20,11 @@ export const createUser = async (data: CreateUserPayload) => {
   if (data.role === 'shop_admin' && !data.shop) {
     throw new Error('Shop is required for shop_admin role');
   }
+  
+  if (!data.password) {
+    data.password = 'srm@123';
+  }
+
   const user = await new User(data).save();
   return enhanceUser(user);
 };

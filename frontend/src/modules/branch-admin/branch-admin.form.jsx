@@ -18,9 +18,7 @@ import {
 } from "@/components/ui/select";
 
 export default function BranchAdminForm({ form, isEdit = false, branches = [] }) {
-  const fields = isEdit
-    ? ["name", "email", "phone", "address"]
-    : ["name", "email", "phone", "address", "password"];
+  const fields = ["name", "email", "phone", "address"];
 
   return (
     <>
