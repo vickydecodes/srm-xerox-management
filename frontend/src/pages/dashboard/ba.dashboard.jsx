@@ -11,6 +11,7 @@ import {
   IconReceipt,
   IconCoin,
   IconClipboardList,
+  IconCreditCard,
 } from "@tabler/icons-react";
 import {
   AreaChart,
@@ -117,10 +118,10 @@ export default function BaDashboard({ data, refreshData }) {
   ];
 
   const quickActions = [
-    { title: "Create Invoice", icon: <IconReceipt className="w-5 h-5" />, path: "/branch_admin/bill-creation" },
     { title: "Manage Departments", icon: <IconBuildingCommunity className="w-5 h-5" />, path: "/branch_admin/department" },
-    { title: "Register Staff", icon: <IconUsers className="w-5 h-5" />, path: "/branch_admin/staff" },
-    { title: "Inventory", icon: <IconClipboardList className="w-5 h-5" />, path: "/branch_admin/inventory-product" },
+    { title: "Department Admins", icon: <IconUsers className="w-5 h-5" />, path: "/branch_admin/department-admin" },
+    { title: "View Orders", icon: <IconClipboardList className="w-5 h-5" />, path: "/branch_admin/order" },
+    { title: "Credit Tracker", icon: <IconCreditCard className="w-5 h-5" />, path: "/branch_admin/credits" },
   ];
 
   // Data preps

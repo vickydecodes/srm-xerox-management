@@ -11,6 +11,7 @@ import {
   IconReceipt,
   IconCoin,
   IconClipboardList,
+  IconBoxSeam,
 } from "@tabler/icons-react";
 import {
   AreaChart,
@@ -88,8 +89,10 @@ export default function StaffDashboard({ data, refreshData }) {
   ];
 
   const quickActions = [
-    { title: "New Invoice", icon: <IconReceipt className="w-5 h-5" />, path: "/staff/bill-creation" },
-    { title: "My Shift Reports", icon: <IconClipboardList className="w-5 h-5" />, path: "/staff/reports" },
+    { title: "Products", icon: <IconBoxSeam className="w-5 h-5" />, path: "/staff/product" },
+    { title: "Services", icon: <IconClipboardList className="w-5 h-5" />, path: "/staff/services" },
+    { title: "View Bills", icon: <IconReceipt className="w-5 h-5" />, path: "/staff/bill" },
+    { title: "View Orders", icon: <IconClipboardList className="w-5 h-5" />, path: "/staff/order" },
   ];
 
   // Data preps

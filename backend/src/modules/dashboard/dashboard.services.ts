@@ -352,6 +352,8 @@ export const getDepartmentAdminDashboard = async (departmentId: string, lt?: str
   const departmentObjectId = new mongoose.Types.ObjectId(departmentId);
   const dateFilter = buildDateFilter(lt, gt);
 
+  const department = await Department.findById(departmentObjectId).select('creditBalance outstandingCredit').lean();
+
   const [
     usersCount,
     billsCount,
@@ -385,7 +387,8 @@ export const getDepartmentAdminDashboard = async (departmentId: string, lt?: str
       users: usersCount,
       totalBills: billsCount,
       totalSpend: totalRevenueResult[0]?.total ?? 0,
-      outstandingCredit: pendingCreditBills,
+      outstandingCredit: department?.outstandingCredit ?? pendingCreditBills,
+      creditBalance: department?.creditBalance ?? 0,
       pendingOrders: unbilledRequisitions,
     },
     recentOrders,

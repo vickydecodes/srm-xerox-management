@@ -730,186 +730,53 @@ async function seedBills(
   products: any[],
   services: any[]
 ) {
-  const staffUser = users[4]; // Staff - Chennai
-  const shopAdmin = users[3]; // Shop Admin - Chennai
-
-  const billsData = [
-    // Month 8: August (Current Month)
-    {
-      items: [
-        { type: BillItemType.PRODUCT, item: products[0]._id, name: products[0].name, quantity: 3, price: 40 },
-        { type: BillItemType.SERVICE, item: services[0]._id, name: services[0].name, quantity: 1, price: services[0].price },
-      ],
-      discount: 10,
-      tax: 5,
-      createdBy: staffUser._id,
-      branch: branches[0]._id,
-      department: departments[0]._id,
-      paymentMethod: 'UPI' as const,
-      status: 'PAID' as const,
-      date: new Date(2026, 7, 14), // August 14
-    },
-    {
-      items: [{ type: BillItemType.PRODUCT, item: products[2]._id, name: products[2].name, quantity: 1, price: 900 }],
-      discount: 0,
-      tax: 45,
-      createdBy: staffUser._id,
-      branch: branches[0]._id,
-      department: departments[0]._id,
-      paymentMethod: 'CASH' as const,
-      status: 'PAID' as const,
-      date: new Date(2026, 7, 10), // August 10
-    },
-    {
-      items: [{ type: BillItemType.SERVICE, item: services[1]._id, name: services[1].name, quantity: 2, price: services[1].price }],
-      discount: 20,
-      tax: 15,
-      createdBy: shopAdmin._id,
-      branch: branches[1]._id,
-      department: departments[1]._id,
-      paymentMethod: 'UPI' as const,
-      status: 'PAID' as const,
-      date: new Date(2026, 7, 12), // August 12
-    },
-    
-    // Month 7: July
-    {
-      items: [{ type: BillItemType.PRODUCT, item: products[0]._id, name: products[0].name, quantity: 5, price: 40 }],
-      discount: 5,
-      tax: 10,
-      createdBy: staffUser._id,
-      branch: branches[0]._id,
-      department: departments[0]._id,
-      paymentMethod: 'UPI' as const,
-      status: 'PAID' as const,
-      date: new Date(2026, 6, 15), // July 15
-    },
-    {
-      items: [{ type: BillItemType.PRODUCT, item: products[1]._id, name: products[1].name, quantity: 2, price: 300 }],
-      discount: 30,
-      tax: 25,
-      createdBy: staffUser._id,
-      branch: branches[1]._id,
-      department: departments[1]._id,
-      paymentMethod: 'CASH' as const,
-      status: 'PAID' as const,
-      date: new Date(2026, 6, 20), // July 20
-    },
-
-    // Month 6: June
-    {
-      items: [{ type: BillItemType.SERVICE, item: services[0]._id, name: services[0].name, quantity: 4, price: 20 }],
-      discount: 0,
-      tax: 4,
-      createdBy: staffUser._id,
-      branch: branches[0]._id,
-      department: departments[0]._id,
-      paymentMethod: 'CREDIT' as const,
-      status: 'PAID' as const,
-      date: new Date(2026, 5, 10), // June 10
-    },
-    {
-      items: [{ type: BillItemType.PRODUCT, item: products[2]._id, name: products[2].name, quantity: 1, price: 900 }],
-      discount: 50,
-      tax: 40,
-      createdBy: staffUser._id,
-      branch: branches[1]._id,
-      department: departments[1]._id,
-      paymentMethod: 'UPI' as const,
-      status: 'PAID' as const,
-      date: new Date(2026, 5, 25), // June 25
-    },
-
-    // Month 5: May
-    {
-      items: [{ type: BillItemType.PRODUCT, item: products[0]._id, name: products[0].name, quantity: 10, price: 40 }],
-      discount: 20,
-      tax: 18,
-      createdBy: staffUser._id,
-      branch: branches[0]._id,
-      department: departments[0]._id,
-      paymentMethod: 'CASH' as const,
-      status: 'PAID' as const,
-      date: new Date(2026, 4, 18), // May 18
-    },
-    {
-      items: [{ type: BillItemType.SERVICE, item: services[0]._id, name: services[0].name, quantity: 5, price: 20 }],
-      discount: 0,
-      tax: 5,
-      createdBy: staffUser._id,
-      branch: branches[1]._id,
-      department: departments[1]._id,
-      paymentMethod: 'UPI' as const,
-      status: 'PAID' as const,
-      date: new Date(2026, 4, 5), // May 5
-    },
-
-    // Month 4: April
-    {
-      items: [{ type: BillItemType.PRODUCT, item: products[2]._id, name: products[2].name, quantity: 1, price: 900 }],
-      discount: 0,
-      tax: 45,
-      createdBy: staffUser._id,
-      branch: branches[0]._id,
-      department: departments[0]._id,
-      paymentMethod: 'UPI' as const,
-      status: 'PAID' as const,
-      date: new Date(2026, 3, 22), // April 22
-    },
-    {
-      items: [{ type: BillItemType.PRODUCT, item: products[1]._id, name: products[1].name, quantity: 3, price: 300 }],
-      discount: 100,
-      tax: 40,
-      createdBy: staffUser._id,
-      branch: branches[1]._id,
-      department: departments[1]._id,
-      paymentMethod: 'CREDIT' as const,
-      status: 'PAID' as const,
-      date: new Date(2026, 3, 4), // April 4
-    },
-
-    // Month 3: March
-    {
-      items: [{ type: BillItemType.PRODUCT, item: products[0]._id, name: products[0].name, quantity: 12, price: 40 }],
-      discount: 30,
-      tax: 20,
-      createdBy: staffUser._id,
-      branch: branches[0]._id,
-      department: departments[0]._id,
-      paymentMethod: 'CASH' as const,
-      status: 'PAID' as const,
-      date: new Date(2026, 2, 12), // March 12
-    },
-    {
-      items: [{ type: BillItemType.PRODUCT, item: products[2]._id, name: products[2].name, quantity: 2, price: 900 }],
-      discount: 100,
-      tax: 80,
-      createdBy: staffUser._id,
-      branch: branches[1]._id,
-      department: departments[1]._id,
-      paymentMethod: 'UPI' as const,
-      status: 'PAID' as const,
-      date: new Date(2026, 2, 28), // March 28
-    },
-  ];
-
   const bills = [];
-  for (const data of billsData) {
-    const { date, ...billFields } = data;
-    const bill = new Bill(billFields);
-    await bill.save();
 
-    // Override the automatically generated createdAt timestamp with historical date using raw mongodb driver
-    await Bill.collection.updateOne({ _id: bill._id }, { $set: { createdAt: date } });
-    
-    // Refresh document in list for logging
-    const updatedBill = await Bill.findById(bill._id);
-    if (updatedBill) {
-      bills.push(updatedBill);
+  for (let m = 2; m <= 7; m++) { // months March to August
+    for (const dept of departments) {
+      const branchUsers = users.filter((u: any) => String(u.branch) === String(dept.branch));
+      const staffUsers = branchUsers.filter((u: any) => u.role === 'staff');
+      const staffUser = staffUsers.length > 0 ? randomItem(staffUsers) : users[0];
+      
+      const numBills = randomInt(1, 2);
+      for (let i = 0; i < numBills; i++) {
+        const isProduct = Math.random() > 0.5;
+        const itemObj = isProduct ? randomItem(products) : randomItem(services);
+        const price = isProduct ? 40 : 25;
+        const quantity = randomInt(1, 10);
+        const total = quantity * price;
+        
+        const date = new Date(2026, m, randomInt(1, 28));
+        
+        const bill = new Bill({
+          items: [{
+            type: isProduct ? 'InventoryProduct' : 'Service',
+            item: itemObj._id,
+            name: itemObj.name,
+            quantity,
+            price,
+            total,
+          }],
+          subtotal: total,
+          discount: 0,
+          tax: Math.round(total * 0.05),
+          total: total + Math.round(total * 0.05),
+          createdBy: staffUser._id,
+          branch: dept.branch,
+          department: dept._id,
+          paymentMethod: randomPaymentMethod(),
+          status: 'PAID',
+        });
+        await bill.save();
+        await Bill.collection.updateOne({ _id: bill._id }, { $set: { createdAt: date } });
+        
+        const updatedBill = await Bill.findById(bill._id);
+        if (updatedBill) bills.push(updatedBill);
+      }
     }
   }
 
-  console.log(`Seeded ${bills.length} bills across historical months.`);
+  console.log(`Seeded ${bills.length} historical bills strictly matching department/branch rules.`);
   return bills;
 }
 
@@ -937,7 +804,6 @@ async function seed() {
     const allBills = await Bill.find({});
     const allDepts = await Department.find({});
     const allUsers = await User.find({});
-    const staffUser = allUsers.find(u => u.role === 'staff') || allUsers[0];
 
     const allProducts = await Product.find({});
     const allServices = await Service.find({});
@@ -945,6 +811,10 @@ async function seed() {
     // Let's loop through departments and assign some outstanding credit
     for (let i = 0; i < allDepts.length; i++) {
       const dept = allDepts[i];
+      // Get a staff user for THIS department's branch!
+      const branchStaff = allUsers.filter(u => String(u.branch) === String(dept.branch) && u.role === 'staff');
+      const staffUser = branchStaff.length > 0 ? randomItem(branchStaff) : allUsers[0];
+
       // Initialize creditBalance
       dept.creditBalance = 0;
       

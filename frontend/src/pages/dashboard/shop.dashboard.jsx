@@ -74,8 +74,9 @@ export default function ShopAdminDashboard({ data, refreshData }) {
   ];
 
   const quickActions = [
-    { title: "Point of Sale", icon: <IconReceipt className="w-5 h-5" />, path: "/shop_admin/bill-creation" },
-    { title: "Manage Staff", icon: <IconUsers className="w-5 h-5" />, path: "/shop_admin/staff" },
+    { title: "New Invoice", icon: <IconReceipt className="w-5 h-5" />, path: "/shop_admin/bill-creation" },
+    { title: "View Bills", icon: <IconReceipt className="w-5 h-5" />, path: "/shop_admin/bill" },
+    { title: "View Orders", icon: <IconClipboardList className="w-5 h-5" />, path: "/shop_admin/order" },
   ];
 
   // Data preps

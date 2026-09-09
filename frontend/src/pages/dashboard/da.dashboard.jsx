@@ -11,6 +11,7 @@ import {
   IconReceipt,
   IconCoin,
   IconClipboardList,
+  IconCreditCard,
 } from "@tabler/icons-react";
 
 export default function DaDashboard({ data, refreshData }) {
@@ -36,8 +37,14 @@ export default function DaDashboard({ data, refreshData }) {
       icon: <IconReceipt className="w-8 h-8 text-primary opacity-80" />,
     },
     {
+      title: "Available Credit",
+      value: currencyFormatter(stats.creditBalance || 0),
+      description: "Remaining credit allocation",
+      icon: <IconCoin className="w-8 h-8 text-emerald-500 opacity-80" />,
+    },
+    {
       title: "Credit Dues",
-      value: stats.outstandingCredit || 0,
+      value: currencyFormatter(stats.outstandingCredit || 0),
       description: "Unpaid department credit bills",
       icon: <IconClipboardList className="w-8 h-8 text-amber-500 opacity-80" />,
     },
@@ -49,8 +56,9 @@ export default function DaDashboard({ data, refreshData }) {
   ];
 
   const quickActions = [
-    { title: "Create Requisition", icon: <IconReceipt className="w-5 h-5" />, path: "/department_admin/order-creation" },
-    { title: "View Staff", icon: <IconUsers className="w-5 h-5" />, path: "/department_admin/staff" },
+    { title: "View Requisitions", icon: <IconClipboardList className="w-5 h-5" />, path: "/department_admin/order" },
+    { title: "View Credits", icon: <IconCreditCard className="w-5 h-5" />, path: "/department_admin/credits" },
+    { title: "View Bills", icon: <IconReceipt className="w-5 h-5" />, path: "/department_admin/bill" },
   ];
 
   return (
@@ -73,7 +81,7 @@ export default function DaDashboard({ data, refreshData }) {
       </div>
 
       {/* Main KPIs - Vercel Style Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
         {kpisMain.map((kpi, i) => (
           <div key={i} className="flex flex-col p-5 bg-card border border-border/60 rounded-lg shadow-sm">
             <div className="flex items-center justify-between pb-2">
