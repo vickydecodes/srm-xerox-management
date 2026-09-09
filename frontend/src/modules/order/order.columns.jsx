@@ -201,11 +201,11 @@ export const useOrderColumns = (orders) => {
                 </DropdownMenuItem>
               )}
 
-              {canReadyForPickup && (
+              {/* {canReadyForPickup && (
                 <DropdownMenuItem onClick={() => orders.readyForPickup(order._id)}>
                   Mark Ready for Pickup
                 </DropdownMenuItem>
-              )}
+              )} */}
 
               {canConvertToBill && (
                 <DropdownMenuItem onClick={() => orders.convertToBill(order)}>

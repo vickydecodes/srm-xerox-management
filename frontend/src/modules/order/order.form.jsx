@@ -58,7 +58,7 @@ export default function OrderForm({
       form.setValue("department", "");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedBranch]);
+  }, []);
 
   const {
     fields: itemFields,
