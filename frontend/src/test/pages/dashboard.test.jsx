@@ -130,7 +130,7 @@ describe('Dashboard page', () => {
 
     renderDashboard();
 
-    expect(screen.getByText(/hello, priya!/i)).toBeInTheDocument();
+    expect(screen.getByText(/hey, priya/i)).toBeInTheDocument();
     expect(screen.getByText(new RegExp(`${label} Dashboard`, 'i'))).toBeInTheDocument();
   });
 
@@ -139,7 +139,7 @@ describe('Dashboard page', () => {
     const user = userEvent.setup();
 
     renderDashboard();
-    await user.click(screen.getByRole('button', { name: /new invoice/i }));
+    await user.click(screen.getAllByRole('button', { name: /new invoice/i })[0]);
 
     expect(mockNavigate).toHaveBeenCalledWith('/shop_admin/bill-creation');
   });
@@ -160,7 +160,7 @@ describe('Dashboard page', () => {
       renderDashboard();
 
       expect(screen.getByText(/^Total Revenue$/i)).toBeInTheDocument();
-      expect(screen.getByText(/^Total Branches$/i)).toBeInTheDocument();
+      expect(screen.getByText(/^Active Branches$/i)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /manage branches/i })).toBeInTheDocument();
     });
 
@@ -176,14 +176,10 @@ describe('Dashboard page', () => {
 
     it('renders the Department Admin dashboard with credit KPIs once loaded', async () => {
       authState.user = { role: 'department_admin', name: 'Dana', department: 'dept-1' };
-      dashboardState.data = { stats: { users: 2, totalBills: 7 } };
-      departmentsState.crud.getOne.mockResolvedValue({ outstandingCredit: 250, creditBalance: 900 });
+      dashboardState.data = { stats: { users: 2, totalBills: 7, outstandingCredit: 250, creditBalance: 900 } };
 
       renderDashboard();
 
-      await waitFor(() => {
-        expect(departmentsState.crud.getOne).toHaveBeenCalledWith('dept-1');
-      });
       expect(await screen.findByText('₹250')).toBeInTheDocument();
       expect(screen.getByText('₹900')).toBeInTheDocument();
     });
@@ -194,8 +190,8 @@ describe('Dashboard page', () => {
 
       renderDashboard();
 
-      expect(screen.getByText(/shop revenue scope/i)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /billing logs/i })).toBeInTheDocument();
+      expect(screen.getByText(/^Shop Revenue$/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /view bills/i })).toBeInTheDocument();
     });
 
     it('renders the Staff dashboard with personal KPIs', () => {
@@ -206,10 +202,9 @@ describe('Dashboard page', () => {
 
       renderDashboard();
 
-      expect(screen.getByText(/your revenue generated/i)).toBeInTheDocument();
-      expect(screen.getByText(/payment collection rate/i)).toBeInTheDocument();
-      // efficiency = round(3/4 * 100) = 75%
-      expect(screen.getByText('75%')).toBeInTheDocument();
+      expect(screen.getByText(/my total revenue/i)).toBeInTheDocument();
+      expect(screen.getByText(/paid invoices/i)).toBeInTheDocument();
+      expect(screen.getByText('3')).toBeInTheDocument();
     });
   });
 

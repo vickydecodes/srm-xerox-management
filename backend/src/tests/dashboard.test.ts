@@ -2,6 +2,8 @@ import { describe, it, beforeAll, afterAll, expect } from 'vitest';
 import { bootstrap } from '../app.ts';
 import User from '@db/models/user.model.ts';
 import Branch from '@db/models/branch.model.ts';
+import Department from '@db/models/department.model.ts';
+import Shop from '@db/models/shop.model.ts';
 import { generateToken } from '../lib/jwt.ts';
 import { tester } from '@core/constants/tester.constant.ts';
 
@@ -9,6 +11,7 @@ const baseRoute = '/api/v1/dashboards';
 
 let superAdminToken: string;
 let cleanupAdmin: () => Promise<void>;
+let superAdminId: string;
 
 let testBranchId: string;
 
@@ -55,6 +58,22 @@ beforeAll(async () => {
     branch: testBranchId,
   });
 
+  const department: any = await Department.create({
+    name: `Test Department ${timestamp}`,
+    code: `TDEPT-${timestamp}`,
+    branch: branch._id,
+    createdBy: branchAdmin._id,
+    active: true,
+  } as any);
+
+  const shop: any = await Shop.create({
+    name: `Test Shop ${timestamp}`,
+    phone: '9876543209',
+    branch: branch._id,
+    createdBy: branchAdmin._id,
+    active: true,
+  } as any);
+
   const deptAdmin = await User.create({
     name: `Test Dept Admin ${timestamp}`,
     email: `dept_admin_${timestamp}@srm.edu`,
@@ -62,6 +81,7 @@ beforeAll(async () => {
     password: 'Password123',
     role: 'department_admin',
     branch: branch._id as any,
+    department: department._id as any,
     active: true,
   });
   deptAdminUserId = deptAdmin._id.toString();
@@ -69,6 +89,7 @@ beforeAll(async () => {
     id: deptAdmin._id,
     role: 'department_admin',
     branch: testBranchId,
+    department: department._id.toString(),
   });
 
   const shopAdmin = await User.create({
@@ -78,6 +99,7 @@ beforeAll(async () => {
     password: 'Password123',
     role: 'shop_admin',
     branch: branch._id as any,
+    shop: shop._id as any,
     active: true,
   });
   shopAdminUserId = shopAdmin._id.toString();
@@ -85,6 +107,7 @@ beforeAll(async () => {
     id: shopAdmin._id,
     role: 'shop_admin',
     branch: testBranchId,
+    shop: shop._id.toString(),
   });
 
   const staff = await User.create({

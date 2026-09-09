@@ -3,6 +3,8 @@ export const buildPayload = (user: any, role: string, loginId: string) => ({
   loginId,
   role,
   branch: user.branch || '',
+  department: user.department || '',
+  shop: user.shop || '',
 });
 
 export const ensureFields = (fields: Record<string, any>) => {

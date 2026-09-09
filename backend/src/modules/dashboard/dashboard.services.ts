@@ -35,12 +35,14 @@ export const getSuperAdminDashboard = async (lt?: string, gt?: string) => {
     recentBills,
     pendingCreditBills,
     unbilledRequisitions,
+    topItems,
+    billsByStatus,
   ] = await Promise.all([
-    Branch.countDocuments({ active: true, deleted: false }),
-    Department.countDocuments({ active: true, deleted: false }),
-    User.countDocuments({ active: true, deleted: false }),
-    Product.countDocuments({ active: true, deleted: false }),
-    Service.countDocuments({ active: true, deleted: false }),
+    Branch.countDocuments({ active: true, deleted: false, ...dateFilter }),
+    Department.countDocuments({ active: true, deleted: false, ...dateFilter }),
+    User.countDocuments({ active: true, deleted: false, ...dateFilter }),
+    Product.countDocuments({ active: true, deleted: false, ...dateFilter }),
+    Service.countDocuments({ active: true, deleted: false, ...dateFilter }),
     Bill.countDocuments({ deleted: false, ...dateFilter }),
 
     // Total revenue from paid bills
@@ -117,11 +119,38 @@ export const getSuperAdminDashboard = async (lt?: string, gt?: string) => {
       .populate('createdBy', 'name')
       .lean(),
 
-    // Pending credit bills needing Super Admin approval
-    Bill.countDocuments({ paymentMethod: 'CREDIT', approvalStatus: 'pending', deleted: false, ...dateFilter }),
+    // Orders waiting for approvals
+    Order.countDocuments({ status: 'pending', deleted: false }),
 
     // Unbilled approved requisitions
-    Order.countDocuments({ status: 'in_progress', deleted: false, ...dateFilter }),
+    Order.countDocuments({ status: 'in_progress', deleted: false }),
+
+    // Top selling items
+    Bill.aggregate([
+      { $match: { status: 'PAID', deleted: false, ...dateFilter } },
+      { $unwind: '$items' },
+      {
+        $group: {
+          _id: '$items.name',
+          count: { $sum: '$items.quantity' },
+          revenue: { $sum: '$items.total' },
+        },
+      },
+      { $sort: { count: -1 } },
+      { $limit: 10 },
+    ]),
+
+    // Bills by status
+    Bill.aggregate([
+      { $match: { deleted: false, ...dateFilter } },
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 },
+          amount: { $sum: '$total' },
+        },
+      },
+    ]),
   ]);
 
 
@@ -151,6 +180,8 @@ export const getSuperAdminDashboard = async (lt?: string, gt?: string) => {
     })),
     branchRevenue,
     recentBills,
+    topItems,
+    billsByStatus,
   };
 };
 
@@ -168,6 +199,9 @@ export const getBranchAdminDashboard = async (branchId: string, lt?: string, gt?
     paymentMethods,
     departmentRevenue,
     recentBills,
+    pendingOrders,
+    topItems,
+    billsByStatus
   ] = await Promise.all([
     Department.countDocuments({ branch: branchObjectId, active: true, deleted: false }),
     User.countDocuments({ branch: branchObjectId, active: true, deleted: false }),
@@ -255,6 +289,36 @@ export const getBranchAdminDashboard = async (branchId: string, lt?: string, gt?
       .populate('department', 'name')
       .populate('createdBy', 'name')
       .lean(),
+      
+    // Branch Orders waiting for approval
+    Order.countDocuments({ branch: branchObjectId, 'branchAdminApproval.status': 'pending', deleted: false }),
+    
+    // Top selling items in branch
+    Bill.aggregate([
+      { $match: { branch: branchObjectId, status: 'PAID', deleted: false, ...dateFilter } },
+      { $unwind: '$items' },
+      {
+        $group: {
+          _id: '$items.name',
+          count: { $sum: '$items.quantity' },
+          revenue: { $sum: '$items.total' },
+        },
+      },
+      { $sort: { count: -1 } },
+      { $limit: 10 },
+    ]),
+    
+    // Branch bills by status
+    Bill.aggregate([
+      { $match: { branch: branchObjectId, deleted: false, ...dateFilter } },
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 },
+          amount: { $sum: '$total' },
+        },
+      },
+    ]),
   ]);
 
   return {
@@ -278,6 +342,131 @@ export const getBranchAdminDashboard = async (branchId: string, lt?: string, gt?
     })),
     departmentRevenue,
     recentBills,
+    pendingOrders,
+    topItems,
+    billsByStatus,
+  };
+};
+
+export const getDepartmentAdminDashboard = async (departmentId: string, lt?: string, gt?: string) => {
+  const departmentObjectId = new mongoose.Types.ObjectId(departmentId);
+  const dateFilter = buildDateFilter(lt, gt);
+
+  const department = await Department.findById(departmentObjectId).select('creditBalance outstandingCredit').lean();
+
+  const [
+    usersCount,
+    billsCount,
+    totalRevenueResult,
+    recentOrders,
+    recentBills,
+    pendingCreditBills,
+    unbilledRequisitions
+  ] = await Promise.all([
+    User.countDocuments({ department: departmentObjectId, active: true, deleted: false }),
+    Bill.countDocuments({ department: departmentObjectId, deleted: false, ...dateFilter }),
+    Bill.aggregate([
+      { $match: { department: departmentObjectId, status: 'PAID', deleted: false, ...dateFilter } },
+      { $group: { _id: null, total: { $sum: '$total' } } },
+    ]),
+    Order.find({ department: departmentObjectId, deleted: false, ...dateFilter })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .lean(),
+    Bill.find({ department: departmentObjectId, deleted: false, ...dateFilter })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .populate('createdBy', 'name')
+      .lean(),
+    Bill.countDocuments({ department: departmentObjectId, status: 'UNPAID', paymentMethod: 'CREDIT', deleted: false }),
+    Order.countDocuments({ department: departmentObjectId, status: 'in_progress', deleted: false }),
+  ]);
+
+  return {
+    stats: {
+      users: usersCount,
+      totalBills: billsCount,
+      totalSpend: totalRevenueResult[0]?.total ?? 0,
+      outstandingCredit: department?.outstandingCredit ?? pendingCreditBills,
+      creditBalance: department?.creditBalance ?? 0,
+      pendingOrders: unbilledRequisitions,
+    },
+    recentOrders,
+    recentBills,
+  };
+};
+
+export const getShopAdminDashboard = async (shopId: string, lt?: string, gt?: string) => {
+  const shopObjectId = new mongoose.Types.ObjectId(shopId);
+  const dateFilter = buildDateFilter(lt, gt);
+  
+  const shopStaff = await User.find({ shop: shopObjectId, deleted: false }).select('_id');
+  const staffIds = shopStaff.map(u => u._id);
+
+  const [
+    billsCount,
+    totalRevenueResult,
+    pendingOrders,
+    recentBills,
+    topItems,
+    monthlyRevenue
+  ] = await Promise.all([
+    Bill.countDocuments({ createdBy: { $in: staffIds }, deleted: false, ...dateFilter }),
+    Bill.aggregate([
+      { $match: { createdBy: { $in: staffIds }, status: 'PAID', deleted: false, ...dateFilter } },
+      { $group: { _id: null, total: { $sum: '$total' } } },
+    ]),
+    Order.countDocuments({ shop: shopObjectId, status: 'in_progress', deleted: false }),
+    Bill.find({ createdBy: { $in: staffIds }, deleted: false, ...dateFilter })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .populate('createdBy', 'name')
+      .lean(),
+    Bill.aggregate([
+      { $match: { createdBy: { $in: staffIds }, status: 'PAID', deleted: false, ...dateFilter } },
+      { $unwind: '$items' },
+      {
+        $group: {
+          _id: '$items.name',
+          count: { $sum: '$items.quantity' },
+          revenue: { $sum: '$items.total' },
+        },
+      },
+      { $sort: { count: -1 } },
+      { $limit: 10 },
+    ]),
+    Bill.aggregate([
+      { $match: { createdBy: { $in: staffIds }, status: 'PAID', deleted: false, ...dateFilter } },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$createdAt' },
+            month: { $month: '$createdAt' },
+          },
+          revenue: { $sum: '$total' },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { '_id.year': 1, '_id.month': 1 } },
+      { $limit: 6 },
+    ]),
+  ]);
+
+  return {
+    stats: {
+      staff: staffIds.length,
+      totalBills: billsCount,
+      totalRevenue: totalRevenueResult[0]?.total ?? 0,
+      pendingOrders: pendingOrders,
+    },
+    recentBills,
+    topItems,
+    monthlyRevenue: monthlyRevenue.map((item) => ({
+      year: item._id.year,
+      month: item._id.month,
+      revenue: item.revenue,
+      count: item.count,
+    })),
   };
 };
 

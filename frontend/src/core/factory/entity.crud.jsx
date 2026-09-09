@@ -99,6 +99,10 @@ export const createCrud = ({ entity, urls, store, getRole }) => {
           options.params = args[0];
         }
 
+        if (callOptions.force) {
+          options.params = { ...options.params, force: true };
+        }
+
         const res = await apiRequest(method, finalUrl, options);
 
         if (SET_KEYS.includes(key) && !callOptions.skipStore) {
@@ -155,6 +159,17 @@ export const createCrud = ({ entity, urls, store, getRole }) => {
 
         return res.data;
       } catch (err) {
+        if (err.response?.data?.code === 'DEPENDENCY_CONFLICT') {
+          toast.error(err.response.data.message, {
+            duration: 8000,
+            action: {
+              label: 'Force Delete',
+              onClick: () => crud[key](...args, { __options: { force: true } })
+            }
+          });
+          throw err;
+        }
+
         handleApiError(err, `Failed to ${key} ${entity}`, {
           toast: callOptions.error !== false,
         });
