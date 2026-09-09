@@ -81,7 +81,7 @@ export default function Layout({ routes, logoutComponent }) {
                             {/* Breadcrumb row */}
                             <div className="flex items-center gap-3">
                                 <img
-                                    src="/logo1.png"
+                                    src="/final_logo.png"
                                     alt="SRM Logo"
                                     className="h-10 w-fit object-contain shrink-0"
                                 />
@@ -130,9 +130,9 @@ export const Logo = ({ role }) => (
             path: `/`,
             icon: (
                 <img
-                    src="/logo.png"
+                    src="/logo2.png"
                     alt="Logo"
-                    className="h-8 w-8 shrink-0 object-contain"
+                    className="h-16 w-16 shrink-0 object-contain"
                 />
             ),
         }}
@@ -145,9 +145,9 @@ export const LogoIcon = () => (
         className="relative z-20 flex items-center justify-center py-1"
     >
         <img
-            src="/logo.png"
+            src="/logo2.png"
             alt="Logo"
-            className="h-8 w-8 shrink-0 object-contain"
+            className="h-16 w-16 shrink-0 object-contain"
         />
     </Link>
 );
