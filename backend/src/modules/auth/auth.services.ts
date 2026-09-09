@@ -49,6 +49,8 @@ export const login = async (loginId: string, password?: string) => {
       ...user.toObject(),
       role,
       branch: user.branch || null,
+      department: user.department || null,
+      shop: user.shop || null,
     },
     token: generateToken(payload),
   };
@@ -105,6 +107,8 @@ export const getCurrentUser = async (token: string): Promise<ReturnedUser> => {
   const user = await User.findById(id)
     .select('-password')
     .populate({ path: 'branch', select: '_id name' })
+    .populate({ path: 'department', select: '_id name' })
+    .populate({ path: 'shop', select: '_id name' })
     .lean();
 
   if (!user) throw new ApiError(404, ERROR.USER_NOT_FOUND);

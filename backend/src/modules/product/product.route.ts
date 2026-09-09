@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authMiddleware } from '@core/middlewares/auth.middleware.js';
-// import { accessControl } from '@core/middlewares/access.middleware.js';
+import { accessControl } from '@core/middlewares/access.middleware.js';
 import { zodValidate } from '@core/middlewares/zod.validator.js';
 import {
   createProductSchema,
@@ -23,7 +23,7 @@ const router = Router();
 
 router.use(authMiddleware);
 
-// router.use(accessControl);
+router.use(accessControl);
 
 // const MODULE = '-product';
 

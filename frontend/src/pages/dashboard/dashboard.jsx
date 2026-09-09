@@ -77,31 +77,27 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-      {/* Welcome Banner */}
-      <Card className="border border-border shadow-sm bg-card relative overflow-hidden">
-        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-primary to-secondary" />
-        <CardContent className="py-6 px-6 md:px-8 flex flex-col lg:flex-row items-center justify-between gap-4">
-          <div className="space-y-1 text-center lg:text-left">
-            <h1 className="text-2xl font-extrabold text-foreground tracking-tight">
-              Hello, {user.name}!
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Welcome back to your {getRoleLabel(user.role)} Dashboard. Here's a summary of the Xerox operational activities.
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-4 items-center">
-            <DateRangePicker date={dateRange} setDate={setDateRange} />
-            <Button
-              onClick={() => navigate(`/${user.role}/bill-creation`)}
-              className="flex items-center gap-2 cursor-pointer font-bold px-4 py-2 bg-primary hover:bg-primary/95 text-primary-foreground shadow transition duration-200"
-            >
-              <IconFileInvoice className="w-4.5 h-4.5" />
-              New Invoice
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="flex flex-col gap-6 animate-in fade-in duration-500">
+      {/* Welcome Header */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-border/60">
+        <div className="space-y-1 text-left">
+          <h1 className="text-xl font-semibold text-foreground tracking-tight">
+            Hey, {user.name}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {getRoleLabel(user.role)} Dashboard
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3 items-center">
+          <DateRangePicker date={dateRange} setDate={setDateRange} />
+          <Button
+            onClick={() => navigate(`/${user.role}/bill-creation`)}
+            className="flex items-center gap-2 text-sm h-9 px-4 bg-foreground hover:bg-foreground/90 text-background rounded-md shadow-sm transition-colors"
+          >
+            New Invoice
+          </Button>
+        </div>
+      </div>
 
       {/* Render the role-specific dashboard */}
       {renderRoleDashboard()}

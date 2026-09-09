@@ -1,4 +1,5 @@
-  import { Request, Response, NextFunction } from 'express';
+import mongoose from 'mongoose';
+import { Request, Response, NextFunction } from 'express';
    import sendResponse from '@core/constants/responsewrapper.constant.js';
    import type { AuthUser, Role } from '@typings/auth.types.ts';
 
@@ -12,6 +13,7 @@
      role?: Role;
      branch?: string;
      department?: string;
+     shop?: string;
      queryFilter?: Record<string, any>;
    }
 
@@ -21,7 +23,7 @@ export async function accessControl(req: AccessRequest, res: Response, next: Nex
       return sendResponse.unauthorized(res, 'Unauthenticated');
     }
 
-    const { role, branch, department, active } = req.user as any;
+    const { role, branch, department, shop, active, _id } = req.user as any;
 
     if (active === false) {
       return sendResponse.unauthorized(
@@ -33,6 +35,7 @@ export async function accessControl(req: AccessRequest, res: Response, next: Nex
     req.role = role as Role;
     req.branch = branch;
     req.department = department;
+    req.shop = shop;
 
     req.queryFilter = {};
 
@@ -40,9 +43,20 @@ export async function accessControl(req: AccessRequest, res: Response, next: Nex
     
     switch (req.role) {
       case 'super_admin':
-      case 'shop_admin':
+        break;
+      case 'shop_admin': {
+        const User = mongoose.model('User');
+        const shopStaff = await User.find({ shop: req.shop }).select('_id');
+        const staffIds = shopStaff.map(u => u._id);
+        req.queryFilter.createdBy = { $in: staffIds };
+        req.queryFilter.shop = req.shop;
+        req.queryFilter.branch = req.branch;
+        break;
+      }
       case 'staff':
-        
+        req.queryFilter.createdBy = _id;
+        req.queryFilter.shop = req.shop;
+        req.queryFilter.branch = req.branch;
         break;
       case 'branch_admin':
         req.queryFilter.branch = req.branch;
