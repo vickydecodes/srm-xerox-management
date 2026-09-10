@@ -123,23 +123,36 @@ export default function OrderForm({
     }
   };
 
-  // Helper to get display names from user object
+  // ---------- Robust name resolution ----------
+  const branchId =
+    form.getValues("branch") ||
+    (typeof user?.branch === "object" ? user.branch?._id : user?.branch);
+
+  const deptId =
+    form.getValues("department") ||
+    (typeof user?.department === "object"
+      ? user.department?._id
+      : user?.department);
+
   const userBranchName =
-    typeof user?.branch === "object" ? user.branch?.name : null;
+    (typeof user?.branch === "object" && user.branch?.name) ||
+    branches.find((b) => String(b._id) === String(branchId))?.name ||
+    "—";
+
   const userDeptName =
-    typeof user?.department === "object" ? user.department?.name : null;
+    (typeof user?.department === "object" && user.department?.name) ||
+    departments.find((d) => String(d._id) === String(deptId))?.name ||
+    "—";
 
   return (
     <>
       {/* Branch */}
       {lockBranchDept ? (
-        // Read-only display for department admin / branch admin
         <div className="space-y-1.5">
           <Label>Branch</Label>
           <div className="rounded-md border bg-muted/40 px-3 py-2.5 text-sm">
-            {userBranchName || "—"}
+            {userBranchName}
           </div>
-          {/* Hidden form field so the ID is still submitted */}
           <FormField
             control={form.control}
             name="branch"
@@ -147,7 +160,6 @@ export default function OrderForm({
           />
         </div>
       ) : (
-        // Editable Select for super admin
         <FormField
           control={form.control}
           name="branch"
@@ -180,13 +192,11 @@ export default function OrderForm({
 
       {/* Department */}
       {lockBranchDept ? (
-        // Read-only display for department admin / branch admin
         <div className="space-y-1.5">
           <Label>Department</Label>
           <div className="rounded-md border bg-muted/40 px-3 py-2.5 text-sm">
-            {userDeptName || "—"}
+            {userDeptName}
           </div>
-          {/* Hidden form field so the ID is still submitted */}
           <FormField
             control={form.control}
             name="department"
@@ -194,7 +204,6 @@ export default function OrderForm({
           />
         </div>
       ) : (
-        // Editable Select for super admin
         <FormField
           control={form.control}
           name="department"
