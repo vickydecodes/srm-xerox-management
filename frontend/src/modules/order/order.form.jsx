@@ -46,19 +46,26 @@ export default function OrderForm({
   const selectedBranch = useWatch({ control: form.control, name: "branch" });
 
   const filteredDepartments = selectedBranch
-    ? departments.filter((d) => (d.branch?._id || d.branch) === selectedBranch)
+    ? departments.filter(
+        (d) => String(d.branch?._id || d.branch) === String(selectedBranch)
+      )
     : departments;
 
+  // Only clear department when data is loaded and the current value is invalid
   useEffect(() => {
+    if (!selectedBranch || departments.length === 0 || lockBranchDept) return;
+
     const currentDept = form.getValues("department");
-    if (
-      currentDept &&
-      !filteredDepartments.some((d) => d._id === currentDept)
-    ) {
+    if (!currentDept) return;
+
+    const isValid = filteredDepartments.some(
+      (d) => String(d._id) === String(currentDept)
+    );
+
+    if (!isValid) {
       form.setValue("department", "");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [selectedBranch, departments, filteredDepartments, form, lockBranchDept]);
 
   const {
     fields: itemFields,
@@ -116,73 +123,114 @@ export default function OrderForm({
     }
   };
 
+  // Helper to get display names from user object
+  const userBranchName =
+    typeof user?.branch === "object" ? user.branch?.name : null;
+  const userDeptName =
+    typeof user?.department === "object" ? user.department?.name : null;
+
   return (
     <>
       {/* Branch */}
-      <FormField
-        control={form.control}
-        name="branch"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Branch</FormLabel>
-            <FormControl>
-              <Select
-                value={field.value ? String(field.value) : undefined}
-                onValueChange={field.onChange}
-                disabled={lockBranchDept}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a branch" />
-                </SelectTrigger>
-                <SelectContent>
-                  {branches.map((branch) => (
-                    <SelectItem key={branch._id} value={String(branch._id)}>
-                      {branch.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      {lockBranchDept ? (
+        // Read-only display for department admin / branch admin
+        <div className="space-y-1.5">
+          <Label>Branch</Label>
+          <div className="rounded-md border bg-muted/40 px-3 py-2.5 text-sm">
+            {userBranchName || "—"}
+          </div>
+          {/* Hidden form field so the ID is still submitted */}
+          <FormField
+            control={form.control}
+            name="branch"
+            render={({ field }) => <input type="hidden" {...field} />}
+          />
+        </div>
+      ) : (
+        // Editable Select for super admin
+        <FormField
+          control={form.control}
+          name="branch"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Branch</FormLabel>
+              <FormControl>
+                <Select
+                  key={`branch-${branches.length}-${field.value}`}
+                  value={field.value ? String(field.value) : undefined}
+                  onValueChange={field.onChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a branch" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {branches.map((branch) => (
+                      <SelectItem key={branch._id} value={String(branch._id)}>
+                        {branch.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
 
       {/* Department */}
-      <FormField
-        control={form.control}
-        name="department"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Department</FormLabel>
-            <FormControl>
-              <Select
-                value={field.value ? String(field.value) : undefined}
-                onValueChange={field.onChange}
-                disabled={lockBranchDept || !selectedBranch}
-              >
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={
-                      selectedBranch
-                        ? "Select a department"
-                        : "Select a branch first"
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredDepartments.map((dept) => (
-                    <SelectItem key={dept._id} value={String(dept._id)}>
-                      {dept.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      {lockBranchDept ? (
+        // Read-only display for department admin / branch admin
+        <div className="space-y-1.5">
+          <Label>Department</Label>
+          <div className="rounded-md border bg-muted/40 px-3 py-2.5 text-sm">
+            {userDeptName || "—"}
+          </div>
+          {/* Hidden form field so the ID is still submitted */}
+          <FormField
+            control={form.control}
+            name="department"
+            render={({ field }) => <input type="hidden" {...field} />}
+          />
+        </div>
+      ) : (
+        // Editable Select for super admin
+        <FormField
+          control={form.control}
+          name="department"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Department</FormLabel>
+              <FormControl>
+                <Select
+                  key={`dept-${filteredDepartments.length}-${field.value}`}
+                  value={field.value ? String(field.value) : undefined}
+                  onValueChange={field.onChange}
+                  disabled={!selectedBranch}
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={
+                        selectedBranch
+                          ? "Select a department"
+                          : "Select a branch first"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filteredDepartments.map((dept) => (
+                      <SelectItem key={dept._id} value={String(dept._id)}>
+                        {dept.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
 
       {/* Shop */}
       <FormField
