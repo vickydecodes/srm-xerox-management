@@ -6,6 +6,7 @@ import {
   IconKey,
   IconUser,
   IconLayoutDashboard,
+  IconPackages
 } from "@tabler/icons-react";
 import Service from "@/pages/service/service";
 import ChangePassword from "@/pages/changepassword/changepassword";
@@ -14,7 +15,7 @@ import Product from "@/pages/product/product";
 import Bill from "@/pages/bill/bill";
 import Dashboard from "@/pages/dashboard/dashboard";
 import Order from "@/pages/order/order";
-import InventoryProduct from "@/pages/inventory/inventory.product";
+import InventoryProduct from "@/pages/inventory-product/inventory-product";
 
 export const staffRoutes = {
   role: "staff",
