@@ -39,14 +39,7 @@ export const useBillModule = (exported) => {
     return crud.edit(bill._id, { status: newStatus });
   };
 
-  const openDelete = (id, code) => {
-    return openModal(modals.delete, {
-      id,
-      code,
-      onConfirm: (id) => crud.delete(id),
-      exported,
-    });
-  };
+
 
    const openErase = (id) => {
       return openModal(modals.erase, {
@@ -56,22 +49,9 @@ export const useBillModule = (exported) => {
       });
     };
   
-    const openRetrieve = (id) => {
-      return openModal(modals.retrieve, {
-        id,
-        submitFn: (id) => crud.retrieve(id),
-        exported,
-      });
-    };
+
   
-    const openActiveStatus = (id, status) => {
-      return openModal(modals.activeStatus, {
-        id,
-        status,
-        submitFn: (id, data) => crud.setActiveStatus(id, data),
-        exported,
-      });
-    };
+
 
 
   const { fetch, reset, sortByColumn, presets, csv, xlsx, pdf, getQuery } = createEntityQueryActions({
@@ -96,10 +76,7 @@ export const useBillModule = (exported) => {
     useBillColumns,
     openView,
     openEdit,
-    openDelete,
     openErase,
-    openRetrieve,
-    openActiveStatus,
     togglePaymentStatus,
     crud,
     create: crud.create,
