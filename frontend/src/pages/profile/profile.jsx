@@ -11,6 +11,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import {
   IconUser,
@@ -23,11 +29,9 @@ import {
   IconCopy,
   IconCheck,
   IconKey,
-  IconGitBranch,
-  IconCircleCheck,
-  IconFingerprint,
-  IconActivity,
   IconBuilding,
+  IconGitBranch,
+  IconShoppingCart,
 } from "@tabler/icons-react";
 
 export default function Profile() {
@@ -40,109 +44,40 @@ export default function Profile() {
       <div className="flex justify-center items-center h-64">
         <div className="flex flex-col items-center gap-3">
           <div className="h-10 w-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-muted-foreground font-medium animate-pulse">Loading user profile...</p>
+          <p className="text-muted-foreground font-medium animate-pulse">
+            Loading profile...
+          </p>
         </div>
       </div>
     );
   }
 
   const handleCopyLoginId = () => {
-    if (user?.login_id) {
-      navigator.clipboard.writeText(user.login_id);
-      setCopied(true);
-      toast.success("Login ID copied to clipboard!");
-      setTimeout(() => setCopied(false), 2000);
-    }
+    if (!user?.login_id) return;
+    navigator.clipboard.writeText(user.login_id);
+    setCopied(true);
+    toast.success("Login ID copied");
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const getRoleLabel = (role) => {
-    switch (role) {
-      case "super_admin":
-        return "Super Admin";
-      case "branch_admin":
-        return "Branch Admin";
-      case "department_admin":
-        return "Department Admin";
-      case "shop_admin":
-        return "Shop Admin";
-      case "staff":
-        return "Staff Member";
-      default:
-        return role;
-    }
+    const map = {
+      super_admin: "Super Admin",
+      branch_admin: "Branch Admin",
+      department_admin: "Department Admin",
+      shop_admin: "Shop Admin",
+      staff: "Staff",
+    };
+    return map[role] || role;
   };
 
-  const getRoleBadgeVariant = (role) => {
-    switch (role) {
-      case "super_admin":
-        return "default";
-      case "branch_admin":
-        return "secondary";
-      default:
-        return "outline";
+  const getAvatarInitials = () => {
+    if (!user.name) return "U";
+    const parts = user.name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
     }
-  };
-
-  const getRoleDescription = (role) => {
-    switch (role) {
-      case "super_admin":
-        return "Complete administrative control over all branches, users, billing metrics, inventory catalogs, and system configurations.";
-      case "branch_admin":
-        return "Oversees operational structures, department assignments, and administrative roles associated with the assigned branch.";
-      case "department_admin":
-        return "Responsible for managing product inventory, workflow policies, and personnel assigned to the department.";
-      case "shop_admin":
-        return "Manages local shop stock records, processes billing logs, and coordinates daily register sales.";
-      case "staff":
-        return "Authorized to create customer invoices, lookup product pricing, and coordinate general services.";
-      default:
-        return "Standard operational authorization role.";
-    }
-  };
-
-  const getRoleCapabilities = (role) => {
-    switch (role) {
-      case "super_admin":
-        return [
-          "Full System Configuration",
-          "Create and Manage Branches",
-          "Manage Branch & Shop Admins",
-          "Global Product & Service Catalog",
-          "Access All Billing Logs & Analytics",
-          "System Security & Password Resets",
-        ];
-      case "branch_admin":
-        return [
-          "Manage Assigned Branch Settings",
-          "Manage Departments within Branch",
-          "Create & Manage Department Admins",
-          "View Branch-wide Billing Reports",
-          "Monitor Branch Inventory Levels",
-        ];
-      case "department_admin":
-        return [
-          "Manage Department Operations",
-          "Assign Staff Members to Department",
-          "Configure Department Catalog Settings",
-          "View Department Sales Reports",
-        ];
-      case "shop_admin":
-        return [
-          "Manage Shop Inventory & Stock",
-          "Generate Billing & Invoices",
-          "Update Product Availability Status",
-          "Manage Daily Cash Register Logs",
-        ];
-      case "staff":
-        return [
-          "Create Invoices & Bills",
-          "View Product and Service Prices",
-          "Update Inventory Stock Levels",
-          "Access Assigned Department Register",
-        ];
-      default:
-        return ["General System Access"];
-    }
+    return user.name.charAt(0).toUpperCase();
   };
 
   const formattedDate = user.createdAt
@@ -153,238 +88,270 @@ export default function Profile() {
       })
     : "N/A";
 
-  const getAvatarInitials = () => {
-    if (!user.name) return "";
-    const nameLower = user.name.toLowerCase().trim();
-    if (nameLower === "super admin" || nameLower === "superadmin") {
-      return "SA";
-    }
-    const parts = user.name.split(" ").filter(Boolean);
-    if (parts.length >= 2) {
-      return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
-    }
-    return user.name.charAt(0).toUpperCase();
-  };
+  const showBranch = user.role === "branch_admin";
+  const showDepartment = user.role === "department_admin";
+  const showShop = user.role === "shop_admin";
 
   return (
-    <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-      
-      {/* V6: Centered Minimalist Stack Header */}
-      <Card className="relative overflow-hidden border border-border shadow-sm bg-card animate-in fade-in duration-200">
-        <CardContent className="pt-8 pb-8 px-6 md:px-8 flex flex-col items-center text-center">
-          <div className="relative group mb-4">
-            <div className="h-28 w-28 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-primary-foreground text-4xl font-extrabold shadow-md transition-all duration-300 group-hover:scale-105 select-none ring-4 ring-primary/10">
-              {getAvatarInitials() || <IconUser className="w-12 h-12" />}
-            </div>
-            <div className="absolute bottom-1 right-1 bg-primary h-5 w-5 rounded-full border-2 border-card animate-pulse shadow-sm" />
+    <div className="flex flex-col gap-6 max-w-5xl mx-auto px-4 py-8">
+      {/* Header */}
+      <Card>
+        <CardContent className="pt-8 pb-8 flex flex-col items-center text-center">
+          <div className="h-24 w-24 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground text-3xl font-bold shadow-md ring-4 ring-primary/10 mb-4">
+            {getAvatarInitials()}
           </div>
-          <div className="space-y-2">
-            <div className="flex items-center justify-center gap-2">
-              <h1 className="text-2xl font-extrabold text-foreground tracking-tight leading-none">{user.name}</h1>
-              <Badge variant={getRoleBadgeVariant(user.role)} className="px-2.5 py-0.5 capitalize text-xs font-bold">
-                {getRoleLabel(user.role)}
-              </Badge>
-            </div>
-            <p className="text-muted-foreground text-sm flex items-center justify-center gap-1.5">
-              <IconMail className="w-4 h-4 text-primary shrink-0" />
-              {user.email}
-            </p>
+
+          <div className="flex items-center gap-2 flex-wrap justify-center">
+            <h1 className="text-2xl font-bold tracking-tight">{user.name}</h1>
+            <Badge variant="secondary" className="capitalize">
+              {getRoleLabel(user.role)}
+            </Badge>
           </div>
+
+          <p className="text-muted-foreground text-sm mt-2 flex items-center gap-1.5">
+            <IconMail className="w-4 h-4 shrink-0" />
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="truncate max-w-[260px] cursor-default">
+                    {user.email}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{user.email}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </p>
         </CardContent>
       </Card>
 
-      {/* Main Details and Side Section Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left 2 Columns: Detailed Personal Information */}
+        {/* Left – Personal info */}
         <div className="lg:col-span-2 space-y-6">
-          <Card className="shadow-md border border-border bg-card">
-            <CardHeader className="px-6 md:px-8 pt-6">
-              <CardTitle className="text-xl font-bold flex items-center gap-2.5">
-                <IconUser className="w-5.5 h-5.5 text-primary" />
-                Personal Profile Information
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <IconUser className="w-5 h-5 text-primary" />
+                Profile details
               </CardTitle>
-              <CardDescription>Verified system credentials and contact records.</CardDescription>
+              <CardDescription>Your account information</CardDescription>
             </CardHeader>
-            
-            <CardContent className="px-6 md:px-8 pb-8 space-y-6">
-              {/* Details Boxes Grid */}
+
+            <CardContent className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                
-                {/* Login ID Box */}
-                <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/20 hover:bg-muted/50 border border-border/40 hover:border-primary/20 transition duration-200 group/item">
-                  <div className="p-3 rounded-xl bg-primary/5 text-primary group-hover/item:bg-primary group-hover/item:text-primary-foreground transition duration-300">
-                    <IconHash className="w-5.5 h-5.5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <span className="text-[10px] text-muted-foreground font-bold tracking-widest uppercase">Login ID</span>
-                    <div className="flex items-center justify-between gap-2 mt-0.5 relative">
-                      <span className="font-extrabold text-foreground truncate select-all">{user.login_id}</span>
-                      <div className="relative">
+                {/* Login ID */}
+                <InfoRow
+                  icon={<IconHash className="w-5 h-5" />}
+                  label="Login ID"
+                  value={
+                    <div className="flex items-center gap-2 min-w-0">
+                      <TooltipProvider delayDuration={200}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="font-semibold truncate cursor-default">
+                              {user.login_id || "—"}
+                            </span>
+                          </TooltipTrigger>
+                          {user.login_id && (
+                            <TooltipContent>
+                              <p>{user.login_id}</p>
+                            </TooltipContent>
+                          )}
+                        </Tooltip>
+                      </TooltipProvider>
+                      {user.login_id && (
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full transition cursor-pointer shrink-0"
+                          className="h-7 w-7 shrink-0"
                           onClick={handleCopyLoginId}
-                          title="Copy Login ID"
                         >
-                          {copied ? <IconCheck className="w-4 h-4 text-primary" /> : <IconCopy className="w-4 h-4" />}
+                          {copied ? (
+                            <IconCheck className="w-4 h-4 text-primary" />
+                          ) : (
+                            <IconCopy className="w-4 h-4" />
+                          )}
                         </Button>
-                        {copied && (
-                          <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[10px] px-2 py-0.5 rounded shadow-md font-semibold whitespace-nowrap animate-in fade-in duration-200">
-                            Copied!
-                          </span>
-                        )}
-                      </div>
+                      )}
                     </div>
-                  </div>
-                </div>
+                  }
+                />
 
-                {/* Security Role Box */}
-                <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/20 hover:bg-muted/50 border border-border/40 hover:border-primary/20 transition duration-200 group/item">
-                  <div className="p-3 rounded-xl bg-primary/5 text-primary group-hover/item:bg-primary group-hover/item:text-primary-foreground transition duration-300">
-                    <IconShield className="w-5.5 h-5.5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <span className="text-[10px] text-muted-foreground font-bold tracking-widest uppercase">Access Role</span>
-                    <p className="font-extrabold text-foreground capitalize mt-0.5 truncate">
-                      {getRoleLabel(user.role)}
-                    </p>
-                  </div>
-                </div>
+                {/* Role */}
+                <InfoRow
+                  icon={<IconShield className="w-5 h-5" />}
+                  label="Role"
+                  value={getRoleLabel(user.role)}
+                />
 
-                {/* Phone Number Box */}
-                <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/20 hover:bg-muted/50 border border-border/40 hover:border-primary/20 transition duration-200 group/item">
-                  <div className="p-3 rounded-xl bg-primary/5 text-primary group-hover/item:bg-primary group-hover/item:text-primary-foreground transition duration-300">
-                    <IconPhone className="w-5.5 h-5.5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <span className="text-[10px] text-muted-foreground font-bold tracking-widest uppercase">Phone Number</span>
-                    <p className="mt-0.5">
-                      <a href={`tel:${user.phone}`} className="font-extrabold text-primary hover:underline transition truncate block">
+                {/* Phone */}
+                <InfoRow
+                  icon={<IconPhone className="w-5 h-5" />}
+                  label="Phone"
+                  value={
+                    user.phone ? (
+                      <a
+                        href={`tel:${user.phone}`}
+                        className="text-primary hover:underline font-semibold"
+                      >
                         {user.phone}
                       </a>
-                    </p>
-                  </div>
-                </div>
+                    ) : (
+                      "—"
+                    )
+                  }
+                />
 
-                {/* Assigned Branch Box */}
-                <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/20 hover:bg-muted/50 border border-border/40 hover:border-primary/20 transition duration-200 group/item">
-                  <div className="p-3 rounded-xl bg-primary/5 text-primary group-hover/item:bg-primary group-hover/item:text-primary-foreground transition duration-300">
-                    <IconBuilding className="w-5.5 h-5.5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <span className="text-[10px] text-muted-foreground font-bold tracking-widest uppercase">Assigned Branch</span>
-                    <p className="font-extrabold text-foreground mt-0.5 truncate">
-                      {user.branch?.name || "Main Headquarters (Global)"}
-                    </p>
-                  </div>
-                </div>
+                {/* Email */}
+                <InfoRow
+                  icon={<IconMail className="w-5 h-5" />}
+                  label="Email"
+                  value={user.email || "—"}
+                />
 
+                {/* Branch – branch_admin only */}
+                {showBranch && (
+                  <InfoRow
+                    icon={<IconBuilding className="w-5 h-5" />}
+                    label="Branch"
+                    value={user.branch?.name || "Not assigned"}
+                  />
+                )}
+
+                {/* Department – department_admin only */}
+                {showDepartment && (
+                  <InfoRow
+                    icon={<IconGitBranch className="w-5 h-5" />}
+                    label="Department"
+                    value={user.department?.name || "Not assigned"}
+                  />
+                )}
+
+                {/* Shop – shop_admin only */}
+                {showShop && (
+                  <InfoRow
+                    icon={<IconShoppingCart className="w-5 h-5" />}
+                    label="Shop"
+                    value={user.shop?.name || "Not assigned"}
+                  />
+                )}
               </div>
 
-              {/* Address Box */}
-              <div className="flex items-start gap-4 p-4 rounded-xl bg-muted/20 hover:bg-muted/50 border border-border/40 hover:border-primary/20 transition duration-200 group/item">
-                <div className="p-3 rounded-xl bg-primary/5 text-primary group-hover/item:bg-primary group-hover/item:text-primary-foreground transition duration-300 shrink-0">
-                  <IconMapPin className="w-5.5 h-5.5" />
+              {/* Address */}
+              <div className="flex items-start gap-4 p-4 rounded-xl bg-muted/30 border border-border/50">
+                <div className="p-2.5 rounded-lg bg-primary/10 text-primary shrink-0">
+                  <IconMapPin className="w-5 h-5" />
                 </div>
-                <div className="flex-1">
-                  <span className="text-[10px] text-muted-foreground font-bold tracking-widest uppercase">Residential Address</span>
-                  <p className="text-foreground font-bold mt-1 leading-relaxed">
-                    {user.address || "No residential address specified in record."}
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] text-muted-foreground font-bold tracking-widest uppercase">
+                    Address
                   </p>
+                  <TooltipProvider delayDuration={200}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <p className="font-medium mt-1 leading-relaxed line-clamp-2 cursor-default">
+                          {user.address || "No address provided"}
+                        </p>
+                      </TooltipTrigger>
+                      {user.address && (
+                        <TooltipContent side="top" className="max-w-sm">
+                          <p className="break-words">{user.address}</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
-              </div>
-
-            </CardContent>
-          </Card>
-
-          {/* Capabilities Card */}
-          <Card className="shadow-md border border-border bg-card">
-            <CardHeader className="px-6 md:px-8 pt-6">
-              <CardTitle className="text-xl font-bold flex items-center gap-2.5">
-                <IconFingerprint className="w-5.5 h-5.5 text-primary" />
-                Access Scope & Capabilities
-              </CardTitle>
-              <CardDescription>
-                Your security clearance grants the following administrative capabilities within the system.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="px-6 md:px-8 pb-8 space-y-6">
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {getRoleDescription(user.role)}
-              </p>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                {getRoleCapabilities(user.role).map((cap, i) => (
-                  <div key={i} className="flex items-center gap-3 text-sm font-bold text-foreground">
-                    <IconCircleCheck className="w-5 h-5 text-primary shrink-0" />
-                    <span>{cap}</span>
-                  </div>
-                ))}
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Right Column: Status & Security Actions */}
+        {/* Right – Status + security */}
         <div className="space-y-6">
-          
-          {/* Status Details Card */}
-          <Card className="shadow-md border border-border bg-card">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-bold flex items-center gap-2">
-                <IconActivity className="w-5 h-5 text-primary" />
-                Account Status
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <IconCalendar className="w-4 h-4 text-primary" />
+                Account
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex justify-between items-center text-sm font-semibold">
-                <span className="text-muted-foreground">Operational Status</span>
-                <span className="inline-flex items-center gap-1.5 font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full text-xs">
-                  <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                  Active
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground">Status</span>
+                <span className="inline-flex items-center gap-1.5 font-medium text-emerald-600 bg-emerald-500/10 px-2.5 py-0.5 rounded-full text-xs">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  {user.active !== false ? "Active" : "Inactive"}
                 </span>
               </div>
-              
+
               <Separator />
 
-              <div className="space-y-2">
-                <span className="text-xs text-muted-foreground font-bold tracking-widest uppercase flex items-center gap-1.5">
-                  <IconCalendar className="w-4 h-4 text-primary" />
-                  Member Since
-                </span>
-                <p className="text-sm font-extrabold text-foreground">
-                  {formattedDate}
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">
+                  Member since
                 </p>
+                <p className="text-sm font-semibold mt-1">{formattedDate}</p>
               </div>
             </CardContent>
           </Card>
 
-          {/* Security Action Cards */}
-          <Card className="shadow-md border border-border bg-card">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-bold flex items-center gap-2">
-                <IconKey className="w-5 h-5 text-primary" />
-                Account Credentials
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <IconKey className="w-4 h-4 text-primary" />
+                Security
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Keep your access secure by updating your credentials regularly. When updating, you will be prompted to re-authenticate.
-              </p>
+            <CardContent>
               <Button
                 variant="outline"
-                className="w-full flex items-center justify-center gap-2 cursor-pointer font-bold py-5 hover:bg-primary/5 hover:text-primary hover:border-primary transition duration-200"
+                className="w-full gap-2"
                 onClick={() => navigate(`/${user.role}/changepassword`)}
               >
-                <IconKey className="w-4 h-4 shrink-0" />
-                Change Password
+                <IconKey className="w-4 h-4" />
+                Change password
               </Button>
             </CardContent>
           </Card>
-
         </div>
+      </div>
+    </div>
+  );
+}
+
+function InfoRow({ icon, label, value }) {
+  const text =
+    typeof value === "string" || typeof value === "number"
+      ? String(value)
+      : null;
+
+  return (
+    <div className="flex items-center gap-3 p-3.5 rounded-xl bg-muted/30 border border-border/50">
+      <div className="p-2.5 rounded-lg bg-primary/10 text-primary shrink-0">
+        {icon}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] text-muted-foreground font-bold tracking-widest uppercase">
+          {label}
+        </p>
+
+        {text ? (
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <p className="font-semibold text-sm mt-0.5 truncate cursor-default">
+                  {text}
+                </p>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs">
+                <p className="break-words">{text}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        ) : (
+          <div className="font-semibold text-sm mt-0.5 truncate">{value}</div>
+        )}
       </div>
     </div>
   );
