@@ -56,7 +56,7 @@ export default function Profile() {
     if (!user?.login_id) return;
     navigator.clipboard.writeText(user.login_id);
     setCopied(true);
-    toast.success("Login ID copied");
+    toast.success("Login ID copied to clipboard!");
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -66,7 +66,7 @@ export default function Profile() {
       branch_admin: "Branch Admin",
       department_admin: "Department Admin",
       shop_admin: "Shop Admin",
-      staff: "Staff",
+      staff: "Staff Member",
     };
     return map[role] || role;
   };
@@ -164,6 +164,7 @@ export default function Profile() {
                         <Button
                           variant="ghost"
                           size="icon"
+                          title="Copy login ID"
                           className="h-7 w-7 shrink-0"
                           onClick={handleCopyLoginId}
                         >
@@ -215,7 +216,7 @@ export default function Profile() {
                   <InfoRow
                     icon={<IconBuilding className="w-5 h-5" />}
                     label="Branch"
-                    value={user.branch?.name || "Not assigned"}
+                    value={user.branch?.name || "Main Headquarters (Global)"}
                   />
                 )}
 
