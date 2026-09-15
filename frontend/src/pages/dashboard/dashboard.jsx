@@ -17,7 +17,10 @@ export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { dashboard } = useApi();
-  const [dateRange, setDateRange] = useState({ from: undefined, to: undefined });
+  const [dateRange, setDateRange] = useState({
+    from: undefined,
+    to: undefined,
+  });
 
   const fetchDashboard = () => {
     if (dashboard && user?.role) {
@@ -63,7 +66,11 @@ export default function Dashboard() {
       case "staff":
         return <StaffDashboard {...props} />;
       default:
-        return <p className="text-muted-foreground text-sm">No dashboard view defined for this role.</p>;
+        return (
+          <p className="text-muted-foreground text-sm">
+            No dashboard view defined for this role.
+          </p>
+        );
     }
   };
 
@@ -71,7 +78,9 @@ export default function Dashboard() {
     return (
       <div className="flex flex-col items-center justify-center h-96 gap-4 animate-in fade-in duration-300">
         <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="text-muted-foreground font-semibold animate-pulse">Assembling dashboard data...</p>
+        <p className="text-muted-foreground font-semibold animate-pulse">
+          Assembling dashboard data...
+        </p>
       </div>
     );
   }
@@ -90,12 +99,14 @@ export default function Dashboard() {
         </div>
         <div className="flex flex-col sm:flex-row gap-3 items-center">
           <DateRangePicker date={dateRange} setDate={setDateRange} />
-          <Button
-            onClick={() => navigate(`/${user.role}/bill-creation`)}
-            className="flex items-center gap-2 text-sm h-9 px-4 bg-foreground hover:bg-foreground/90 text-background rounded-md shadow-sm transition-colors"
-          >
-            New Invoice
-          </Button>
+          {user.role === "shop_admin" && (
+            <Button
+              onClick={() => navigate(`/${user.role}/bill-creation`)}
+              className="flex items-center gap-2 text-sm h-9 px-4 bg-foreground hover:bg-foreground/90 text-background rounded-md shadow-sm transition-colors"
+            >
+              New Invoice
+            </Button>
+          )}
         </div>
       </div>
 

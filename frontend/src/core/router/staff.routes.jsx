@@ -6,6 +6,7 @@ import {
   IconKey,
   IconUser,
   IconLayoutDashboard,
+  IconPackages
 } from "@tabler/icons-react";
 import Service from "@/pages/service/service";
 import ChangePassword from "@/pages/changepassword/changepassword";
@@ -14,6 +15,7 @@ import Product from "@/pages/product/product";
 import Bill from "@/pages/bill/bill";
 import Dashboard from "@/pages/dashboard/dashboard";
 import Order from "@/pages/order/order";
+import InventoryProduct from "@/pages/inventory-product/inventory-product";
 
 export const staffRoutes = {
   role: "staff",
@@ -25,6 +27,15 @@ export const staffRoutes = {
       description: "Overview of your invoices and billing activity.",
       element: <Dashboard />,
       icon: <IconLayoutDashboard className="h-5 w-5 shrink-0" />,
+    },
+    {
+      path: "/staff/inventory",
+      label: "Inventory",
+      title: "Inventory Management",
+      description:
+        "Manage inventory items, stock levels, and product availability.",
+      icon: <IconPackages className="h-5 w-5 shrink-0" />,
+      element: <InventoryProduct />,
     },
     {
       path: "/staff/product",
