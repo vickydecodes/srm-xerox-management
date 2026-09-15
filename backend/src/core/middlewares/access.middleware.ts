@@ -23,7 +23,9 @@ export async function accessControl(req: AccessRequest, res: Response, next: Nex
       return sendResponse.unauthorized(res, 'Unauthenticated');
     }
 
-    const { role, branch, department, shop, active, _id } = req.user as any;
+    const { role, branch, department, shop, active, id } = req.user as any;
+
+    console.log(req.user)
 
     if (active === false) {
       return sendResponse.unauthorized(
@@ -45,16 +47,11 @@ export async function accessControl(req: AccessRequest, res: Response, next: Nex
       case 'super_admin':
         break;
       case 'shop_admin': {
-        const User = mongoose.model('User');
-        const shopStaff = await User.find({ shop: req.shop }).select('_id');
-        const staffIds = shopStaff.map(u => u._id);
-        req.queryFilter.createdBy = { $in: staffIds };
         req.queryFilter.shop = req.shop;
-        req.queryFilter.branch = req.branch;
         break;
       }
       case 'staff':
-        req.queryFilter.createdBy = _id;
+        req.queryFilter.createdBy = id;
         req.queryFilter.shop = req.shop;
         req.queryFilter.branch = req.branch;
         break;

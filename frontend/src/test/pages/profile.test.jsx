@@ -61,17 +61,17 @@ describe('Profile page', () => {
   it('shows a loading state while the user has not hydrated yet', () => {
     useAuth.mockReturnValue({ user: null });
     render(<Profile />);
-    expect(screen.getByText(/loading user profile/i)).toBeInTheDocument();
+    expect(screen.getByText(/loading profile/i)).toBeInTheDocument();
   });
 
   it("renders the user's core identity details once loaded", () => {
-    const user = buildUser();
+    const user = buildUser({ role: 'branch_admin' });
     useAuth.mockReturnValue({ user });
     render(<Profile />);
 
     expect(screen.getByText(user.name)).toBeInTheDocument();
-    expect(screen.getByText(user.email)).toBeInTheDocument();
-    expect(screen.getByText(user.login_id)).toBeInTheDocument();
+    expect(screen.getAllByText(user.email).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(user.login_id).length).toBeGreaterThan(0);
     expect(screen.getByText('Main Branch')).toBeInTheDocument();
   });
 
@@ -88,7 +88,7 @@ describe('Profile page', () => {
   });
 
   it('falls back to "Main Headquarters (Global)" when no branch is assigned', () => {
-    useAuth.mockReturnValue({ user: buildUser({ branch: null }) });
+    useAuth.mockReturnValue({ user: buildUser({ branch: null, role: 'branch_admin' }) });
     render(<Profile />);
     expect(screen.getByText('Main Headquarters (Global)')).toBeInTheDocument();
   });

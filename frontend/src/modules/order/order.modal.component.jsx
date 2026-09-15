@@ -72,10 +72,11 @@ export const View = ({ order, exported, closeModal } = {}) => {
 
   const canSubmit = order?.status === "draft" && (isSuperAdmin || isDeptAdmin);
 
-  const canBranchApprove =
-    order?.status !== "draft" &&
-    order?.status !== "completed" &&
-    (isSuperAdmin || isBranchAdmin);
+ const canBranchApprove =
+  order?.status !== "draft" &&
+  order?.status !== "completed" &&
+  branchStatus !== "approved" &&
+  (isSuperAdmin || isBranchAdmin);
 
   const canSuperAdminApprove =
     order?.status !== "draft" &&

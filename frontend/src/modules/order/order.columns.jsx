@@ -1,15 +1,15 @@
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { MoreHorizontal } from "lucide-react"
-import { Hint } from "@/core/utils/tooltip.util"
-import formatdate from "@/core/utils/formatdate.util"
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal } from "lucide-react";
+import { Hint } from "@/core/utils/tooltip.util";
+import formatdate from "@/core/utils/formatdate.util";
 
 import { useAuth } from "@/core/contexts/auth.context";
 import {
@@ -21,53 +21,58 @@ import {
 } from "@tabler/icons-react";
 
 const statusStyles = {
-  draft: "border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400",
-  pending: "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-400",
-  in_progress: "border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-900/50 dark:bg-blue-950/20 dark:text-blue-400",
-  ready_for_pickup: "border-indigo-200 bg-indigo-50 text-indigo-800 dark:border-indigo-900/50 dark:bg-indigo-950/20 dark:text-indigo-400",
-  delivered: "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/20 dark:text-emerald-400",
-  completed: "border-green-200 bg-green-50 text-green-800 dark:border-green-900/50 dark:bg-green-950/20 dark:text-green-400",
-  rejected: "border-red-200 bg-red-50 text-red-800 dark:border-red-900/50 dark:bg-red-950/20 dark:text-red-400",
+  draft:
+    "border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400",
+  pending:
+    "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-400",
+  in_progress:
+    "border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-900/50 dark:bg-blue-950/20 dark:text-blue-400",
+  ready_for_pickup:
+    "border-indigo-200 bg-indigo-50 text-indigo-800 dark:border-indigo-900/50 dark:bg-indigo-950/20 dark:text-indigo-400",
+  delivered:
+    "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/20 dark:text-emerald-400",
+  completed:
+    "border-green-200 bg-green-50 text-green-800 dark:border-green-900/50 dark:bg-green-950/20 dark:text-green-400",
+  rejected:
+    "border-red-200 bg-red-50 text-red-800 dark:border-red-900/50 dark:bg-red-950/20 dark:text-red-400",
 };
 
 export const useOrderColumns = (orders) => {
-
   const { user } = useAuth();
-
 
   return [
     {
-      accessorKey: 'code',
-      header: () => Hint('Code', 'Auto-generated order code'),
-      cell: ({ row }) => <span>{row.getValue('code') || 'Draft'}</span>,
+      accessorKey: "code",
+      header: () => Hint("Code", "Auto-generated order code"),
+      cell: ({ row }) => <span>{row.getValue("code") || "Draft"}</span>,
     },
     {
-      accessorKey: 'department',
-      header: () => Hint('Department', 'Department that raised this order'),
+      accessorKey: "department",
+      header: () => Hint("Department", "Department that raised this order"),
       cell: ({ row }) => {
-        const department = row.getValue('department');
-        return <span>{department?.name || department || '-'}</span>;
+        const department = row.getValue("department");
+        return <span>{department?.name || department || "-"}</span>;
       },
     },
     {
-      accessorKey: 'branch',
-      header: () => Hint('Branch', 'Branch this order belongs to'),
+      accessorKey: "branch",
+      header: () => Hint("Branch", "Branch this order belongs to"),
       cell: ({ row }) => {
-        const branch = row.getValue('branch');
-        return <span>{branch?.name || branch || '-'}</span>;
+        const branch = row.getValue("branch");
+        return <span>{branch?.name || branch || "-"}</span>;
       },
     },
     {
-      accessorKey: 'shop',
-      header: () => Hint('Shop', 'Shop processing this order'),
+      accessorKey: "shop",
+      header: () => Hint("Shop", "Shop processing this order"),
       cell: ({ row }) => {
-        const shop = row.getValue('shop');
+        const shop = row.getValue("shop");
         const status = row.original?.status;
-        
+
         if (!shop) return <span className="text-muted-foreground">-</span>;
-        
-        const isReady = status === 'ready_for_pickup';
-        
+
+        const isReady = status === "ready_for_pickup";
+
         return (
           <div className="flex items-center gap-1.5">
             {isReady && (
@@ -76,18 +81,24 @@ export const useOrderColumns = (orders) => {
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
               </span>
             )}
-            <span className={isReady ? "font-semibold text-indigo-600 dark:text-indigo-400" : "text-muted-foreground"}>
-              {shop?.name || shop || '-'}
+            <span
+              className={
+                isReady
+                  ? "font-semibold text-indigo-600 dark:text-indigo-400"
+                  : "text-muted-foreground"
+              }
+            >
+              {shop?.name || shop || "-"}
             </span>
           </div>
         );
       },
     },
     {
-      accessorKey: 'status',
-      header: () => Hint('Status', 'Current order status'),
+      accessorKey: "status",
+      header: () => Hint("Status", "Current order status"),
       cell: ({ row }) => {
-        const status = row.getValue('status');
+        const status = row.getValue("status");
         return (
           <Badge
             variant="outline"
@@ -99,15 +110,17 @@ export const useOrderColumns = (orders) => {
       },
     },
     {
-      accessorKey: 'createdAt',
-      header: () => Hint('Created', 'Order creation date'),
+      accessorKey: "createdAt",
+      header: () => Hint("Created", "Order creation date"),
       cell: ({ row }) => (
-        <span className="text-muted-foreground">{formatdate(row.getValue('createdAt'))}</span>
+        <span className="text-muted-foreground">
+          {formatdate(row.getValue("createdAt"))}
+        </span>
       ),
     },
     {
-      accessorKey: 'actions',
-      header: () => Hint('Actions', 'Manage this order'),
+      accessorKey: "actions",
+      header: () => Hint("Actions", "Manage this order"),
       cell: ({ row }) => {
         const order = row.original;
         const isDeleted = Boolean(order?.deleted || order?.deletedAt);
@@ -115,7 +128,8 @@ export const useOrderColumns = (orders) => {
         const isSuperAdmin = user?.role === "super_admin";
         const isDeptAdmin = user?.role === "department_admin";
         const isBranchAdmin = user?.role === "branch_admin";
-        const isShopOrStaff = user?.role === "shop_admin" || user?.role === "staff";
+        const isShopOrStaff =
+          user?.role === "shop_admin" || user?.role === "staff";
 
         const branchStatus = order.branchAdminApproval?.status || "pending";
         const superAdminStatus = order.superAdminApproval?.status || "pending";
@@ -123,13 +137,14 @@ export const useOrderColumns = (orders) => {
         // Action permissions
         const canSubmit = !isDeleted && order.status === "draft" && isDeptAdmin;
         const canEdit = !isDeleted && order.status === "draft" && isDeptAdmin;
-        
+
         const canBranchApprove =
           !isDeleted &&
           order.status !== "draft" &&
           order.status !== "completed" &&
+          branchStatus !== "approved" &&
           isBranchAdmin;
-          
+
         const canSuperAdminApprove =
           !isDeleted &&
           order.status !== "draft" &&
@@ -140,18 +155,16 @@ export const useOrderColumns = (orders) => {
         // Shop Admin and Staff can convert to bill if approved
         const canConvertToBill =
           !isDeleted &&
-          (order.status === "in_progress" || order.status === "pending" || order.status === "approved") &&
+          (order.status === "in_progress" ||
+            order.status === "pending" ||
+            order.status === "approved") &&
           isShopOrStaff;
 
         const canDeliver =
-          !isDeleted &&
-          order.status === "ready_for_pickup" &&
-          isShopOrStaff;
+          !isDeleted && order.status === "ready_for_pickup" && isShopOrStaff;
 
         const canReadyForPickup =
-          !isDeleted &&
-          order.status === "in_progress" &&
-          isShopOrStaff;
+          !isDeleted && order.status === "in_progress" && isShopOrStaff;
 
         const canProcess =
           !isDeleted &&
@@ -184,13 +197,19 @@ export const useOrderColumns = (orders) => {
               )}
 
               {canBranchApprove && (
-                <DropdownMenuItem onClick={() => orders.openApprovalDialog(order, "branch")}>
+                <DropdownMenuItem
+                  onClick={() => orders.openApprovalDialog(order, "branch")}
+                >
                   Branch Admin Approval
                 </DropdownMenuItem>
               )}
 
               {canSuperAdminApprove && (
-                <DropdownMenuItem onClick={() => orders.openApprovalDialog(order, "super_admin")}>
+                <DropdownMenuItem
+                  onClick={() =>
+                    orders.openApprovalDialog(order, "super_admin")
+                  }
+                >
                   Super Admin Approval
                 </DropdownMenuItem>
               )}
@@ -201,11 +220,11 @@ export const useOrderColumns = (orders) => {
                 </DropdownMenuItem>
               )}
 
-              {canReadyForPickup && (
+              {/* {canReadyForPickup && (
                 <DropdownMenuItem onClick={() => orders.readyForPickup(order._id)}>
                   Mark Ready for Pickup
                 </DropdownMenuItem>
-              )}
+              )} */}
 
               {canConvertToBill && (
                 <DropdownMenuItem onClick={() => orders.convertToBill(order)}>
@@ -224,7 +243,9 @@ export const useOrderColumns = (orders) => {
                   <DropdownMenuSeparator />
                   {isDeleted ? (
                     <>
-                      <DropdownMenuItem onClick={() => orders.openRetrieve(order._id)}>
+                      <DropdownMenuItem
+                        onClick={() => orders.openRetrieve(order._id)}
+                      >
                         Retrieve
                       </DropdownMenuItem>
                       <DropdownMenuItem
@@ -246,8 +267,8 @@ export const useOrderColumns = (orders) => {
               )}
             </DropdownMenuContent>
           </DropdownMenu>
-        )
-      }
-    }
-  ]
-}
+        );
+      },
+    },
+  ];
+};

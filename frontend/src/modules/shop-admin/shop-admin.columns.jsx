@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { MoreHorizontal } from "lucide-react"
 import { Hint } from "@/core/utils/tooltip.util"
+import { safeId } from "@/core/utils/normalize-id";
 
 export const useShopAdminColumns = (shopAdmins) => {
   return [
@@ -26,6 +27,12 @@ export const useShopAdminColumns = (shopAdmins) => {
       accessorKey: 'email',
       header: () => Hint('Email', 'Contact email'),
       cell: ({ row }) => <span>{row.getValue('email')}</span>,
+    },
+    {
+
+      accessorKey: 'shop',
+      header: () => Hint('Shop', 'Shop of the shop admin'),
+      cell: ({ row }) => <span>{safeId(row.getValue('shop').name)}</span>,
     },
     {
       accessorKey: 'phone',

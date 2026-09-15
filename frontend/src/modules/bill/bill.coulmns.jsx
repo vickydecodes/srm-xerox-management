@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/popover";
 import { MoreHorizontal, Printer } from "lucide-react";
 import { Hint } from "@/core/utils/tooltip.util";
-import { apiRequest } from "@/core/api/api.request";
 import { printPdf } from "@/core/api/api.service";
 
 export const printBillPdf = async (billId, code) => {
@@ -147,31 +146,13 @@ export const useBillColumns = (bills) => {
                   Mark as {bill.status === 'PAID' ? 'Unpaid' : 'Paid'}
                 </DropdownMenuItem>
 
-                <DropdownMenuItem
-                  onClick={() => bills.openActiveStatus(bill._id, bill.active)}
-                >
-                  {bill.active ? 'Deactivate' : 'Activate'}
-                </DropdownMenuItem>
-
                 <DropdownMenuSeparator />
 
-
-                <DropdownMenuItem onClick={() => bills.openRetrieve(bill._id)}>
-                  Retrieve
-                </DropdownMenuItem>
-
-
-                <DropdownMenuItem
-                  variant="destructive"
-                  onClick={() => bills.openDelete(bill._id, bill.code)}
-                >
-                  Delete
-                </DropdownMenuItem>
                 <DropdownMenuItem
                   variant="destructive"
                   onClick={() => bills.openErase(bill._id)}
                 >
-                  Erase Permanently
+                  Delete Permanently
                 </DropdownMenuItem>
 
 

@@ -357,7 +357,6 @@ async function seedUsers(branches: any[], departments: any[]) {
         phone: randomPhone(),
         password: defaultPassword,
         role: 'shop_admin',
-        branch: branch._id,
         shop: shop._id,
       });
       await user.save();
