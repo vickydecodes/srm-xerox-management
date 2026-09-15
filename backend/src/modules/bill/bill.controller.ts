@@ -41,6 +41,13 @@ const controllers = {
     return sendResponse.paginated(res, 'bill', result);
   },
 
+  getPublicBillById: async (req: Request<{ id: string }>, res: Response) => {
+    const { id } = req.params;
+    const bill = await service.getBillById(id);
+    if (!bill) return sendResponse.notFound(res, 'bill');
+    return sendResponse.fetched(res, 'bill', bill);
+  },
+
   getBillById: async (req: Request<{ id: string }>, res: Response) => {
     const { id } = req.params;
     const bill = await service.getBillById(id);
@@ -109,6 +116,7 @@ export const {
   getAllBills,
   getBillsByDepartment,
   getBillById,
+  getPublicBillById,
   updateBill,
   deleteBill,
   setBillActiveStatus,

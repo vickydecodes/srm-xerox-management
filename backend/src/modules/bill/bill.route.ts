@@ -16,10 +16,13 @@ import {
   approveCreditBill,
   rejectCreditBill,
   getBillsByDepartment,
+  getPublicBillById,
   downloadBillPdf,
 } from './bill.controller.js';
 
 const router = Router();
+
+router.get('/public/:id', getPublicBillById);
 
 router.use(authMiddleware);
 // const MODULE = '-bill';

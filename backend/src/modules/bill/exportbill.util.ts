@@ -2,13 +2,14 @@ import PDFDocument from 'pdfkit';
 import { Buffer } from 'buffer';
 import path from 'path';
 import fs from 'fs';
+import QRCode from 'qrcode';
 import Bill from '@db/models/bill.model.ts';
 import Setting from '@db/models/setting.model.ts';
 
 export const generatePdfBuffer = (bill: any, docSetting: any): Promise<Buffer> => {
   const pdfTitle = docSetting?.pdfTitle || 'SRM Xerox & DTP Management';
   const pdfPaperSize = docSetting?.pdfPaperSize || 'A5 Landscape';
-  
+
   // Custom sizing defaults
   const customMargin = docSetting?.pdfMargin ?? 30;
   const customLogoSize = docSetting?.pdfLogoSize ?? 45;
@@ -16,7 +17,7 @@ export const generatePdfBuffer = (bill: any, docSetting: any): Promise<Buffer> =
   let pdfSize: 'A4' | 'A5' = 'A5';
   let pdfLayout: 'portrait' | 'landscape' = 'landscape';
   let pdfMargin = customMargin;
-  
+
   let pageWidth = 595.28;
   let pageHeight = 419.53;
 
@@ -37,14 +38,14 @@ export const generatePdfBuffer = (bill: any, docSetting: any): Promise<Buffer> =
     pageWidth = 595.28;
     pageHeight = 419.53;
   }
-  
+
   const rightBound = pageWidth - pdfMargin;
   const contentWidth = pageWidth - (2 * pdfMargin);
 
-  return new Promise<Buffer>((resolve, reject) => {
-    const doc = new PDFDocument({ 
-      margin: pdfMargin, 
-      size: pdfSize, 
+  return new Promise<Buffer>(async (resolve, reject) => {
+    const doc = new PDFDocument({
+      margin: pdfMargin,
+      size: pdfSize,
       layout: pdfLayout,
       autoFirstPage: true
     } as any);
@@ -92,9 +93,19 @@ export const generatePdfBuffer = (bill: any, docSetting: any): Promise<Buffer> =
       .text('Kattankulathur Campus, Chennai, Tamil Nadu - 603203', textStartX, pdfMargin + 15)
       .text('Official Xerox & Print Services Management System', textStartX, pdfMargin + 25);
 
-    // Invoice Title on far right
+    // QR Code
+    try {
+      const clientUrl = process.env.CLIENT_URL || 'https://srm-dtp.in';
+      const qrUrl = `${clientUrl}/verify/${bill._id}`;
+      const qrBuffer = await QRCode.toBuffer(qrUrl, { margin: 1, width: 50 });
+      doc.image(qrBuffer, rightBound - 50, pdfMargin);
+    } catch (err) {
+      console.warn('Failed to generate QR code:', err);
+    }
+
+    // Invoice Title on far right (shifted left to accommodate QR code)
     const invoiceTitleWidth = 135;
-    const invoiceTitleX = rightBound - invoiceTitleWidth;
+    const invoiceTitleX = rightBound - 60 - invoiceTitleWidth;
 
     doc
       .fillColor(primaryColor)
@@ -193,7 +204,7 @@ export const generatePdfBuffer = (bill: any, docSetting: any): Promise<Buffer> =
     let rowIdx = 0;
     for (const item of (bill.items || [])) {
       const itemType = item.type === 'InventoryProduct' ? 'Product' : 'Service';
-      
+
       if (rowIdx % 2 === 1) {
         doc.rect(pdfMargin, tableY, contentWidth, 20).fill(rowAltColor);
       }
@@ -217,7 +228,7 @@ export const generatePdfBuffer = (bill: any, docSetting: any): Promise<Buffer> =
     // 5. Summary / Totals block
     const summaryW = pdfPaperSize === 'A4 Portrait' ? 215 : 180;
     const summaryX = rightBound - summaryW;
-    
+
     doc
       .rect(summaryX, tableY, summaryW, 70)
       .strokeColor(gridBorderColor)
@@ -290,7 +301,7 @@ export const generatePdfBuffer = (bill: any, docSetting: any): Promise<Buffer> =
 
     // Footer section
     let footerY = pageHeight - pdfMargin - 25;
-    
+
     doc.rect(pdfMargin, footerY - 10, contentWidth, 1).fill(secondaryColor);
 
     doc
@@ -316,7 +327,7 @@ export const generateBillPdf = async (id: string): Promise<Buffer> => {
   if (!bill) {
     throw new Error('Bill not found');
   }
-  
+
   const docSetting = await Setting.findOne();
   return generatePdfBuffer(bill, docSetting);
 };

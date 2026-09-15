@@ -56,8 +56,11 @@ export const AuthProvider = ({ children }) => {
         setRole(null);
       });
 
-      navigateRef.current("/");
-      toast.error(message);
+      // Don't redirect to login if on a public route like /verify
+      if (!locationRef.current.pathname.startsWith('/verify')) {
+        navigateRef.current("/");
+        toast.error(message);
+      }
     });
   }, []);
 

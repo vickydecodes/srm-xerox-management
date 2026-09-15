@@ -12,6 +12,7 @@ import InsiderNotFound from '@/components/global/app404.jsx';
 import PublicNotFound from '@/components/global/notfound.jsx';
 import Login from '@/pages/login/login.jsx';
 import PublicRoute from './public.route.jsx';
+import VerifyBill from '@/pages/verify/verify.jsx';
 
 
 const roleRouteGroups = [
@@ -52,6 +53,7 @@ export default function AppRoutes() {
             ))}
 
             <Route path="/" element={<PublicRoute><Login /></PublicRoute>} />
+            <Route path="/verify/:id" element={<VerifyBill />} />
             <Route path="*" element={<PublicNotFound />} />
         </Routes>
     );
