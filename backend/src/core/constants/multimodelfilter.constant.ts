@@ -2,7 +2,7 @@ import { Model } from 'mongoose';
 import { dynamicFilter, FilterConfig } from './dynamicfilter.constant.ts';
 
 export interface MultiModelSearchConfig {
-  model: Model<any>;
+  model: any;
   config: FilterConfig<any>;
   type: string;
   mapFn: (item: any) => any;
@@ -38,14 +38,14 @@ export async function multiModelDynamicFilter(
       }
     );
 
-    return res.data.map((item) => cfg.mapFn(item));
+    return Promise.all(res.data.map((item) => cfg.mapFn(item)));
   });
 
   const resolvedResults = await Promise.all(resultsPromises);
   const combined = resolvedResults.flat();
 
   // Sort combined results alphabetically by name
-  combined.sort((a, b) => a.name.localeCompare(b.name));
+  combined.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
   return combined;
 }

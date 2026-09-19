@@ -51,11 +51,11 @@ afterAll(async () => {
   }
 
   if (testProductId) {
-    await InventoryProduct.deleteMany({ product: new mongoose.Types.ObjectId(testProductId) });
+    await InventoryProduct.deleteMany({ product: testProductId });
     await Product.findByIdAndDelete(testProductId);
   }
   if (testInventoryId) {
-    await InventoryProduct.deleteMany({ inventory: new mongoose.Types.ObjectId(testInventoryId) });
+    await InventoryProduct.deleteMany({ inventory: testInventoryId });
     await Inventory.findByIdAndDelete(testInventoryId);
   }
 });
@@ -164,7 +164,7 @@ describe('Inventory Product API Endpoint Suite', () => {
   });
 
   it('should return 404 when requesting a non-existent inventory product', async () => {
-    const nonExistentId = new mongoose.Types.ObjectId().toString();
+    const nonExistentId = '00000000-0000-0000-0000-000000000000';
     const res = await tester.get(`${baseRoute}/${nonExistentId}`, token);
 
     tester.assertNotFound(res, 'inventory product');

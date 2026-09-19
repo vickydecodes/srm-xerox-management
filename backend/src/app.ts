@@ -1,6 +1,6 @@
 import express, { Express, Request, Response } from 'express';
 import { ENV } from '@config/env.config.js';
-import connectDB from '@config/db.config.js';
+import prisma from '@config/prisma.config.js';
 import errorHandler from '@core/errors/handler.error.ts';
 import { applySecurityMiddlewares } from '@config/security.config.js';
 import { maintenanceMode } from '@core/middlewares/maintenance.middleware.js';
@@ -20,8 +20,8 @@ app.use(express.json());
 app.use(tracer);
 
 export const bootstrap = async (): Promise<void> => {
-  if (!ENV.MONGO_URI) throw new Error('MONGO_URI is not defined');
-  await connectDB(ENV.MONGO_URI);
+  await prisma.$connect();
+  console.log('✅ Connected to PostgreSQL database via Prisma');
 
   applySecurityMiddlewares(app);
   app.use(maintenanceMode);

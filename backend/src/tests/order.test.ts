@@ -164,7 +164,7 @@ afterAll(async () => {
 
   if (testInventoryId) {
     await InventoryProduct.deleteMany({
-      inventory: new mongoose.Types.ObjectId(testInventoryId),
+      inventory: testInventoryId,
     });
 
     await Inventory.findByIdAndDelete(testInventoryId);
@@ -442,7 +442,7 @@ describe('Order API Endpoint Suite', () => {
 
   it('should return 404 when requesting a non-existent order', async () => {
     const nonExistentId =
-      new mongoose.Types.ObjectId().toString();
+      '00000000-0000-0000-0000-000000000000';
 
     const res = await tester.get(
       `${baseRoute}/${nonExistentId}`,

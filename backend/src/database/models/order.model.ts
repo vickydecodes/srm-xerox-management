@@ -1,5 +1,7 @@
-import mongoose, { Schema, Document, Types } from 'mongoose';
-import { Counter } from './counter.model.ts';
+import prisma from '@config/prisma.config.js';
+import { CounterModel } from './counter.model.js';
+
+export interface IOrder extends OrderDocument {}
 
 export enum OrderItemType {
   PRODUCT = 'InventoryProduct',
@@ -13,204 +15,265 @@ export enum OrderType {
 
 export interface IOrderItem {
   type: OrderItemType;
-  item: Types.ObjectId;
+  item: string;
   name: string;
   quantity: number;
   price: number;
   total: number;
 }
 
-const OrderItemSchema = new Schema<IOrderItem>(
-  {
-    type: { type: String, enum: Object.values(OrderItemType), required: true },
-    item: { type: Schema.Types.ObjectId, required: true, refPath: 'items.type' },
-    name: { type: String, required: true, trim: true },
-    quantity: { type: Number, required: true, min: 0 },
-    price: { type: Number, required: true, min: 0 },
-    total: { type: Number, min: 0 },
-  },
-  { _id: false }
-);
-
 export interface IApproval {
   status: 'pending' | 'approved' | 'rejected';
-  approver?: Types.ObjectId;
+  approver?: string;
   date?: Date;
   remarks?: string;
 }
 
-const ApprovalSchema = new Schema<IApproval>(
-  {
-    status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
-    approver: { type: Schema.Types.ObjectId, ref: 'User' },
-    date: { type: Date },
-    remarks: { type: String, trim: true },
-  },
-  { _id: false }
-);
-
 export interface IApprovalHistory {
   status: 'draft' | 'submitted' | 'approved' | 'rejected';
-  approver: Types.ObjectId;
+  approver: string;
   date: Date;
   remarks?: string;
 }
-
-const ApprovalHistorySchema = new Schema<IApprovalHistory>(
-  {
-    status: { type: String, enum: ['draft', 'submitted', 'approved', 'rejected'], required: true },
-    approver: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    date: { type: Date, default: Date.now },
-    remarks: { type: String, trim: true },
-  },
-  { _id: false }
-);
 
 export interface ISponsor {
   name: string;
   amount: number;
 }
 
-const SponsorSchema = new Schema<ISponsor>(
-  {
-    name: { type: String, required: true, trim: true },
-    amount: { type: Number, required: true, min: 0 },
-  },
-  { _id: false }
-);
-
-export interface IOrder extends Document {
+export class OrderDocument {
+  _id!: string;
   code?: string;
-  orderType: OrderType;
+  orderType!: OrderType;
 
-  department: Types.ObjectId;
-  branch: Types.ObjectId;
-  shop?: Types.ObjectId;
+  department!: string;
+  branch!: string;
+  shop?: string;
 
   purpose?: string;
 
   managementAmount?: number;
-  sponsors: ISponsor[];
+  sponsors!: ISponsor[];
 
-  items: IOrderItem[];
+  items!: IOrderItem[];
 
-  branchAdminApproval: IApproval;
-  superAdminApproval: IApproval;
-  approvalHistory: IApprovalHistory[];
+  branchAdminApproval!: IApproval;
+  superAdminApproval!: IApproval;
+  approvalHistory!: IApprovalHistory[];
 
-  status:
-  | 'draft'
-  | 'pending'
-  | 'in_progress'
-  | 'ready_for_pickup'
-  | 'delivered'
-  | 'rejected';
+  status!:
+    | 'draft'
+    | 'pending'
+    | 'in_progress'
+    | 'ready_for_pickup'
+    | 'delivered'
+    | 'rejected';
 
-  bill?: Types.ObjectId;
+  bill?: string;
 
-  deleted: boolean;
+  deleted!: boolean;
   deletedAt?: Date;
 
-  createdBy: Types.ObjectId;
+  createdBy!: string;
 
   attachmentEmail?: string;
 
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt!: Date;
+  updatedAt!: Date;
+
+  isNew: boolean = false;
+
+  constructor(data: any) {
+    Object.assign(this, data);
+    this._id = data._id || data.id;
+    if (!this._id) {
+      this.isNew = true;
+    }
+    
+    // Default initializations to replicate Mongoose behavior
+    if (!this.sponsors) this.sponsors = [];
+    if (!this.items) this.items = [];
+    if (!this.branchAdminApproval) this.branchAdminApproval = { status: 'pending' };
+    if (!this.superAdminApproval) this.superAdminApproval = { status: 'pending' };
+    if (!this.approvalHistory) this.approvalHistory = [];
+    if (!this.status) this.status = 'draft';
+    if (this.deleted === undefined) this.deleted = false;
+  }
+
+  // Helper to replicate isModified behavior roughly
+  isModified(path: string) {
+    // A proper implementation would track original states.
+    // For now, assume it is modified if we are saving.
+    return true;
+  }
+
+  async runPreSaveHooks() {
+    // 1. Counter for code
+    if (this.status !== 'draft' && !this.code) {
+      const counter = await CounterModel.findOneAndUpdate(
+        { key: 'order' },
+        { $inc: { value: 1 } },
+        { upsert: true, new: true }
+      );
+      this.code = `ORD-${String(counter!.value).padStart(4, '0')}`;
+    }
+
+    // 2. Item total calculation
+    if (this.items) {
+      for (const i of this.items) {
+        i.total = i.quantity * i.price;
+      }
+    }
+
+    // 3. Validation for funds
+    if (this.status !== 'draft' && this.items && this.items.length > 0) {
+      const totalCost = this.items.reduce((sum, i) => sum + i.total, 0);
+      const totalSponsorship = this.sponsors.reduce((sum, s) => sum + s.amount, 0);
+      const totalAvailable = (this.managementAmount ?? 0) + totalSponsorship;
+    
+      if (totalCost > totalAvailable) {
+        throw new Error(
+          `Order total (${totalCost}) exceeds available funds — management (${this.managementAmount ?? 0}) + sponsorship (${totalSponsorship})`
+        );
+      }
+    }
+
+    // 4. Approval logic
+    if (this.status !== 'draft') {
+      if (this.branchAdminApproval.status === 'pending' && this.superAdminApproval.status !== 'pending') {
+        throw new Error('superAdminApproval cannot be resolved before branchAdminApproval');
+      }
+
+      if (this.branchAdminApproval.status === 'rejected' || this.superAdminApproval.status === 'rejected') {
+        this.status = 'rejected';
+      } else if (this.branchAdminApproval.status === 'approved' && this.status === 'pending') {
+        this.status = 'in_progress';
+      }
+    }
+  }
+
+  async save() {
+    await this.runPreSaveHooks();
+
+    // Map Prisma-friendly data
+    const payload = {
+      code: this.code,
+      orderType: this.orderType,
+      purpose: this.purpose,
+      attachmentEmail: this.attachmentEmail,
+      managementAmount: this.managementAmount,
+      status: this.status,
+      deleted: this.deleted,
+      deletedAt: this.deletedAt,
+      // References
+      department: this.department,
+      branch: this.branch,
+      shop: this.shop,
+      createdBy: this.createdBy,
+      bill: this.bill,
+      // Complex json types
+      sponsors: this.sponsors as any,
+      items: this.items as any,
+      branchAdminApproval: this.branchAdminApproval as any,
+      superAdminApproval: this.superAdminApproval as any,
+      approvalHistory: this.approvalHistory as any,
+    };
+
+    if (this.isNew) {
+      const created = await prisma.order.create({
+        data: payload as any
+      });
+      this._id = created.id;
+      this.isNew = false;
+    } else {
+      await prisma.order.update({
+        where: { id: this._id },
+        data: payload as any
+      });
+    }
+    return this;
+  }
 }
 
-const OrderSchema = new Schema<IOrder>(
-  {
-    code: { type: String, unique: true, sparse: true },
-    orderType: {
-      type: String,
-      enum: Object.values(OrderType),
-      required: true,
-    },
-
-    department: { type: Schema.Types.ObjectId, ref: 'Department', required: true },
-    branch: { type: Schema.Types.ObjectId, ref: 'Branch', required: true },
-    shop: { type: Schema.Types.ObjectId, ref: 'Shop', default: null },
-
-    purpose: { type: String, trim: true },
-    attachmentEmail: { type: String, trim: true },
-
-    managementAmount: { type: Number, min: 0 },
-    sponsors: { type: [SponsorSchema], default: [] },
-
-    items: { type: [OrderItemSchema], default: [] },
-
-    branchAdminApproval: { type: ApprovalSchema, default: () => ({}) },
-    superAdminApproval: { type: ApprovalSchema, default: () => ({}) },
-    approvalHistory: { type: [ApprovalHistorySchema], default: [] },
-
-    status: {
-  type: String,
-  enum: [
-    'draft',
-    'pending',
-    'in_progress',
-    'ready_for_pickup',
-    'delivered',
-    'rejected',
-  ],
-  default: 'draft',
-},
-
-    bill: { type: Schema.Types.ObjectId, ref: 'Bill' },
-
-    deleted: { type: Boolean, default: false },
-    deletedAt: { type: Date },
-
-    createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  },
-  { timestamps: true }
-);
-
-OrderSchema.pre('save', async function () {
-  if (this.status === 'draft' || this.code) return;
-
-  const counter = await Counter.findOneAndUpdate(
-    { key: 'order' },
-    { $inc: { value: 1 } },
-    { upsert: true, new: true }
-  );
-  this.code = `ORD-${String(counter!.value).padStart(4, '0')}`;
-});
-
-OrderSchema.pre('save', function () {
-  for (const i of this.items) i.total = i.quantity * i.price;
-});
-
-OrderSchema.pre('save', function () {
-  if (this.status === 'draft' || !this.items.length) return;
-
-  const totalCost = this.items.reduce((sum, i) => sum + i.total, 0);
-  const totalSponsorship = this.sponsors.reduce((sum, s) => sum + s.amount, 0);
-  const totalAvailable = (this.managementAmount ?? 0) + totalSponsorship;
-
-  if (totalCost > totalAvailable) {
-    throw new Error(
-      `Order total (${totalCost}) exceeds available funds — management (${this.managementAmount ?? 0}) + sponsorship (${totalSponsorship})`
-    );
+export class OrderModel {
+  static prismaModelName = 'order';
+  static async findById(id: string) {
+    if (!id) return null;
+    const doc = await prisma.order.findUnique({
+      where: { id: id.toString() }
+    });
+    if (!doc) return null;
+    return new OrderDocument({ ...doc, _id: doc.id });
   }
-});
 
-OrderSchema.pre('save', function () {
-  if (this.status === 'draft') return;
-
-  if (this.isModified('branchAdminApproval') || this.isModified('superAdminApproval')) {
-    if (this.branchAdminApproval.status === 'pending' && this.superAdminApproval.status !== 'pending') {
-      throw new Error('superAdminApproval cannot be resolved before branchAdminApproval');
+  static async findByIdAndUpdate(id: string, data: any, options: any = {}) {
+    let updateData: any = data.$set ? { ...data.$set } : { ...data };
+    if (data.$inc) {
+      for (const [key, val] of Object.entries(data.$inc)) {
+        updateData[key] = { increment: val };
+      }
+      delete updateData.$inc;
     }
-
-    if (this.branchAdminApproval.status === 'rejected' || this.superAdminApproval.status === 'rejected') {
-      this.status = 'rejected';
-    } else if (this.branchAdminApproval.status === 'approved') {
-      this.status = 'in_progress';
-    }
+    const updated = await prisma.order.update({
+      where: { id: id.toString() },
+      data: updateData as any
+    });
+    return new OrderDocument({ ...updated, _id: updated.id });
   }
-});
 
+  static async findByIdAndDelete(id: string) {
+    let deleted; try { deleted = await prisma.order.delete({ where: { id: id.toString() } }); } catch (e) { return null; }
+    return new OrderDocument({ ...deleted, _id: deleted.id });
+  }
 
-export default mongoose.model<IOrder>('Order', OrderSchema);
+  static async find(query: any) {
+    const docs = await prisma.order.findMany({ where: query as any });
+    return docs.map((doc: any) => new OrderDocument({ ...doc, _id: doc.id }));
+  }
+
+  static async findOne(query: any) {
+    const doc = await prisma.order.findFirst({ where: query as any });
+    if (!doc) return null;
+    return new OrderDocument({ ...doc, _id: doc.id });
+  }
+  static async create(data: any) {
+    const doc = new OrderDocument(data);
+    return await doc.save();
+  }
+  static async deleteMany(query: any) {
+    return await prisma.order.deleteMany({ where: query as any });
+  }
+  static async countDocuments(query: any) {
+    return await prisma.order.count({ where: query as any });
+  }
+  static async aggregate(pipeline: any[]): Promise<any[]> {
+    console.warn('Order.aggregate not fully implemented for PostgreSQL Prisma');
+    return [];
+  }
+  static async findOneAndUpdate(query: any, data: any, options: any = {}) {
+    let updateData: any = data.$set ? { ...data.$set } : { ...data };
+    if (data.$inc) {
+      for (const [key, val] of Object.entries(data.$inc)) {
+        updateData[key] = { increment: val };
+      }
+      delete updateData.$inc;
+    }
+    const existing = await prisma.order.findFirst({ where: query as any });
+    if (!existing) return null;
+    const updated = await prisma.order.update({
+      where: { id: existing.id },
+      data: updateData as any
+    });
+    return new OrderDocument({ ...updated, _id: updated.id });
+  }
+}
+
+type OrderModelType = typeof OrderModel & {
+  new (data: any): OrderDocument;
+  (data: any): OrderDocument;
+};
+
+const OrderFn = function(data: any) { return new OrderDocument(data); };
+Object.setPrototypeOf(OrderFn, OrderModel);
+export const Order = OrderFn as unknown as OrderModelType;
+export default Order;

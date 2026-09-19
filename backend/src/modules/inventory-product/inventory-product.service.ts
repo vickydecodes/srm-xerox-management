@@ -34,7 +34,7 @@ export const createInventoryProduct = async (data: CreateInventoryProductPayload
     inventory: inventoryId,
   }).save();
 
-  const populated = await InventoryProduct.findById(inventoryProduct._id).populate('product');
+  const populated = await InventoryProduct.findById(inventoryProduct._id);
   return resolveInventoryProductVariant(populated);
 };
 
@@ -59,12 +59,12 @@ export const getAllInventoryProducts = async (
 };
 
 export const getInventoryProductById = async (id: string) => {
-  const ip = await InventoryProduct.findById(id).populate('product');
+  const ip = await InventoryProduct.findById(id);
   return resolveInventoryProductVariant(ip);
 };
 
 export const updateInventoryProduct = async (id: string, data: UpdateInventoryProductPayload) => {
-  const updated = await InventoryProduct.findByIdAndUpdate(id, data, UPDATE_OPTIONS).populate('product');
+  const updated = await InventoryProduct.findByIdAndUpdate(id, data, UPDATE_OPTIONS);
 
   if (!updated) return null;
 

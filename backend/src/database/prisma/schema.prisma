@@ -1,0 +1,255 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String      @id @default(uuid()) @map("_id")
+  name          String
+  login_id      String      @unique
+  email         String
+  phone         String
+  address       String?
+  password      String
+  role          String // 'super_admin', 'branch_admin', 'department_admin', 'shop_admin', 'staff'
+  branch        String?
+  department    String?
+  shop          String?
+  branchObj     Branch?     @relation(fields: [branch], references: [id])
+  departmentObj Department? @relation(fields: [department], references: [id])
+  shopObj       Shop?       @relation(fields: [shop], references: [id])
+  active        Boolean     @default(true)
+  deleted       Boolean     @default(false)
+  deletedAt     DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  bills         Bill[] @relation("BillCreator")
+  approvedBills Bill[] @relation("BillApprover")
+}
+
+model Branch {
+  id        String    @id @default(uuid()) @map("_id")
+  name      String    @unique
+  code      String
+  active    Boolean   @default(true)
+  deleted   Boolean   @default(false)
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  bills Bill[]
+  User  User[]
+}
+
+model Department {
+  id                String    @id @default(uuid()) @map("_id")
+  name              String    @unique
+  code              String
+  branch            String?
+  outstandingCredit Float     @default(0)
+  creditBalance     Float     @default(0)
+  active            Boolean   @default(true)
+  deleted           Boolean   @default(false)
+  deletedAt         DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  bills Bill[]
+  User  User[]
+}
+
+model Order {
+  id               String    @id @default(uuid()) @map("_id")
+  code             String?   @unique
+  orderType        String
+  department       String
+  branch           String
+  shop             String?
+  purpose          String?
+  attachmentEmail  String?
+  managementAmount Float?
+  status           String    @default("draft")
+  deleted          Boolean   @default(false)
+  deletedAt        DateTime?
+  createdBy        String
+  bill             String?
+
+  // JSON fields for complex nested docs
+  sponsors            Json @default("[]")
+  items               Json @default("[]")
+  branchAdminApproval Json @default("{}")
+  superAdminApproval  Json @default("{}")
+  approvalHistory     Json @default("[]")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bills Bill[]
+}
+
+model Service {
+  id          String    @id @default(uuid()) @map("_id")
+  code        String    @unique
+  name        String
+  description String?
+  unit        String
+  price       Float
+  materials   Json      @default("[]")
+  active      Boolean   @default(true)
+  deleted     Boolean   @default(false)
+  deletedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model InventoryProduct {
+  id        String   @id @default(uuid()) @map("_id")
+  quantity  Float    @default(0)
+  price     Float
+  active    Boolean  @default(true)
+  deleted   Boolean  @default(false)
+  deletedAt DateTime?
+  inventory String
+  product   String
+  variant   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Inventory {
+  id        String   @id @default(uuid()) @map("_id")
+  name      String
+  active    Boolean  @default(true)
+  deleted   Boolean  @default(false)
+  deletedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Product {
+  id          String    @id @default(uuid()) @map("_id")
+  code        String    @unique
+  name        String
+  description String?
+  attributes  Json      @default("{}")
+  variants    Json      @default("[]")
+  active      Boolean   @default(true)
+  deleted     Boolean   @default(false)
+  deletedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Bill {
+  id             String  @id @default(uuid()) @map("_id")
+  code           String  @unique
+  subtotal       Float   @default(0)
+  discount       Float   @default(0)
+  tax            Float   @default(0)
+  total          Float   @default(0)
+  paymentMethod  String // 'CASH', 'UPI', 'CREDIT'
+  status         String  @default("UNPAID") // 'UNPAID', 'PAID', 'CANCELLED'
+  approvalStatus String  @default("approved") // 'pending', 'approved', 'rejected'
+  remarks        String?
+
+  branch        String?
+  department    String?
+  order         String?
+  createdBy     String
+  approvedBy    String?
+  branchObj     Branch?     @relation(fields: [branch], references: [id])
+  departmentObj Department? @relation(fields: [department], references: [id])
+  orderObj      Order?      @relation(fields: [order], references: [id])
+  createdByObj  User        @relation("BillCreator", fields: [createdBy], references: [id])
+  approvedByObj User?       @relation("BillApprover", fields: [approvedBy], references: [id])
+
+  approvedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  deleted   Boolean   @default(false)
+  deletedAt DateTime?
+
+  items BillItem[]
+}
+
+model BillItem {
+  id       String @id @default(uuid()) @map("_id")
+  type     String // 'InventoryProduct' or 'Service'
+  item     String // Storing the related item ID as a string to allow polymorphic relation
+  name     String
+  quantity Int
+  price    Float
+  total    Float
+
+  bill    String
+  billObj Bill   @relation(fields: [bill], references: [id], onDelete: Cascade)
+}
+
+model Counter {
+  id    String @id @default(uuid()) @map("_id")
+  key   String @unique
+  value Int    @default(0)
+}
+
+model CreditPayment {
+  id                 String   @id @default(uuid()) @map("_id")
+  amount             Float
+  paymentMethod      String
+  otherPaymentMethod String?
+  date               DateTime @default(now())
+  remarks            String?
+
+  department String
+  paidBy     String
+
+  // JSON array for bill IDs
+  bills Json @default("[]")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+model ErrorLog {
+  id         String   @id @default(uuid()) @map("_id")
+  requestId  String?
+  method     String?
+  route      String?
+  caller     String?
+  statusCode Int      @default(500)
+  message    String
+  stack      String?
+  meta       Json?
+  createdAt  DateTime @default(now())
+}
+
+model Setting {
+  id              String   @id @default(uuid()) @map("_id")
+  srmCollegeEmail String   @default("srmxerox@srmist.edu.in")
+  pdfTitle        String   @default("SRM Xerox & DTP Management")
+  pdfPaperSize    String   @default("A5 Landscape")
+  pdfMargin       Float    @default(30)
+  pdfLogoSize     Float    @default(45)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Shop {
+  id        String    @id @default(uuid()) @map("_id")
+  code      String    @unique
+  name      String
+  phone     String
+  email     String?
+  createdBy String
+  active    Boolean   @default(true)
+  deleted   Boolean   @default(false)
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  User      User[]
+}

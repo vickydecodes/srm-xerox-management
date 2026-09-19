@@ -27,7 +27,7 @@ export const extractBranch = (
     return inventory as string | undefined;
 };
 
-export const toObjectId = (id: string) => new Types.ObjectId(id);
+export const toObjectId = (id: any) => id ? id.toString() : null;;
 
 export const getVisibility = (role?: Role) =>
     role === ROLE.SUPER_ADMIN

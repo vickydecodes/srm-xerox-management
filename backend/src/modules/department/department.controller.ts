@@ -20,8 +20,9 @@ const departmentStatus = createStatusControllers(
 );
 
 const controllers = {
-  createDepartment: async (req: Request<{}, {}, CreateDepartmentPayload>, res: Response) => {
-    const department = await service.createDepartment(req.body);
+  createDepartment: async (req: AuthRequest & { body: CreateDepartmentPayload }, res: Response) => {
+    const { branchId } = req.user!;
+    const department = await service.createDepartment({ ...req.body, branch: branchId });
 
     return sendResponse.created(res, 'Department', department);
   },
@@ -31,7 +32,7 @@ const controllers = {
 
     const branch = extractBranch(queries);
 
-    const result = await service.getAllDepartments(queries, 'super_admin', { branchId: branch });
+    const result = await service.getAllDepartments(queries, 'super_admin', { branch });
 
     return sendResponse.paginated(res, 'department', result);
   },

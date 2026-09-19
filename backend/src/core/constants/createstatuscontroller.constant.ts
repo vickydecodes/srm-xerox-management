@@ -2,7 +2,7 @@ import sendResponse from '@core/constants/responsewrapper.constant.js';
 import { Response, Request } from 'express';
 
 import { DeleteConfig } from './../config/delete.config.ts';
-import mongoose from 'mongoose';
+import prisma from '@config/prisma.config.js';
 
 export const createStatusControllers = (service: any, entityName: string) => {
   return {
@@ -15,12 +15,21 @@ export const createStatusControllers = (service: any, entityName: string) => {
         let conflictMessage = `This ${entityName} has associated `;
         const conflictDetails: string[] = [];
 
+        const noDeletedModels = ['BillItem', 'Counter', 'CreditPayment', 'ErrorLog', 'Setting', 'billItem', 'counter', 'creditPayment', 'errorLog', 'setting'];
+        const noActiveModels = ['Order', 'Bill', 'BillItem', 'Counter', 'CreditPayment', 'ErrorLog', 'Setting', 'order', 'bill', 'billItem', 'counter', 'creditPayment', 'errorLog', 'setting'];
+
         if (force !== 'true') {
           for (const dep of config.dependencies) {
-            const Model = mongoose.models[dep.modelName];
-            if (!Model) continue;
+            // @ts-ignore - dynamic prisma model access
+            const model = prisma[dep.modelName];
+            if (!model) continue;
 
-            const count = await Model.countDocuments({ [dep.filterField]: req.params.id, deleted: false });
+            const query: any = { [dep.filterField]: req.params.id };
+            if (!noDeletedModels.includes(dep.modelName)) {
+              query.deleted = false;
+            }
+
+            const count = await model.count({ where: query });
             if (count > 0) {
               hasDependencies = true;
               conflictDetails.push(`${count} ${dep.name}`);
@@ -34,13 +43,25 @@ export const createStatusControllers = (service: any, entityName: string) => {
         } else {
           // Force delete phase
           for (const dep of config.dependencies) {
-            const Model = mongoose.models[dep.modelName];
-            if (!Model) continue;
+            // @ts-ignore - dynamic prisma model access
+            const model = prisma[dep.modelName];
+            if (!model) continue;
 
-            await Model.updateMany(
-              { [dep.filterField]: req.params.id },
-              { $set: { deleted: true, active: false, deletedAt: new Date() } }
-            );
+            const updateData: any = {};
+            if (!noDeletedModels.includes(dep.modelName)) {
+              updateData.deleted = true;
+              updateData.deletedAt = new Date();
+            }
+            if (!noActiveModels.includes(dep.modelName)) {
+              updateData.active = false;
+            }
+
+            if (Object.keys(updateData).length > 0) {
+              await model.updateMany({
+                where: { [dep.filterField]: req.params.id },
+                data: updateData
+              });
+            }
           }
         }
       }

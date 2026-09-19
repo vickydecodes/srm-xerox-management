@@ -112,12 +112,8 @@ export const getSuperAdminDashboard = async (lt?: string, gt?: string) => {
 
     // Recent bills
     Bill.find({ deleted: false, ...dateFilter })
-      .sort({ createdAt: -1 })
-      .limit(10)
-      .populate('branch', 'name')
-      .populate('department', 'name')
-      .populate('createdBy', 'name')
-      .lean(),
+      
+      ,
 
     // Orders waiting for approvals
     Order.countDocuments({ status: 'pending', deleted: false }),
@@ -186,7 +182,7 @@ export const getSuperAdminDashboard = async (lt?: string, gt?: string) => {
 };
 
 export const getBranchAdminDashboard = async (branchId: string, lt?: string, gt?: string) => {
-  const branchObjectId = new mongoose.Types.ObjectId(branchId);
+  const branchObjectId = branchId || null;
   const dateFilter = buildDateFilter(lt, gt);
 
   const [
@@ -284,14 +280,11 @@ export const getBranchAdminDashboard = async (branchId: string, lt?: string, gt?
 
     // Recent branch bills
     Bill.find({ branch: branchObjectId, deleted: false, ...dateFilter })
-      .sort({ createdAt: -1 })
-      .limit(10)
-      .populate('department', 'name')
-      .populate('createdBy', 'name')
-      .lean(),
+      
+      ,
       
     // Branch Orders waiting for approval
-    Order.countDocuments({ branch: branchObjectId, 'branchAdminApproval.status': 'pending', deleted: false }),
+    Order.countDocuments({ branch: branchObjectId, branchAdminApproval: { path: ["status"], equals: "pending" }, deleted: false }),
     
     // Top selling items in branch
     Bill.aggregate([
@@ -349,10 +342,9 @@ export const getBranchAdminDashboard = async (branchId: string, lt?: string, gt?
 };
 
 export const getDepartmentAdminDashboard = async (departmentId: string, lt?: string, gt?: string) => {
-  const departmentObjectId = new mongoose.Types.ObjectId(departmentId);
   const dateFilter = buildDateFilter(lt, gt);
 
-  const department = await Department.findById(departmentObjectId).select('creditBalance outstandingCredit').lean();
+  const department = await Department.findById(departmentId);
 
   const [
     usersCount,
@@ -363,23 +355,20 @@ export const getDepartmentAdminDashboard = async (departmentId: string, lt?: str
     pendingCreditBills,
     unbilledRequisitions
   ] = await Promise.all([
-    User.countDocuments({ department: departmentObjectId, active: true, deleted: false }),
-    Bill.countDocuments({ department: departmentObjectId, deleted: false, ...dateFilter }),
+    User.countDocuments({ department: departmentId, active: true, deleted: false }),
+    Bill.countDocuments({ department: departmentId, deleted: false, ...dateFilter }),
     Bill.aggregate([
-      { $match: { department: departmentObjectId, status: 'PAID', deleted: false, ...dateFilter } },
+      { $match: { department: departmentId, status: 'PAID', deleted: false, ...dateFilter } },
       { $group: { _id: null, total: { $sum: '$total' } } },
     ]),
-    Order.find({ department: departmentObjectId, deleted: false, ...dateFilter })
-      .sort({ createdAt: -1 })
-      .limit(10)
-      .lean(),
-    Bill.find({ department: departmentObjectId, deleted: false, ...dateFilter })
-      .sort({ createdAt: -1 })
-      .limit(10)
-      .populate('createdBy', 'name')
-      .lean(),
-    Bill.countDocuments({ department: departmentObjectId, status: 'UNPAID', paymentMethod: 'CREDIT', deleted: false }),
-    Order.countDocuments({ department: departmentObjectId, status: 'in_progress', deleted: false }),
+    Order.find({ department: departmentId, deleted: false, ...dateFilter })
+      
+      ,
+    Bill.find({ department: departmentId, deleted: false, ...dateFilter })
+      
+      ,
+    Bill.countDocuments({ department: departmentId, status: 'UNPAID', paymentMethod: 'CREDIT', deleted: false }),
+    Order.countDocuments({ department: departmentId, status: 'in_progress', deleted: false }),
   ]);
 
   return {
@@ -397,10 +386,10 @@ export const getDepartmentAdminDashboard = async (departmentId: string, lt?: str
 };
 
 export const getShopAdminDashboard = async (shopId: string, lt?: string, gt?: string) => {
-  const shopObjectId = new mongoose.Types.ObjectId(shopId);
+  const shopObjectId = shopId || null;
   const dateFilter = buildDateFilter(lt, gt);
   
-  const shopStaff = await User.find({ shop: shopObjectId, deleted: false }).select('_id');
+  const shopStaff = await User.find({ shop: shopObjectId, deleted: false });
   const staffIds = shopStaff.map(u => u._id);
 
   const [
@@ -411,19 +400,19 @@ export const getShopAdminDashboard = async (shopId: string, lt?: string, gt?: st
     topItems,
     monthlyRevenue
   ] = await Promise.all([
-    Bill.countDocuments({ createdBy: { $in: staffIds }, deleted: false, ...dateFilter }),
+    Bill.countDocuments({ createdBy: { in: staffIds }, deleted: false, ...dateFilter }),
     Bill.aggregate([
-      { $match: { createdBy: { $in: staffIds }, status: 'PAID', deleted: false, ...dateFilter } },
+      { $match: { createdBy: { in: staffIds }, status: 'PAID', deleted: false, ...dateFilter } },
       { $group: { _id: null, total: { $sum: '$total' } } },
     ]),
     Order.countDocuments({ shop: shopObjectId, status: 'in_progress', deleted: false }),
-    Bill.find({ createdBy: { $in: staffIds }, deleted: false, ...dateFilter })
-      .sort({ createdAt: -1 })
-      .limit(10)
-      .populate('createdBy', 'name')
-      .lean(),
+    Bill.find({ createdBy: { in: staffIds }, deleted: false, ...dateFilter })
+      
+      
+      
+      ,
     Bill.aggregate([
-      { $match: { createdBy: { $in: staffIds }, status: 'PAID', deleted: false, ...dateFilter } },
+      { $match: { createdBy: { in: staffIds }, status: 'PAID', deleted: false, ...dateFilter } },
       { $unwind: '$items' },
       {
         $group: {
@@ -436,7 +425,7 @@ export const getShopAdminDashboard = async (shopId: string, lt?: string, gt?: st
       { $limit: 10 },
     ]),
     Bill.aggregate([
-      { $match: { createdBy: { $in: staffIds }, status: 'PAID', deleted: false, ...dateFilter } },
+      { $match: { createdBy: { in: staffIds }, status: 'PAID', deleted: false, ...dateFilter } },
       {
         $group: {
           _id: {
@@ -471,7 +460,7 @@ export const getShopAdminDashboard = async (shopId: string, lt?: string, gt?: st
 };
 
 export const getStaffDashboard = async (userId: string, lt?: string, gt?: string) => {
-  const userObjectId = new mongoose.Types.ObjectId(userId);
+  const userObjectId = userId || null;
   const dateFilter = buildDateFilter(lt, gt);
 
   const [
@@ -493,11 +482,11 @@ export const getStaffDashboard = async (userId: string, lt?: string, gt?: string
 
     // Recent staff bills
     Bill.find({ createdBy: userObjectId, deleted: false, ...dateFilter })
-      .sort({ createdAt: -1 })
-      .limit(10)
-      .populate('branch', 'name')
-      .populate('department', 'name')
-      .lean(),
+      
+      
+      
+      
+      ,
 
     // Payment methods breakdown for this staff member
     Bill.aggregate([

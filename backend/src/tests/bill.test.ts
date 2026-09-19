@@ -80,10 +80,10 @@ afterAll(async () => {
   }
 
   await Bill.deleteMany({
-    $or: [
+    OR: [
       { branch: testBranchId },
       { department: testDepartmentId },
-      { 'items.item': testInventoryProductId },
+      { items: { some: { item: testInventoryProductId } } },
     ],
   });
 
@@ -218,7 +218,7 @@ describe('Bill API Endpoint Suite', () => {
   });
 
   it('should return 404 when requesting a non-existent bill', async () => {
-    const nonExistentId = new mongoose.Types.ObjectId().toString();
+    const nonExistentId = '00000000-0000-0000-0000-000000000000';
     const res = await tester.get(`${baseRoute}/${nonExistentId}`, token);
 
     tester.assertNotFound(res, 'bill');

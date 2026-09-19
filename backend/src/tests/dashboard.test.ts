@@ -132,7 +132,7 @@ afterAll(async () => {
 
   const userIds = [branchAdminUserId, deptAdminUserId, shopAdminUserId, staffUserId].filter(Boolean);
   if (userIds.length > 0) {
-    await User.deleteMany({ _id: { $in: userIds } });
+    await User.deleteMany({ id: { in: userIds  } });
   }
 
   if (testBranchId) {

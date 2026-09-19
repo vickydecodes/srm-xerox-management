@@ -20,7 +20,7 @@ afterAll(async () => {
   if (cleanupAdmin) {
     await cleanupAdmin();
   }
-  await Branch.deleteMany({ code: { $in: ['TBR', 'TBR-UPD'] } });
+  await Branch.deleteMany({ code: { in: ['TBR', 'TBR-UPD']  } });
 });
 
 describe('Branch API Endpoint Suite', () => {
@@ -100,7 +100,7 @@ describe('Branch API Endpoint Suite', () => {
   });
 
   it('should return 404 when requesting a non-existent branch', async () => {
-    const nonExistentId = new mongoose.Types.ObjectId().toString();
+    const nonExistentId = '00000000-0000-0000-0000-000000000000';
     const res = await tester.get(`${baseRoute}/${nonExistentId}`, token);
 
     tester.assertNotFound(res, 'branch');

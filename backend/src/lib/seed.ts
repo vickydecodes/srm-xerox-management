@@ -27,7 +27,7 @@
  *   MONGODB_URI="mongodb://localhost:27017/srm_xerox_db" npx ts-node seed.ts
  */
 
-import mongoose from 'mongoose';
+import prisma from '../config/prisma.config.js';
 
 import { Branch } from '@db/models/branch.model.ts';
 import Department from '@db/models/department.model.ts';
@@ -131,21 +131,20 @@ function sortedVariant(entries: [string, string][]): Map<string, string> {
 
 async function clearCollections() {
   console.log('Clearing existing collections...');
-  await Promise.all([
-    Branch.deleteMany({}),
-    Department.deleteMany({}),
-    User.deleteMany({}),
-    Product.deleteMany({}),
-    Inventory.deleteMany({}),
-    InventoryProduct.deleteMany({}),
-    Service.deleteMany({}),
-    Shop.deleteMany({}),
-    Bill.deleteMany({}),
-    Counter.deleteMany({}),
-    CreditPayment.deleteMany({}),
-    Order.deleteMany({}),
-    Setting.deleteMany({}),
-  ]);
+  await prisma.billItem.deleteMany({});
+  await prisma.bill.deleteMany({});
+  await prisma.order.deleteMany({});
+  await prisma.creditPayment.deleteMany({});
+  await prisma.inventoryProduct.deleteMany({});
+  await prisma.product.deleteMany({});
+  await prisma.inventory.deleteMany({});
+  await prisma.service.deleteMany({});
+  await prisma.shop.deleteMany({});
+  await prisma.department.deleteMany({});
+  await prisma.branch.deleteMany({});
+  await prisma.user.deleteMany({});
+  await prisma.counter.deleteMany({});
+  await prisma.setting.deleteMany({});
   console.log('Collections cleared (counters reset).');
 }
 
@@ -176,7 +175,7 @@ async function seedBranches() {
     { name: 'SRM Faculty of Science and Humanities', code: '4', active: true },
   ];
 
-  const branches = await Branch.insertMany(branchesData);
+  const branches = await Promise.all(branchesData.map(d => new Branch(d).save()));
   console.log(`  → ${branches.length} branches created.`);
   return branches;
 }
@@ -271,7 +270,7 @@ async function seedDepartments(branches: any[]) {
     });
   }
 
-  const departments = await Department.insertMany(deptData);
+  const departments = await Promise.all(deptData.map(d => new Department(d).save()));
   console.log(`  → ${departments.length} departments created.`);
   return departments;
 }
@@ -382,7 +381,7 @@ async function seedUsers(branches: any[], departments: any[]) {
 
   // One Department Admin per department
   for (const dept of departments) {
-    const branch = branches.find((b: any) => b._id.equals(dept.branch));
+    const branch = branches.find((b: any) => b._id === dept.branch);
     const campusHint = branch
       ? branch.name.includes('Kattankulathur')
         ? 'ktr'
@@ -605,9 +604,7 @@ async function seedProducts() {
 async function seedInventory(products: any[]) {
   console.log('Seeding Inventory (single location)...');
 
-  const inventories = await Inventory.insertMany([
-    { name: 'Main Store', active: true },
-  ]);
+  const inventories = (await Promise.all([{ name: 'Main Store', active: true }].map(d => new Inventory(d).save())));
   const inventory = inventories[0];
 
   // Realistic base prices by rough category keyword
@@ -656,8 +653,7 @@ async function seedInventory(products: any[]) {
   const inventoryProducts: any[] = [];
   for (let i = 0; i < stockEntries.length; i += CHUNK) {
     const chunk = stockEntries.slice(i, i + CHUNK);
-    const inserted = await InventoryProduct.insertMany(chunk, { ordered: false });
-    inventoryProducts.push(...inserted);
+    for (const c of chunk) { const doc = await new InventoryProduct(c).save(); inventoryProducts.push(doc); }
   }
 
   console.log(`  → ${inventoryProducts.length} stock entries created (all under Main Store).`);
@@ -767,9 +763,9 @@ async function seedBills(
           status: 'PAID',
         });
         await bill.save();
-        await Bill.collection.updateOne({ _id: bill._id }, { $set: { createdAt: date } });
+        await prisma.bill.update({ where: { id: bill._id }, data: { createdAt: date } });
         
-        const updatedBill = await Bill.findById(bill._id);
+        const updatedBill = await prisma.bill.findUnique({ where: { id: bill._id }, include: { items: true } });
         if (updatedBill) bills.push(updatedBill);
       }
     }
@@ -784,7 +780,7 @@ async function seedBills(
 /* ------------------------------------------------------------------ */
 
 async function seed() {
-  await mongoose.connect(MONGODB_URI);
+  await prisma.$connect();
   console.log(`Connected to ${MONGODB_URI}\n`);
 
   try {
@@ -800,12 +796,12 @@ async function seed() {
     await seedBills(branches, departments, users, products, services);
 
     console.log('Seeding Credit Ledger records and outstanding department credits...');
-    const allBills = await Bill.find({});
-    const allDepts = await Department.find({});
-    const allUsers = await User.find({});
+    const allBills = await prisma.bill.findMany({ include: { items: true } }).then(res => res.map(b => ({ ...b, _id: b.id })));
+    const allDepts = await prisma.department.findMany({}).then(res => res.map(d => ({ ...d, _id: d.id })));
+    const allUsers = await prisma.user.findMany({}).then(res => res.map(x => ({ ...x, _id: x.id })));
 
-    const allProducts = await Product.find({});
-    const allServices = await Service.find({});
+    const allProducts = await prisma.product.findMany({}).then(res => res.map(x => ({ ...x, _id: x.id })));
+    const allServices = await prisma.service.findMany({}).then(res => res.map(x => ({ ...x, _id: x.id })));
 
     // Let's loop through departments and assign some outstanding credit
     for (let i = 0; i < allDepts.length; i++) {
@@ -858,7 +854,7 @@ async function seed() {
       }
 
       dept.outstandingCredit = outstanding;
-      await dept.save();
+      await prisma.department.update({ where: { id: dept._id }, data: { outstandingCredit: dept.outstandingCredit } });
 
       // Let's also create 2 PAID credit bills for ledger history
       const paidBillsList = [];
@@ -916,7 +912,7 @@ async function seed() {
         dept.creditBalance = excess;
         // Apply it to the unpaid bills we generated above!
         await applyCreditBalance(dept);
-        await dept.save();
+        await prisma.department.update({ where: { id: dept._id }, data: { outstandingCredit: dept.outstandingCredit } });
       }
     }
     console.log('Successfully seeded credit ledger records and outstanding credits.');
@@ -937,7 +933,7 @@ async function seed() {
     console.error('Seed failed:', err);
     process.exitCode = 1;
   } finally {
-    await mongoose.disconnect();
+    await prisma.$disconnect();
   }
 }
 

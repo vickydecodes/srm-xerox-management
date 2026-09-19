@@ -125,7 +125,7 @@ export const createBill = async (data: CreateBillPayload, createdBy: string) => 
     ...item,
     total: item.quantity * item.price,
   }));
-  bill.subtotal = bill.items.reduce((sum, item) => sum + item.total, 0);
+  bill.subtotal = bill.items.reduce((sum, item) => sum + (item.total || 0), 0);
   bill.total = bill.subtotal - (bill.discount || 0) + (bill.tax || 0);
 
   await bill.save();
@@ -170,7 +170,7 @@ export const approveCreditBill = async (id: string, userId: string, remarks?: st
   }
 
   bill.approvalStatus = 'approved';
-  bill.approvedBy = new mongoose.Types.ObjectId(userId);
+  bill.approvedBy = userId;
   bill.approvedAt = new Date();
   if (remarks) bill.remarks = remarks;
 
@@ -178,7 +178,8 @@ export const approveCreditBill = async (id: string, userId: string, remarks?: st
 
   // Only apply credit on approval if this is a direct bill (not linked to an order)
   if (bill.department && !bill.order) {
-    const dept = await Department.findById(bill.department);
+    const deptId = typeof bill.department === 'object' ? (bill.department as any).id || (bill.department as any)._id : bill.department;
+    const dept = await Department.findById(deptId);
     if (!dept) throw new Error('Department not found');
 
     dept.outstandingCredit += bill.total;
@@ -198,7 +199,7 @@ export const rejectCreditBill = async (id: string, userId: string, remarks?: str
   }
 
   bill.approvalStatus = 'rejected';
-  bill.approvedBy = new mongoose.Types.ObjectId(userId);
+  bill.approvedBy = userId;
   bill.approvedAt = new Date();
   if (remarks) bill.remarks = remarks;
 
@@ -292,7 +293,7 @@ export const eraseBill = async (id: string) => {
 export const setBillActiveStatus = async (id: string, active: boolean) => {
   return Bill.findByIdAndUpdate(
     id,
-    { active, ...(active ? { deleted: false, deletedAt: null } : {}) },
+    { ...(active ? { deleted: false, deletedAt: null } : { deleted: true, deletedAt: new Date() }) },
     { new: true }
   );
 };

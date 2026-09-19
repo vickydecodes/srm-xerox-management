@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import { multiModelDynamicFilter } from '@core/constants/multimodelfilter.constant.ts';
 import InventoryProduct from '@db/models/inventory-product.model.ts';
 import Service from '@db/models/service.model.ts';
+import Product from '@db/models/product.model.ts';
 
 // Strict configs for search to match ONLY by name and avoid description/code matches
 const strictInventoryProductFilterConfig = {
@@ -45,7 +46,9 @@ export const searchProducts = async (
           select: 'variants',
         },
       },
-      mapFn: (ip: any) => {
+      mapFn: async (ip: any) => {
+        const prod = await Product.findById(ip.product);
+        ip.product = prod;
         let resolvedVariant = null;
         if (ip.variant) {
           if (mongoose.Types.ObjectId.isValid(ip.variant)) {

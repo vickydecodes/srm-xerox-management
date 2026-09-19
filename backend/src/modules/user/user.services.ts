@@ -45,7 +45,7 @@ export const getAllUsers = async (
 };
 
 export const getUserById = async (id: string) => {
-  return User.findById(id).populate('branch department shop');
+  return User.findById(id);
 };
 
 export const updateUser = async (

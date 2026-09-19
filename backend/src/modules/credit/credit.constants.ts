@@ -7,5 +7,4 @@ export const UPDATE_OPTIONS = {
 };
 
 
-export const toObjectId = (id: string) =>
-  new mongoose.Types.ObjectId(id);
+export const toObjectId = (id: any) => id ? id.toString() : null;;

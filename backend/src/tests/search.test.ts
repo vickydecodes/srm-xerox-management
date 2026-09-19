@@ -92,7 +92,7 @@ describe('Search API Endpoint Suite', () => {
   it('should successfully fetch search results with empty query', async () => {
     const res = await tester.get(`${baseRoute}/products`, token);
 
-    tester.assertFetched(res, 'products');
+    console.log(JSON.stringify(res.body, null, 2)); tester.assertFetched(res, "products");
     expect(Array.isArray(res.body.data)).to.be.true;
   });
 

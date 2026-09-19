@@ -6,6 +6,8 @@ import { generateToken } from '../../lib/jwt.ts';
 import { randomUUID } from 'node:crypto';
 
 
+import prisma from '@config/prisma.config.ts';
+
 const makeRequest = (method: string, url: string, body?: any, token?: string) => {
   let req = (request(app) as any)[method](url);
   if (token) {
@@ -27,15 +29,38 @@ export const tester = {
 
   // Auth/Setup helper
   setupAdmin: async () => {
-    const mockUser = await User.create({
+    // Clear all tables before test starts
+    try {
+      await prisma.$transaction([
+        prisma.bill.deleteMany(),
+        prisma.order.deleteMany(),
+        prisma.inventoryProduct.deleteMany(),
+        prisma.creditPayment.deleteMany(),
+        prisma.service.deleteMany(),
+        prisma.product.deleteMany(),
+        prisma.inventory.deleteMany(),
+        prisma.department.deleteMany(),
+        prisma.branch.deleteMany(),
+        prisma.user.deleteMany(),
+        prisma.shop.deleteMany(),
+        prisma.counter.deleteMany(),
+      ]);
+    } catch (e) {
+      console.error('Error clearing DB:', e);
+    }
+
+    const mockUser = await new User({
       name: 'Test Super Admin',
-      email: `testadmin_${randomUUID()}@srm.edu`,      phone: '9999999999',
+      login_id: `admin_${randomUUID()}`,
+      email: `testadmin_${randomUUID()}@srm.edu`, phone: '9999999999',
       password: 'Password123',
       role: 'super_admin',
       active: true,
-    });
+    }).save();
     const token = generateToken({ id: mockUser._id, role: 'super_admin' });
     const cleanup = async () => {
+      // no need to delete specific user, as we will clear everything before test runs.
+      // but to be safe:
       await User.findByIdAndDelete(mockUser._id);
     };
     return { token, user: mockUser, cleanup };

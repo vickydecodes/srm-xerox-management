@@ -33,7 +33,7 @@ const validatePassword = async (raw: string, hashed: string) => {
 export const login = async (loginId: string, password?: string) => {
   ensureFields({ loginId, password });
 
-  const user: any = await User.findOne({ login_id: loginId }).select('+password');
+  const user: any = await User.findOne({ login_id: loginId });
   if (!user) throw new ApiError(404, ERROR.USER_NOT_FOUND);
 
   const role: Role = user.role;
@@ -80,7 +80,7 @@ export const changePassword = async (data: {
 }) => {
   ensureFields(data);
 
-  const user = await User.findById(data.userId).select('+password');
+  const user = await User.findById(data.userId);
   if (!user) throw new ApiError(404, ERROR.USER_NOT_FOUND);
 
   const valid = await bcrypt.compare(data.currentPassword, (user as any).password);
@@ -104,12 +104,7 @@ export const getCurrentUser = async (token: string): Promise<ReturnedUser> => {
 
   const { id, role } = decoded;
 
-  const user = await User.findById(id)
-    .select('-password')
-    .populate({ path: 'branch', select: '_id name' })
-    .populate({ path: 'department', select: '_id name' })
-    .populate({ path: 'shop', select: '_id name' })
-    .lean();
+  const user = await User.findById(id);
 
   if (!user) throw new ApiError(404, ERROR.USER_NOT_FOUND);
 
@@ -128,7 +123,7 @@ export const verifyPassword = async (data: {
   userId: string;
   password: string;
 }): Promise<{ verified: boolean; message: string }> => {
-  const user = await User.findById(data.userId).select('+password');
+  const user = await User.findById(data.userId);
   if (!user) throw new ApiError(404, ERROR.USER_NOT_FOUND);
 
   const match = await bcrypt.compare(data.password, (user as any).password);

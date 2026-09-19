@@ -26,7 +26,7 @@ afterAll(async () => {
 
   const ids = [createdProductId, variantProductId].filter(Boolean);
   if (ids.length > 0) {
-    await Product.deleteMany({ _id: { $in: ids } });
+    await Product.deleteMany({ id: { in: ids  } });
   }
 });
 
@@ -149,7 +149,7 @@ describe('Product API Endpoint Suite', () => {
   });
 
   it('should return 404 when requesting a non-existent product', async () => {
-    const nonExistentId = new mongoose.Types.ObjectId().toString();
+    const nonExistentId = '00000000-0000-0000-0000-000000000000';
     const res = await tester.get(`${baseRoute}/${nonExistentId}`, token);
 
     tester.assertNotFound(res, 'product');

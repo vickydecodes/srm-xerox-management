@@ -207,7 +207,7 @@ describe('User API Endpoint Suite', () => {
   });
 
   it('should return 404 when requesting a non-existent user', async () => {
-    const nonExistentId = new mongoose.Types.ObjectId().toString();
+    const nonExistentId = '00000000-0000-0000-0000-000000000000';
     const res = await tester.get(`${baseRoute}/${nonExistentId}`, token);
 
     tester.assertNotFound(res, 'user');

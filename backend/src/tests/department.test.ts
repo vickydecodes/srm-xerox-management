@@ -43,9 +43,9 @@ afterAll(async () => {
   const deptIds = [createdDepartmentId, creditDeptId].filter(Boolean);
 
   if (deptIds.length > 0) {
-    await CreditPayment.deleteMany({ department: { $in: deptIds } });
-    await Bill.deleteMany({ department: { $in: deptIds } });
-    await Department.deleteMany({ _id: { $in: deptIds } });
+    await CreditPayment.deleteMany({ department: { in: deptIds  } });
+    await Bill.deleteMany({ department: { in: deptIds  } });
+    await Department.deleteMany({ id: { in: deptIds  } });
   }
 
   if (testBranchId) {
@@ -151,7 +151,7 @@ describe('Department API Endpoint Suite', () => {
   });
 
   it('should return 404 when requesting a non-existent department', async () => {
-    const nonExistentId = new mongoose.Types.ObjectId().toString();
+    const nonExistentId = '00000000-0000-0000-0000-000000000000';
     const res = await tester.get(`${baseRoute}/${nonExistentId}`, token);
 
     tester.assertNotFound(res, 'department');

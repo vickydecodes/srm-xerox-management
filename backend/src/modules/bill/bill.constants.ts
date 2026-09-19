@@ -7,10 +7,10 @@ const ROLE = { SUPER_ADMIN: 'super_admin' } as const;
 
 export const UPDATE_OPTIONS = { new: true, runValidators: true };
 
-export const SOFT_DELETE = { deleted: true, deletedAt: new Date(), active: false };
+export const SOFT_DELETE = { deleted: true, deletedAt: new Date() };
 
 export const RETRIEVE = { deleted: false, deletedAt: null };
 
-export const toObjectId = (id: string) => new mongoose.Types.ObjectId(id);
+export const toObjectId = (id: any) => id ? id.toString() : null;;
 
 export const getVisibility = (role?: Role) => (role === ROLE.SUPER_ADMIN ? 'all' : 'active-only');

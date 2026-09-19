@@ -11,7 +11,7 @@ import {
 } from './department.constants.ts';
 import { enhanceDepartment } from './department.util.ts';
 import { departmentFilterConfig } from './department.filterconfig.ts';
-import Bill from '@db/models/bill.model.ts';
+import prisma from '@config/prisma.config.ts';
 import CreditPayment from '@db/models/credit.model.ts';
 
 export const createDepartment = async (data: CreateDepartmentPayload) => {
@@ -23,9 +23,9 @@ export const createDepartment = async (data: CreateDepartmentPayload) => {
 export const getAllDepartments = async (
   queries: Record<string, unknown>,
   role?: Role,
-  options?: { branchId?: string }
+  options?: { branch?: string }
 ) => {
-  const rawQuery = options?.branchId ? { branch: toObjectId(options.branchId) } : undefined;
+  const rawQuery = options?.branch ? { branch: toObjectId(options.branch) } : undefined;
 
   return dynamicFilter(Department, departmentFilterConfig, queries, {
     visibility: getVisibility(role),
@@ -88,13 +88,20 @@ export const setDepartmentActiveStatus = async (id: string, active: boolean) => 
 export const applyCreditBalance = async (department: any) => {
   if (department.creditBalance <= 0) return;
 
-  const unpaidBills = await Bill.find({
-    department: department._id,
-    paymentMethod: 'CREDIT',
-    status: 'UNPAID',
-    approvalStatus: 'approved',
-    deleted: false,
-  }).sort({ createdAt: 1 });
+  const unpaidBills = await prisma.bill.findMany({
+    where: {
+      department: department._id,
+      paymentMethod: 'CREDIT',
+      status: 'UNPAID',
+      approvalStatus: 'approved',
+      deleted: false,
+    },
+    orderBy: { createdAt: 'asc' }
+  }).then(docs => docs.map(d => ({
+    ...d,
+    total: Number(d.total),
+    save: async () => { await prisma.bill.update({ where: { id: d.id }, data: { status: d.status as any } }) }
+  })));
 
   for (const bill of unpaidBills) {
     if (department.creditBalance <= 0) break;
@@ -132,7 +139,7 @@ export const clearCredit = async (
   let billObjectIds: any[] = [];
 
   if (billIds.length > 0) {
-    const bills = await Bill.find({ _id: { $in: billIds } });
+    const bills = await prisma.bill.findMany({ where: { id: { in: billIds } } }).then(docs => docs.map(d => ({ ...d, department: d.department, total: Number(d.total) })));
 
     if (bills.length !== billIds.length) {
       throw new Error('One or more bills not found');
@@ -163,7 +170,7 @@ export const clearCredit = async (
       return oid;
     });
 
-    await Bill.updateMany({ _id: { $in: billIds } }, { $set: { status: 'PAID' } });
+    await prisma.bill.updateMany({ where: { id: { in: billIds } }, data: { status: 'PAID' } });
     department.outstandingCredit = Math.max(0, department.outstandingCredit - expectedTotal);
   }
 
@@ -174,14 +181,14 @@ export const clearCredit = async (
 
   await applyCreditBalance(department);
 
-  const departmentId = toObjectId(id);
-  if (!departmentId) throw new Error('Invalid department id');
+  const departmentObjectId = toObjectId(id);
+  if (!departmentObjectId) throw new Error('Invalid department id');
 
   const paidByObjectId = toObjectId(userId);
   if (!paidByObjectId) throw new Error('Invalid user id');
 
   await CreditPayment.create({
-    department: departmentId,
+    department: departmentObjectId,
     bills: billObjectIds,
     amount: data.amount,
     paymentMethod: data.paymentMethod,

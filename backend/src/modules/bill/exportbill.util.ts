@@ -306,12 +306,9 @@ export const generatePdfBuffer = (bill: any, docSetting: any): Promise<Buffer> =
 
 export const generateBillPdf = async (id: string): Promise<Buffer> => {
   const bill = await Bill.findById(id)
-    .populate('branch')
-    .populate('department')
-    .populate({
-      path: 'createdBy',
-      populate: { path: 'shop' }
-    });
+    
+    
+    ;
 
   if (!bill) {
     throw new Error('Bill not found');

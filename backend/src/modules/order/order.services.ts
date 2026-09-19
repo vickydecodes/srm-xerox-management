@@ -91,9 +91,7 @@ export const getAllOrders = async (
 export const getOrderById = async (
   id: string
 ) => {
-  return Order.findById(id).populate(
-    'branch department shop createdBy branchAdminApproval.approver superAdminApproval.approver approvalHistory.approver'
-  );
+  return Order.findById(id);
 };
 
 export const updateOrder = async (

@@ -26,21 +26,7 @@ const RETRIEVE = {
 };
 
 
-const toObjectId = (
-  value?: string | Types.ObjectId | null
-) => {
-  if (!value) return null;
-
-  if (value instanceof Types.ObjectId) {
-    return value;
-  }
-
-  if (Types.ObjectId.isValid(value)) {
-    return new Types.ObjectId(value);
-  }
-
-  return null;
-};
+const toObjectId = (value?: any) => { return value ? value.toString() : null; };
 
 
 const getVisibility = (role?: Role) =>

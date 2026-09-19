@@ -59,7 +59,7 @@ afterAll(async () => {
 
   const serviceIds = [createdServiceId, materialServiceId].filter(Boolean);
   if (serviceIds.length > 0) {
-    await Service.deleteMany({ _id: { $in: serviceIds } });
+    await Service.deleteMany({ id: { in: serviceIds  } });
   }
 
   if (testInventoryProductId) {
@@ -200,7 +200,7 @@ describe('Service API Endpoint Suite', () => {
   });
 
   it('should return 404 when requesting a non-existent service', async () => {
-    const nonExistentId = new mongoose.Types.ObjectId().toString();
+    const nonExistentId = '00000000-0000-0000-0000-000000000000';
     const res = await tester.get(`${baseRoute}/${nonExistentId}`, token);
 
     tester.assertNotFound(res, 'service');

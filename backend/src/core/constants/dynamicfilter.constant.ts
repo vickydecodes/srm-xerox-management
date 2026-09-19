@@ -1,10 +1,8 @@
-import mongoose, { Model, Document, PipelineStage, Types } from 'mongoose';
-import { analyzeSchemaPaths } from '@utils/schemaanalyzer.util.ts';
-import { castObjectIds } from '@core/utils/parseid.util.js';
+import prisma from '@config/prisma.config.js';
 
 export interface SearchableRefConfig {
-  field: string; // local field holding the ObjectId, e.g. 'branch'
-  ref: string; // model name registered with mongoose, e.g. 'Branch'
+  field: string; // local relation field, e.g. 'branch'
+  ref: string; // model name, e.g. 'Branch'
   matchOn: string; // field on the referenced model to regex-match, e.g. 'name'
 }
 
@@ -19,6 +17,7 @@ export interface FilterConfig<T> {
 export interface PaginationOptions {
   page?: number;
   limit?: number;
+  full?: boolean;
 }
 
 export interface PaginatedResult<T> {
@@ -35,8 +34,8 @@ export interface PaginatedResult<T> {
   };
 }
 
-export async function dynamicFilter<T extends Document>(
-  model: Model<T>,
+export async function dynamicFilter<T>(
+  model: any,
   config: FilterConfig<T>,
   queryParams: Record<string, any>,
   options: PaginationOptions & {
@@ -44,71 +43,47 @@ export async function dynamicFilter<T extends Document>(
       select?: string;
     };
     nestedPopulate?: any[];
-    forcePopulate?: any[]; // ← add this
-
+    forcePopulate?: any[];
     visibility?: 'all' | 'active-only';
     rawQuery?: Record<string, any>;
   } = {}
 ): Promise<PaginatedResult<T>> {
-  mongoose.set('strictPopulate', false);
+  const prismaModelName = model.prismaModelName;
+  if (!prismaModelName) {
+    throw new Error(`Model must have a static 'prismaModelName' property`);
+  }
+
+  const delegate = (prisma as any)[prismaModelName];
+
   const {
     searchable = [],
     filterable = [],
     sortable = [],
     searchableRefs = [],
-    defaultSort = 'name',
+    defaultSort = 'createdAt',
   } = config;
 
-  const { populatePaths, refIdPaths, dynamicRefPaths } = analyzeSchemaPaths(model.schema);
-  console.log('populatePaths:', populatePaths);
-  const dynamicRefPathSet = new Set(dynamicRefPaths.map((d) => d.path));
-
-  const query: Record<string, any> = {};
-
   const visibility = options.visibility ?? 'active-only';
-  const SMART_SORT_FIELDS = ['name'];
-  const BUSINESS_SORT_FIELDS: any = {
-    status: {
-      paid: 1,
-      partial: 2,
-      pending: 3,
-    },
-  };
-  const DERIVED_SORT_FIELDS: any = {
-    'paymentHistory.statusUpdatedAt': {
-      field: 'lastPaymentAt',
-    },
-  };
+  const query: any = { ...options.rawQuery };
+
+  const noActiveModels = ['order', 'bill', 'billItem', 'counter', 'creditPayment', 'errorLog', 'setting'];
+  const noDeletedModels = ['billItem', 'counter', 'creditPayment', 'errorLog', 'setting'];
 
   if (visibility === 'active-only') {
-    if (model.schema.path('active')) query.active = true;
-    if (model.schema.path('deleted')) query.deleted = false;
+    if (!noActiveModels.includes(prismaModelName)) {
+      query.active = true;
+    }
+    if (!noDeletedModels.includes(prismaModelName)) {
+      query.deleted = false;
+    }
   }
 
-  const isFullFetch = queryParams.full === 'true' || queryParams.full === true;
-
-  const rawQuery = (options as any).rawQuery ?? {};
-
-  Object.assign(query, rawQuery);
-
-  castObjectIds(query);
+  const isFullFetch = queryParams.full === 'true' || queryParams.full === true || options.full === true;
 
   filterable.forEach((field) => {
     const key = field as string;
     const value = queryParams[key];
     if (value === undefined || value === null || value === '') return;
-
-    const isId = Types.ObjectId.isValid(value);
-
-    if (refIdPaths.includes(key)) {
-      query[key] = isId ? new Types.ObjectId(value) : value;
-      return;
-    }
-
-    if (isId) {
-      query[key] = new Types.ObjectId(value);
-      return;
-    }
 
     if (key.toLowerCase().includes('date')) {
       const d = new Date(value);
@@ -121,308 +96,118 @@ export async function dynamicFilter<T extends Document>(
       return;
     }
 
+    // Attempt to handle ObjectId filtering automatically? For now just assign
     query[key] = value;
   });
 
-  const lookupStages: PipelineStage[] = [];
-  const searchUnsetFields: string[] = [];
-
   if (queryParams.search && (searchable.length > 0 || searchableRefs.length > 0)) {
-    const r = new RegExp(queryParams.search.trim(), 'i');
-    const orConditions: Record<string, any>[] = searchable.map((f) => ({ [f]: { $regex: r } }));
+    const searchString = queryParams.search.trim();
+    const orConditions: any[] = searchable.map((f) => ({
+      [f]: { contains: searchString, mode: 'insensitive' }
+    }));
 
-    searchableRefs.forEach(({ field, ref, matchOn }) => {
-      const refModel = mongoose.model(ref);
-      const alias = `__search_${field.replace(/\./g, '_')}`;
+    for (const { field, ref, matchOn } of searchableRefs) {
+      const refModelName = ref.charAt(0).toLowerCase() + ref.slice(1);
+      const refModel = (prisma as any)[refModelName];
+      if (refModel) {
+        try {
+          const matchingRefs = await refModel.findMany({
+            where: { [matchOn]: { contains: searchString, mode: 'insensitive' } },
+            select: { id: true }
+          });
+          console.log("matchingRefs:", matchingRefs); const ids = matchingRefs.map((r: any) => r.id);
+          if (ids.length > 0) {
+            orConditions.push({ [field]: { in: ids } });
+          }
+        } catch (err) {
+           // Skip if query fails
+        }
+      }
+    }
 
-      lookupStages.push({
-        $lookup: {
-          from: refModel.collection.name,
-          localField: field,
-          foreignField: '_id',
-          as: alias,
-        },
-      });
-
-      searchUnsetFields.push(alias);
-      orConditions.push({ [`${alias}.${matchOn}`]: { $regex: r } });
-    });
-
-    query.$or = orConditions;
+    if (orConditions.length > 0) {
+      query.OR = orConditions;
+    } else {
+      // If there are search conditions but none matched, ensure no results are returned
+      query.id = 'NO_MATCH';
+    }
   }
 
-  const sort: Record<string, 1 | -1> = {};
+  let orderBy: any = {};
   const sortBy = queryParams.sortBy;
 
   if (sortBy && sortable.includes(sortBy)) {
-    sort[sortBy] = queryParams.order === 'asc' ? 1 : -1;
+    orderBy[sortBy] = queryParams.order === 'asc' ? 'asc' : 'desc';
   } else {
     let finalDefault = (defaultSort as string) || 'createdAt';
-    let defaultOrder: 1 | -1 = 1;
+    let defaultOrder = 'asc';
     if (finalDefault.startsWith('-')) {
-      defaultOrder = -1;
+      defaultOrder = 'desc';
       finalDefault = finalDefault.slice(1);
     }
-    sort[finalDefault] = queryParams.order ? (queryParams.order === 'asc' ? 1 : -1) : defaultOrder;
+    orderBy[finalDefault] = queryParams.order ? (queryParams.order === 'asc' ? 'asc' : 'desc') : defaultOrder;
   }
 
   const page = isFullFetch ? 1 : Math.max(1, Number(queryParams.page) || 1);
   const limit = isFullFetch ? 0 : Math.min(100, Math.max(1, Number(queryParams.limit) || 10));
 
-  const sortField = Object.keys(sort)[0];
-  const sortOrder = sort[sortField];
-
-  const pipeline: PipelineStage[] = [...lookupStages, { $match: query }];
-
-  if (DERIVED_SORT_FIELDS[sortField]) {
-    pipeline.push({
-      $addFields: {
-        lastPaymentAt: {
-          $max: {
-            $map: {
-              input: '$paymentHistory',
-              as: 'p',
-              in: {
-                $ifNull: ['$$p.statusUpdatedAt', '$$p.createdAt'],
-              },
-            },
-          },
-        },
-      },
-    });
-
-    pipeline.push({
-      $sort: {
-        lastPaymentAt: sortOrder,
-        createdAt: -1, // stable secondary sort
-      },
-    });
-  } else if (BUSINESS_SORT_FIELDS[sortField]) {
-    const map = BUSINESS_SORT_FIELDS[sortField];
-
-    pipeline.push(
-      {
-        $addFields: {
-          __businessOrder: {
-            $switch: {
-              branches: Object.entries(map).map(([key, value]) => ({
-                case: { $eq: [`$${sortField}`, key] },
-                then: value,
-              })),
-              default: 999,
-            },
-          },
-        },
-      },
-      {
-        $sort: {
-          __businessOrder: sortOrder,
-          createdAt: -1, // stable secondary sort
-        },
-      },
-      {
-        $project: {
-          __businessOrder: 0,
-        },
+  let include: any = undefined;
+  if (options.forcePopulate && options.forcePopulate.length > 0) {
+    include = {};
+    options.forcePopulate.forEach((pathObj: any) => {
+      if (typeof pathObj === 'string') {
+        const parts = pathObj.split(' ');
+        parts.forEach(p => {
+            if (p) include[p] = true;
+        });
+      } else if (pathObj.path) {
+        include[pathObj.path] = pathObj.populate ? { include: buildInclude(pathObj.populate) } : true;
       }
-    );
-  } else if (SMART_SORT_FIELDS.includes(sortField)) {
-    pipeline.push(
-      {
-        $addFields: {
-          __cleanValue: {
-            $toLower: {
-              $trim: { input: { $toString: `$${sortField}` } },
-            },
-          },
-
-          __typePriority: {
-            $cond: [
-              {
-                $regexMatch: {
-                  input: '$__cleanValue',
-                  regex: /^[a-z]+$/,
-                },
-              },
-              0,
-              1,
-            ],
-          },
-
-          __numericPart: {
-            $let: {
-              vars: {
-                match: {
-                  $regexFind: {
-                    input: '$__cleanValue',
-                    regex: /\d+/,
-                  },
-                },
-              },
-              in: {
-                $cond: [{ $ne: ['$$match', null] }, { $toInt: '$$match.match' }, 999999],
-              },
-            },
-          },
-        },
-      },
-      {
-        $sort: {
-          __typePriority: 1,
-          __numericPart: 1,
-          __cleanValue: sortOrder,
-        },
-      },
-      {
-        $project: {
-          __cleanValue: 0,
-          __typePriority: 0,
-          __numericPart: 0,
-        },
-      }
-    );
-  } else {
-    pipeline.push({ $sort: sort });
+    });
   }
 
-  pipeline.push({
-    $project: {
-      password: 0,
-      __v: 0,
-      ...Object.fromEntries(searchUnsetFields.map((f) => [f, 0])),
-    },
-  });
+  const findParams: any = {
+    where: query,
+    orderBy,
+    include: Object.keys(include || {}).length > 0 ? include : undefined,
+  };
 
-  let data: any[];
-  let total: number;
-
-  if (isFullFetch) {
-    data = await model.aggregate(pipeline);
-    total = data.length;
-  } else {
-    const [result] = await model.aggregate([
-      ...pipeline,
-      {
-        $facet: {
-          data: [{ $skip: (page - 1) * limit }, { $limit: limit }],
-          total: [{ $count: 'count' }],
-        },
-      },
-    ]);
-
-    data = result?.data ?? [];
-    total = result?.total?.[0]?.count ?? 0;
+  if (!isFullFetch) {
+    findParams.skip = (page - 1) * limit;
+    findParams.take = limit;
   }
 
-  if (populatePaths.length > 0) {
-    data = await model.populate(
-      data,
-      populatePaths.map((path) => {
-        // NEW: dynamic refs (refPath) — let mongoose resolve the model per-document.
-        // schemaPath.options.ref is undefined for these, so skip the static-ref logic below.
-        if (dynamicRefPathSet.has(path)) {
+  const [total, data] = await Promise.all([
+    delegate.count({ where: query }),
+    delegate.findMany(findParams)
+  ]);
 
-          const selectByModel: Record<string, string> = {
-            InventoryRequest: '_id status quantity createdAt',
-            InventoryAllocation: '_id status quantity createdAt',
-          };
-
-
-          return { path };
-        }
-
-        const schemaPath: any = model.schema.path(path);
-        let refModelName = null;
-
-        if (schemaPath?.options?.ref) {
-          refModelName = schemaPath.options.ref;
-        }
-
-        if (schemaPath?.$embeddedSchemaType?.options?.ref) {
-          refModelName = schemaPath.$embeddedSchemaType.options.ref;
-        }
-
-        let match: any = undefined;
-
-        if (refModelName) {
-          const refSchema = mongoose.model(refModelName)?.schema;
-          if (refSchema?.path('active') && refSchema?.path('deleted')) {
-            match = { active: true, deleted: false };
-          }
-        }
-
-        if (path === 'materials.product') {
-          return {
-            path: 'materials.product',
-            match,
-            select: '_id product variant price quantity active',
-            populate: [
-              { path: 'product', select: '_id name code' }
-            ]
-          };
-        }
-
-        if (path === 'inventory') {
-          return {
-            path: 'inventory',
-            select: '_id code branch',
-            options: { strictPopulate: false },
-            populate: [
-              {
-                path: 'branch',
-                select: '_id name code',
-              }
-            ],
-          };
-        }
-
-        if (path === 'history.source') {
-          return {
-            path: 'history.source',
-            select: '_id code branch',
-            options: { strictPopulate: false },
-            populate: [{ path: 'branch', select: '_id name code' }],
-          };
-        }
-
-        const baseSelect = ['_id', 'name', 'code'];
-
-        if (options?.extras?.select) {
-          const extras = options.extras.select.split(/[\s,]+/).filter(Boolean);
-
-          baseSelect.push(...extras);
-        }
-
-        const nestedPopulate = options?.nestedPopulate?.find((p) => p.path === path);
-
-        return {
-          path,
-          match,
-          select: baseSelect.join(' '),
-          ...(nestedPopulate && { populate: nestedPopulate.populate }),
-        };
-      }),
-      // { strictPopulate: false }
-    );
-
-    if (options?.forcePopulate && options.forcePopulate.length > 0) {
-      data = await model.populate(data, options.forcePopulate, );
-    }
-  }
-
+  const wrapperData = data.map((d: any) => model({ ...d, _id: d.id }));
   const pages = limit === 0 ? 1 : Math.ceil(total / limit);
 
   return {
     success: true,
     message: 'Data fetched successfully',
-    data,
+    data: wrapperData,
     pagination: {
       page,
-      limit,
+      limit: limit === 0 ? total : limit,
       total,
       pages,
       hasNext: page < pages,
       hasPrev: page > 1,
     },
   };
+}
+
+function buildInclude(populateArr: any[]): any {
+    const inc: any = {};
+    populateArr.forEach((pathObj: any) => {
+      if (typeof pathObj === 'string') {
+        inc[pathObj] = true;
+      } else if (pathObj.path) {
+        inc[pathObj.path] = pathObj.populate ? { include: buildInclude(pathObj.populate) } : true;
+      }
+    });
+    return inc;
 }

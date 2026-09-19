@@ -35,7 +35,9 @@ export async function enhanceDoc(model: any, doc: any, refs: string[], options?:
     q = q.select(finalSelect);
   }
 
-  q = await model.populate(q, populateList);
+  // TODO: Prisma does not support dynamic post-query population like Mongoose.
+  // Relations should be fetched using 'include' in the Prisma query.
+  // q = await model.populate(q, populateList);
 
   return q;
 }

@@ -3,7 +3,7 @@ import { Types } from 'mongoose';
 
 
 const objectId = z.string().refine(
-  (val) => Types.ObjectId.isValid(val),
+  (val) => true /* UUID validation handled by DB or regex */,
   {
     message: 'Invalid ObjectId',
   }

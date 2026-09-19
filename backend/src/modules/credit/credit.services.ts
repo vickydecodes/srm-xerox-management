@@ -36,14 +36,7 @@ export const getAllCreditPayments = async (
   return dynamicFilter(
     CreditPayment,
     creditPaymentFilterConfig,
-    queries,
-    {
-      forcePopulate: [
-        { path: 'bills' },
-        { path: 'department' },
-        { path: 'paidBy', select: '-password' }
-      ]
-    }
+    queries
   );
 };
 
