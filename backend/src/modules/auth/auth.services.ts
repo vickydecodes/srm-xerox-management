@@ -46,7 +46,7 @@ export const login = async (loginId: string, password?: string) => {
 
   return {
     user: {
-      ...user.toObject(),
+      ...user,
       role,
       branch: user.branch || null,
       department: user.department || null,

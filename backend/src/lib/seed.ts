@@ -44,7 +44,7 @@ import Setting from '@db/models/setting.model.ts';
 import Shop from '@db/models/shop.model.ts';
 import { applyCreditBalance } from '../modules/department/department.services.ts';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/srm_xerox_db';
+const MONGODB_URI = process.env.DATABASE_URL || 'postgresql://postgres:admin123@localhost:5432/srm_xerox_db?schema=public';
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -568,7 +568,7 @@ async function seedProducts() {
     if (variantsMap.size > 0) {
       const keys = Array.from(variantsMap.keys());
       const valueLists = keys.map((k) => variantsMap.get(k) || []);
-      
+
       const cartesian = (arrays: string[][]): string[][] =>
         arrays.reduce(
           (acc, curr) => acc.flatMap((a) => curr.map((c) => [...a, c])),
@@ -732,7 +732,7 @@ async function seedBills(
       const branchUsers = users.filter((u: any) => String(u.branch) === String(dept.branch));
       const staffUsers = branchUsers.filter((u: any) => u.role === 'staff');
       const staffUser = staffUsers.length > 0 ? randomItem(staffUsers) : users[0];
-      
+
       const numBills = randomInt(1, 2);
       for (let i = 0; i < numBills; i++) {
         const isProduct = Math.random() > 0.5;
@@ -740,9 +740,9 @@ async function seedBills(
         const price = isProduct ? 40 : 25;
         const quantity = randomInt(1, 10);
         const total = quantity * price;
-        
+
         const date = new Date(2026, m, randomInt(1, 28));
-        
+
         const bill = new Bill({
           items: [{
             type: isProduct ? 'InventoryProduct' : 'Service',
@@ -764,7 +764,7 @@ async function seedBills(
         });
         await bill.save();
         await prisma.bill.update({ where: { id: bill._id }, data: { createdAt: date } });
-        
+
         const updatedBill = await prisma.bill.findUnique({ where: { id: bill._id }, include: { items: true } });
         if (updatedBill) bills.push(updatedBill);
       }
@@ -812,7 +812,7 @@ async function seed() {
 
       // Initialize creditBalance
       dept.creditBalance = 0;
-      
+
       // Let's generate 2-3 unpaid CREDIT bills for this department
       const numBills = 2 + (i % 2); // alternating 2 and 3 bills
       let outstanding = 0;
@@ -820,8 +820,8 @@ async function seed() {
       for (let j = 0; j < numBills; j++) {
         // Pick a product or service
         const isProduct = j % 2 === 0;
-        const itemObj = isProduct 
-          ? allProducts[j % allProducts.length] 
+        const itemObj = isProduct
+          ? allProducts[j % allProducts.length]
           : allServices[j % allServices.length];
         const price = isProduct ? 50 : 25;
         const quantity = 3 + j;
@@ -861,8 +861,8 @@ async function seed() {
       let paidSum = 0;
       for (let j = 0; j < 2; j++) {
         const isProduct = j % 2 === 0;
-        const itemObj = isProduct 
-          ? allProducts[(j + 2) % allProducts.length] 
+        const itemObj = isProduct
+          ? allProducts[(j + 2) % allProducts.length]
           : allServices[(j + 2) % allServices.length];
         const price = isProduct ? 100 : 50;
         const quantity = 2;
