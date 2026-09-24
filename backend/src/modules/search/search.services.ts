@@ -1,21 +1,26 @@
 import mongoose from 'mongoose';
-import { multiModelDynamicFilter } from '@core/constants/multimodelfilter.constant.ts';
+import { multiModelDynamicFilter, MultiModelSearchConfig } from '@core/constants/multimodelfilter.constant.ts';
 import InventoryProduct from '@db/models/inventory-product.model.ts';
 import Service from '@db/models/service.model.ts';
 import Product from '@db/models/product.model.ts';
 
+import { FilterConfig } from '@core/constants/dynamicfilter.constant.ts';
+
 // Strict configs for search to match ONLY by name and avoid description/code matches
-const strictInventoryProductFilterConfig = {
+const strictInventoryProductFilterConfig: FilterConfig<any> = {
+  table: 'InventoryProduct',
   searchable: [] as string[],
   searchableRefs: [
-    { field: 'product', ref: 'Product', matchOn: 'name' }
+    { field: 'product', delegate: 'product', matchOn: 'name' }
   ],
   filterable: ['active'],
   sortable: ['createdAt'],
   defaultSort: 'createdAt',
+  enhanceRefs: ['product'],
 };
 
-const strictServiceFilterConfig = {
+const strictServiceFilterConfig: FilterConfig<any> = {
+  table: 'Service',
   searchable: ['name'],
   filterable: ['active', 'deleted'],
   sortable: ['name'],
@@ -34,7 +39,7 @@ export const searchProducts = async (
   const queryProducts = !isServiceKeyword;
   const queryServices = !isProductKeyword;
 
-  const configs = [];
+  const configs: MultiModelSearchConfig[] = [];
 
   if (queryProducts) {
     configs.push({
@@ -47,7 +52,9 @@ export const searchProducts = async (
         },
       },
       mapFn: async (ip: any) => {
-        const prod = await Product.findById(ip.product);
+        const prod = typeof ip.product === 'object' && ip.product !== null 
+          ? ip.product 
+          : await Product.findById(ip.product);
         ip.product = prod;
         let resolvedVariant = null;
         if (ip.variant) {

@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { parseMongoError } from './mongoerrorparser.constant.ts';
+import { parsePrismaError } from './prismaerrorparser.constant.ts';
 import pluralize from 'pluralize';
 
 const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
@@ -131,7 +131,7 @@ const sendResponse = {
     }),
 
   error: (res: Response, model: string, err?: any) => {
-  const parsed = parseMongoError(err);
+  const parsed = parsePrismaError(err);
   return res.status(parsed.status || 500).json({
     success: false,
     message: parsed.message || `Error processing ${model}`,

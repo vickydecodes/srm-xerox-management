@@ -1,4 +1,4 @@
-import { Types } from 'mongoose';
+
 import { Role } from '@typings/auth.types.js';
 import { log } from '@core/constants/logger.constant.ts';
 
@@ -22,11 +22,9 @@ const RETRIEVE = {
   deletedAt: null,
 } as const;
 
-const toObjectId = (value?: string | Types.ObjectId | null) => {
+const toObjectId = (value?: string | any | null) => {
   if (!value) return null;
-  if (value instanceof Types.ObjectId) return value;
-  if (Types.ObjectId.isValid(value)) return new Types.ObjectId(value);
-  return null;
+  return String(value);
 };
 
 const getVisibility = (role?: Role) => (role === ROLE.SUPER_ADMIN ? 'all' : 'active-only');

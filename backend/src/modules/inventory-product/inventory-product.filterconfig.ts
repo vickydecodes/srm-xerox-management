@@ -2,11 +2,12 @@ import { FilterConfig } from "@core/constants/dynamicfilter.constant.ts";
 import { IInventoryProduct } from '@db/models/inventory-product.model.ts';
 
 export const inventoryProductFilterConfig: FilterConfig<IInventoryProduct> = {
+    table: 'InventoryProduct',
     searchable: [
         "inventory.name"
     ],
     searchableRefs: [
-        { field: 'product', ref: 'Product', matchOn: 'name' }
+        { field: 'product', delegate: 'product', matchOn: 'name' }
     ],
     filterable: [
         "inventory",
@@ -25,4 +26,5 @@ export const inventoryProductFilterConfig: FilterConfig<IInventoryProduct> = {
     ],
 
     defaultSort: "createdAt",
+    enhanceRefs: ['inventory', 'product'],
 } 

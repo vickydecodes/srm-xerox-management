@@ -3,6 +3,7 @@ import { ICreditPayment } from '@db/models/credit.model.ts';
 
 
 export const creditPaymentFilterConfig: FilterConfig<ICreditPayment> = {
+  table: 'CreditPayment',
   filterable: [
     'department',
     'paymentMethod',
@@ -17,5 +18,8 @@ export const creditPaymentFilterConfig: FilterConfig<ICreditPayment> = {
     'createdAt',
     'updatedAt',
   ],
-  defaultSort: '-createdAt',
+  defaultSort: 'createdAt',
+  hasActive: false,
+  hasDeleted: false,
+  enhanceRefs: ['department', 'paidBy'],
 };

@@ -2,6 +2,7 @@ import { FilterConfig } from '@core/constants/dynamicfilter.constant.ts';
 import { IShop } from '@db/models/shop.model.ts';
 
 export const shopFilterConfig: FilterConfig<IShop> = {
+  table: 'Shop',
   searchable: ['name', 'code', 'phone', 'email'],
 
   filterable: ['active', 'deleted'],
@@ -15,4 +16,5 @@ export const shopFilterConfig: FilterConfig<IShop> = {
   ],
 
   defaultSort: 'name',
+  enhanceRefs: ['createdBy'],
 };
