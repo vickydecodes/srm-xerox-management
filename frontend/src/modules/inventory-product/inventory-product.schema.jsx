@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const inventoryProductCreateSchema = z.object({
   product: z.string().min(1, "Product is required"),
-  variant: z.record(z.string(), z.string()).default({}),
+  variant: z.string().optional().nullable(),
   quantity: z.coerce.number().min(0, "Quantity cannot be negative").default(0),
   price: z.coerce.number().min(0, "Price cannot be negative").default(0),
   active: z.boolean().default(true),
@@ -17,7 +17,7 @@ export const inventoryProductEditSchema = z.object({
 
 export const inventoryProductSchema = z.object({
   product: z.string().min(1, "Product is required"),
-  variant: z.record(z.string(), z.string()).default({}),
+  variant: z.string().optional().nullable(),
   quantity: z.coerce.number().min(0, "Quantity cannot be negative").default(0),
   price: z.coerce.number().min(0, "Price cannot be negative").default(0),
   active: z.boolean().default(true),

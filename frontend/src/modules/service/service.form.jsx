@@ -1,6 +1,13 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useFieldArray } from "react-hook-form";
+import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
+import { apiRequest } from "@/core/api/api.request";
+import { apiurls } from "@/core/api/api.urls";
 import {
   FormControl,
   FormField,
@@ -10,38 +17,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useSelectItems } from "@/core/hooks/useSelect";
-import {
-  Select,
-  SelectContent,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-const formatVariant = (variant) => {
-  if (!variant) return '';
-  const entries = typeof variant.entries === 'function' ? [...variant.entries()] : Object.entries(variant);
-  if (entries.length === 0) return '';
-  return `(${entries.map(([k, v]) => `${k}: ${v}`).join(', ')})`;
-};
 
-export default function ServiceForm({ form, isEdit = false, products }) {
+export default function ServiceForm({ form, isEdit = false, inventoryProducts = [] }) {
   const fields = ["name", "description", "unit", "price"];
 
   const { fields: materialFields, append, remove } = useFieldArray({
     control: form.control,
     name: "materials",
-  });
-
-  console.log(products)
-
-  const productSelect = useSelectItems(products, {
-    emptyText: "No products available",
-    placeholder: "Select a product",
-    getLabel: (i) => {
-      const variantStr = formatVariant(i.variant);
-      const name = i.product?.name || "Unknown Product";
-      return `${name} ${variantStr}`.trim();
-    }
   });
 
   return (
@@ -75,22 +57,18 @@ export default function ServiceForm({ form, isEdit = false, products }) {
       <div className="space-y-2">
         <FormLabel>Materials</FormLabel>
         {materialFields.map((item, index) => (
-          <div key={item._id} className="flex gap-2 items-start">
+          <div key={item.id || item._id || index} className="flex gap-2 items-start">
             <FormField
               control={form.control}
               name={`materials.${index}.product`}
               render={({ field: f }) => (
                 <FormItem className="flex-1">
                   <FormControl>
-                  <Select
-                value={f.value ? String(f.value) : undefined}
-                onValueChange={f.onChange}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={productSelect.placeholder} />
-                </SelectTrigger>
-                <SelectContent>{productSelect.items}</SelectContent>
-              </Select>
+                    <MaterialProductCombobox
+                      value={f.value}
+                      initialItems={inventoryProducts}
+                      onSelect={f.onChange}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -118,5 +96,154 @@ export default function ServiceForm({ form, isEdit = false, products }) {
         </Button>
       </div>
     </>
+  );
+}
+
+function MaterialProductCombobox({ value, onSelect, initialItems = [], disabled }) {
+  const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [fetchedItems, setFetchedItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+
+  const getItemLabel = (item) => {
+    if (!item) return "";
+    const prodName = item.product?.name || item.product || "Unknown Inventory Product";
+    let variantStr = "";
+    if (typeof item.variant === "object" && item.variant !== null) {
+      if (item.variant.attributes) {
+        variantStr = Object.entries(item.variant.attributes)
+          .map(([k, v]) => `${k}: ${v}`)
+          .join(", ");
+      } else {
+        variantStr = Object.entries(item.variant)
+          .map(([k, v]) => `${k}: ${v}`)
+          .join(", ");
+      }
+    } else if (item.variant) {
+      variantStr = String(item.variant);
+    }
+    return `${prodName}${variantStr ? ` (${variantStr})` : ""}`.trim();
+  };
+
+  const allItemsMap = new Map();
+  [...initialItems, ...fetchedItems].forEach((item) => {
+    if (item && (item._id || item.id)) {
+      allItemsMap.set(String(item._id || item.id), item);
+    }
+  });
+  const allItems = Array.from(allItemsMap.values());
+
+  useEffect(() => {
+    let active = true;
+    if (!open || !searchQuery) return;
+
+    const fetchItems = async () => {
+      setLoading(true);
+      try {
+        const url = apiurls.inventoryProducts.getAll.url();
+        const res = await apiRequest("get", url, { params: { search: searchQuery } });
+        if (active) {
+          setFetchedItems(res.data || []);
+        }
+      } catch (err) {
+        console.error("Failed to search inventory products:", err);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    const timer = setTimeout(() => {
+      fetchItems();
+    }, 300);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [searchQuery, open]);
+
+  useEffect(() => {
+    if (value && !selectedItem && !allItemsMap.has(String(value))) {
+      const fetchInitial = async () => {
+        try {
+          const url = apiurls.inventoryProducts.getOne.url(value);
+          const res = await apiRequest("get", url);
+          if (res.data) setSelectedItem(res.data);
+        } catch (e) {
+          console.error("Failed to fetch initial material inventory product:", e);
+        }
+      };
+      fetchInitial();
+    }
+  }, [value, selectedItem, allItemsMap]);
+
+  const displayItem = allItemsMap.get(String(value)) || selectedItem;
+
+  const displayedList = searchQuery
+    ? allItems.filter((i) => getItemLabel(i).toLowerCase().includes(searchQuery.toLowerCase()))
+    : allItems;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between overflow-hidden text-ellipsis whitespace-nowrap"
+          disabled={disabled}
+        >
+          <span className="truncate">{displayItem ? getItemLabel(displayItem) : "Select an inventory product..."}</span>
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[350px] p-0" align="start">
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder="Search inventory products..."
+            value={searchQuery}
+            onValueChange={setSearchQuery}
+          />
+          <CommandList>
+            {loading && (
+              <div className="flex items-center justify-center py-6 text-sm text-muted-foreground">
+                <Loader2 className="mr-2 h-4 w-4 animate-spin text-primary" />
+                Searching...
+              </div>
+            )}
+            {!loading && displayedList.length === 0 && (
+              <CommandEmpty>No inventory products found.</CommandEmpty>
+            )}
+            {!loading && displayedList.length > 0 && (
+              <CommandGroup>
+                {displayedList.map((item) => {
+                  const itemId = String(item._id || item.id);
+                  return (
+                    <CommandItem
+                      key={itemId}
+                      value={itemId}
+                      onSelect={() => {
+                        setSelectedItem(item);
+                        onSelect(itemId);
+                        setOpen(false);
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4 shrink-0",
+                          String(value) === itemId ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      <span className="truncate">{getItemLabel(item)}</span>
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            )}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }

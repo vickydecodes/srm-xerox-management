@@ -60,7 +60,7 @@ export const searchProducts = async (
         if (ip.variant) {
           if (mongoose.Types.ObjectId.isValid(ip.variant)) {
             const variantObj = ip.product?.variants
-              ? ip.product.variants.find((v: any) => String(v._id) === String(ip.variant))
+              ? ip.product.variants.find((v: any) => String(v.id || v._id) === String(ip.variant))
               : null;
             resolvedVariant = variantObj ? variantObj.attributes : null;
           } else {
@@ -70,7 +70,7 @@ export const searchProducts = async (
         }
 
         return {
-          _id: ip._id,
+          _id: ip.id || ip._id,
           type: 'InventoryProduct',
           name: ip.product?.name || 'Unknown Product',
           price: ip.price,
@@ -90,7 +90,7 @@ export const searchProducts = async (
       config: strictServiceFilterConfig,
       type: 'Service',
       mapFn: (s: any) => ({
-        _id: s._id,
+        _id: s.id || s._id,
         type: 'Service',
         name: s.name,
         price: s.price,

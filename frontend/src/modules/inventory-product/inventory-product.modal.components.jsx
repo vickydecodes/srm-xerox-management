@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   DialogClose,
   DialogContent,
@@ -18,43 +19,20 @@ import { inventoryProductSchema } from "./inventory-product.schema";
 import { InventoryProductForm } from "./inventory-product.form";
 import { Button } from "@/components/ui/button";
 
-const findMatchingVariantId = (product, selectedAttributes) => {
-  if (!product || !product.variants || !selectedAttributes) return null;
-  const match = product.variants.find((v) => {
-    const vAttrs = v.attributes || {};
-    const vEntries =
-      typeof vAttrs.entries === "function"
-        ? [...vAttrs.entries()]
-        : Object.entries(vAttrs);
-    if (vEntries.length === 0) return false;
-    return vEntries.every(
-      ([k, val]) => String(selectedAttributes[k]) === String(val),
-    );
-  });
-  return match ? match._id : null;
-};
-
 export const Create = ({ exported, submitFn, closeModal }) => {
-  const { createPreset } = useLoader();
-  const preset = createPreset(exported.products);
-
-  useEffect(() => {
-    preset();
-  }, []);
-
-  const products = exported.products.state;
-
   const form = useForm({
     resolver: zodResolver(inventoryProductSchema),
     defaultValues: {
       product: "",
-      variant: {},
+      variant: null,
       quantity: 1,
       price: 0,
       active: true,
     },
     mode: "onSubmit",
   });
+
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
   const { run, loading, ErrorAlert, clearError } = useAsync((data) => submitFn(data));
 
@@ -63,14 +41,7 @@ export const Create = ({ exported, submitFn, closeModal }) => {
   const onSubmit = useSubmit({
     run,
     form,
-    transform: (data) => {
-      const selectedProduct = products.find((p) => String(p._id) === String(data.product));
-      const variantId = findMatchingVariantId(selectedProduct, data.variant);
-      return {
-        ...data,
-        variant: variantId,
-      };
-    },
+
     onSuccess: closeModal,
   });
 
@@ -85,7 +56,7 @@ export const Create = ({ exported, submitFn, closeModal }) => {
 
       <Form {...form}>
         <form className="grid gap-4 py-2" onSubmit={form.handleSubmit(onSubmit)}>
-          <InventoryProductForm form={form} products={products} />
+          <InventoryProductForm form={form} selectedProduct={selectedProduct} onProductSelect={setSelectedProduct} />
           {ErrorAlert}
 
           <DialogFooter>
@@ -102,64 +73,33 @@ export const Create = ({ exported, submitFn, closeModal }) => {
   );
 };
 
-export const Edit = ({ inventoryProduct, exported, submitFn = () => {}, closeModal = () => {} } = {}) => {
-  const { createPreset } = useLoader();
-  const preset = createPreset(exported.products);
+export const Edit = ({ inventoryProduct, exported, submitFn = () => { }, closeModal = () => { } } = {}) => {
+  const productId =
+    inventoryProduct?.product?._id ??
+    inventoryProduct?.product?.id ??
+    (typeof inventoryProduct?.product === "string" ? inventoryProduct?.product : "");
 
-  useEffect(() => {
-    preset();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const variantId =
+    typeof inventoryProduct?.variant === "object" && inventoryProduct?.variant !== null
+      ? (inventoryProduct?.variant?.sku || inventoryProduct?.variant?.id || inventoryProduct?.variant?._id || null)
+      : (inventoryProduct?.variant || null);
 
-  const products = exported.products.state;
-
-  const productId = inventoryProduct?.product?._id ?? inventoryProduct?.product ?? "";
-  const variantId = inventoryProduct?.variant?._id ?? inventoryProduct?.variant ?? null;
+  const initialProduct = typeof inventoryProduct?.product === "object" ? inventoryProduct?.product : null;
 
   const form = useForm({
     resolver: zodResolver(inventoryProductSchema),
     defaultValues: {
       product: productId,
-      variant: {},
+      variant: variantId,
       quantity: inventoryProduct?.quantity ?? 0,
       price: inventoryProduct?.price ?? 0,
       active: inventoryProduct?.active ?? true,
     },
   });
 
-  // Once products (with their variants) load, find the matching variant sub-doc
-  // by ID and populate the form's variant.<attrKey> fields from its attributes.
-  useEffect(() => {
-    console.log("[Edit] products.length:", products.length, products);
+  const [selectedProduct, setSelectedProduct] = useState(initialProduct);
 
-    if (!products.length || !variantId) {
-      console.log("[Edit] bailing early — no products or no variantId");
-      return;
-    }
-
-    const selectedProduct = products.find((p) => String(p._id) === String(productId));
-    console.log("[Edit] selectedProduct:", selectedProduct);
-
-    const matchedVariant = selectedProduct?.variants?.find(
-      (v) => String(v._id) === String(variantId)
-    );
-    console.log("[Edit] matchedVariant:", matchedVariant);
-
-    if (matchedVariant?.attributes) {
-      const attrs =
-        typeof matchedVariant.attributes.entries === "function"
-          ? Object.fromEntries(matchedVariant.attributes)
-          : matchedVariant.attributes;
-
-      console.log("[Edit] setting variant to:", attrs);
-      form.setValue("variant", attrs, { shouldValidate: false });
-    } else {
-      console.log("[Edit] no matched variant attributes found — variant stays empty");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [products, productId, variantId]);
-
-  const { run, loading, ErrorAlert, clearError } = useAsync(submitFn);
+  const { run, loading, ErrorAlert, clearError } = useAsync((data) => submitFn(data));
 
   useClearError(form, clearError);
 
@@ -167,11 +107,10 @@ export const Edit = ({ inventoryProduct, exported, submitFn = () => {}, closeMod
     run,
     form,
     transform: (data) => {
-      const selectedProduct = products.find((p) => String(p._id) === String(data.product));
-      const matchedVariantId = findMatchingVariantId(selectedProduct, data.variant);
       return {
         ...data,
-        variant: matchedVariantId,
+        product: productId,
+        variant: variantId,
       };
     },
     onSuccess: closeModal,
@@ -182,13 +121,19 @@ export const Edit = ({ inventoryProduct, exported, submitFn = () => {}, closeMod
       <DialogHeader>
         <DialogTitle>Edit Inventory Product</DialogTitle>
         <DialogDescription>
-          Update details of {inventoryProduct?.product?.name || "this item"}
+          Update details of {selectedProduct?.name || inventoryProduct?.product?.name || "this item"}
         </DialogDescription>
       </DialogHeader>
 
       <Form {...form}>
         <form className="grid gap-4 py-2" onSubmit={form.handleSubmit(onSubmit)}>
-          <InventoryProductForm form={form} products={products} isEdit />
+          <InventoryProductForm
+            form={form}
+            selectedProduct={selectedProduct}
+            onProductSelect={setSelectedProduct}
+            inventoryProduct={inventoryProduct}
+            isEdit
+          />
           {ErrorAlert}
 
           <DialogFooter>
@@ -205,7 +150,7 @@ export const Edit = ({ inventoryProduct, exported, submitFn = () => {}, closeMod
   );
 };
 
-export const Delete = ({ id, name, closeModal = () => {}, onConfirm = () => {} }) => (
+export const Delete = ({ id, name, closeModal = () => { }, onConfirm = () => { } }) => (
   <DialogContent className="sm:max-w-[425px]">
     <DialogHeader>
       <DialogTitle>Are you sure you want to delete {name}?</DialogTitle>

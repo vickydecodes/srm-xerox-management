@@ -36,21 +36,7 @@ try {
     console.warn('⚠️ MongoDB connection failed. Check your MONGO_URI or Mongo service.');
   }
 
-  console.log('\n🧪 Running API route smoke tests...\n');
-
-  const vitest = await startVitest('test', [], {
-    watch: false,
-    reporters: ['default'],
-  });
-
-  await vitest?.close();
-
-  const failed = vitest?.state.getFiles().some((f) => f.result?.state === 'fail');
-
-  if (failed) {
-    console.error('\n❌ Route smoke tests failed! Fix them before continuing.\n');
-    process.exit(1);
-  }
+  // Smoke tests removed because they execute tester.setupAdmin() which wipes the database on every boot.
 
   console.log("\n🚀 All checks completed successfully! You're good to go.\n");
 })();

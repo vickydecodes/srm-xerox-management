@@ -54,7 +54,7 @@ export const Create = ({ submitFn = () => { }, closeModal = () => { }, exported 
     serviceModal();
   }, []);
 
-  const products = useInventoryProductStore((s) => s.list);
+  const inventoryProducts = useInventoryProductStore((s) => s.list);
 
   return (
     <DialogContent className="w-xl max-h-[85vh] overflow-y-auto">
@@ -65,7 +65,7 @@ export const Create = ({ submitFn = () => { }, closeModal = () => { }, exported 
 
       <Form {...form}>
         <form className="grid gap-4 py-2" onSubmit={form.handleSubmit(onSubmit)}>
-          <ServiceForm form={form} products={products} />
+          <ServiceForm form={form} inventoryProducts={inventoryProducts} />
           {ErrorAlert}
           <DialogFooter>
             <DialogClose asChild>
@@ -127,9 +127,7 @@ export const Edit = ({
     editModal();
   }, []);
 
-  const products = useInventoryProductStore((s) => s.list);
-
-  console.log(products);
+  const inventoryProducts = useInventoryProductStore((s) => s.list);
 
   return (
     <DialogContent className="w-xl max-h-[85vh] overflow-y-auto">
@@ -140,7 +138,7 @@ export const Edit = ({
 
       <Form {...form}>
         <form className="grid gap-4 py-2" onSubmit={form.handleSubmit(onSubmit)}>
-          <ServiceForm form={form} isEdit products={products} />
+          <ServiceForm form={form} isEdit inventoryProducts={inventoryProducts} />
           {ErrorAlert}
           <DialogFooter>
             <DialogClose asChild>

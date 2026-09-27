@@ -122,9 +122,16 @@ export function BillForm({
   };
 
   const submit = (data) => {
+    console.log("Submit called with data:", data);
     onSubmit?.(data);
     reset(defaultBillValues);
   };
+
+  useEffect(() => {
+    if (Object.keys(form.formState.errors).length > 0) {
+      console.log("Form Validation Errors:", form.formState.errors);
+    }
+  }, [form.formState.errors]);
 
   const getPaymentIcon = (method) => {
     switch (method) {
@@ -214,6 +221,16 @@ export function BillForm({
                   searchProducts={searchProducts} // ← ADD THIS LINE
                 />
               </div>)}
+              {form.formState.errors.items?.root?.message && (
+                <div className="text-sm font-medium text-destructive">
+                  {form.formState.errors.items.root.message}
+                </div>
+              )}
+              {form.formState.errors.items?.message && (
+                <div className="text-sm font-medium text-destructive">
+                  {form.formState.errors.items.message}
+                </div>
+              )}
 
               {fields.length > 0 && (
                 <>
@@ -521,7 +538,6 @@ export function BillForm({
             <CardFooter className="bg-primary/[0.02] border-t border-primary/5 p-6">
               <Button
                 type="submit"
-                disabled={loading}
                 className="w-full h-11 text-sm font-semibold tracking-wide shadow-sm hover:shadow transition-all duration-200"
               >
                 {loading

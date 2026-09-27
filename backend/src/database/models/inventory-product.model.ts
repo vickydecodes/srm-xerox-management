@@ -43,7 +43,7 @@ export class InventoryProductDocument {
         // Validation for variant existing in product
         const prod = await Product.findById(this.product);
         if (prod) {
-          const variantExists = prod.variants?.some((v: any) => v._id === this.variant);
+          const variantExists = prod.variants?.some((v: any) => String(v._id) === String(this.variant) || String(v.id) === String(this.variant) || String(v.sku) === String(this.variant));
           if (!variantExists) {
             throw new Error(`Variant ${this.variant} does not exist for product ${this.product}`);
           }

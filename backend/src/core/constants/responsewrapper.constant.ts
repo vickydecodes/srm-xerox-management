@@ -4,12 +4,34 @@ import pluralize from 'pluralize';
 
 const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
 
+const mapIdToId = (obj: any): any => {
+  if (obj === null || typeof obj !== 'object') return obj;
+  if (obj instanceof Date) return obj;
+  
+  if (Array.isArray(obj)) {
+    return obj.map(mapIdToId);
+  }
+  
+  const mapped: any = { ...obj };
+  if (mapped.id && !mapped._id) {
+    mapped._id = mapped.id;
+  }
+  
+  for (const key in mapped) {
+    if (Object.prototype.hasOwnProperty.call(mapped, key)) {
+      mapped[key] = mapIdToId(mapped[key]);
+    }
+  }
+  
+  return mapped;
+};
+
 const sendResponse = {
   success: (res: Response, message: string, data: any = null) =>
     res.status(200).json({
       success: true,
       message,
-      data,
+      data: mapIdToId(data),
       timestamp: new Date().toISOString(),
     }),
 
@@ -17,7 +39,7 @@ const sendResponse = {
     res.status(201).json({
       success: true,
       message: `${capitalize(model)} created successfully`,
-      data: data || null,
+      data: mapIdToId(data) || null,
       timestamp: new Date().toISOString(),
     }),
 
@@ -25,7 +47,7 @@ const sendResponse = {
     res.status(200).json({
       success: true,
       message: `${capitalize(model)} updated successfully`,
-      data: data || null,
+      data: mapIdToId(data) || null,
       timestamp: new Date().toISOString(),
     }),
 
@@ -34,7 +56,7 @@ const sendResponse = {
     return res.status(200).json({
       success: true,
       message: `${capitalize(plural)} fetched successfully`,
-      data: data || [],
+      data: mapIdToId(data) || [],
       count: Array.isArray(data) ? data.length : 1,
       timestamp: new Date().toISOString(),
     });
@@ -43,14 +65,14 @@ const sendResponse = {
     res.status(200).json({
       success: true,
       message: `${capitalize(model)} retrieved successfully`,
-      data: data || null,
+      data: mapIdToId(data) || null,
       timestamp: new Date().toISOString(),
     }),
   blocked: (res: Response, message: string, data?: any, code: string = 'ENTITY_IN_USE') =>
     res.status(409).json({
       success: false,
       message,
-      data: data || null,
+      data: mapIdToId(data) || null,
       code,
       timestamp: new Date().toISOString(),
     }),
@@ -58,7 +80,7 @@ const sendResponse = {
   deleted: (res: Response, model: string, data?: any) =>
     res.status(200).json({
       success: true,
-      data: data || null,
+      data: mapIdToId(data) || null,
       message: `${capitalize(model)} deleted successfully`,
       timestamp: new Date().toISOString(),
     }),
@@ -84,7 +106,7 @@ const sendResponse = {
     return res.status(200).json({
       success: true,
       message: `${capitalize(plural)} fetched successfully`,
-      data: result.data,
+      data: mapIdToId(result.data),
       count: result.data.length,
       pagination: result.pagination,
       timestamp: new Date().toISOString(),

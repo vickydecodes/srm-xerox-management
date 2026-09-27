@@ -129,7 +129,7 @@ export default function BillCreation() {
         paymentMethod: data.paymentMethod.toUpperCase(),
         status: data.status.toUpperCase(),
       };
-      
+
       const targetOrderId = prefilledValues?.order || orderId;
       if (targetOrderId) {
         payload.order = targetOrderId;
@@ -143,7 +143,7 @@ export default function BillCreation() {
         if (newBill && newBill._id) {
           printBillPdf(newBill._id, newBill.code);
         }
-        navigate(`/${user.role}/bill`);
+        navigate(`/${user.role}/bills`);
       }
     } catch {
       // errors handled by CRUD layer
@@ -153,8 +153,8 @@ export default function BillCreation() {
   const formValues = editingBill
     ? getFormDefaultValues(editingBill)
     : prefilledValues
-    ? prefilledValues
-    : defaultBillValues;
+      ? prefilledValues
+      : defaultBillValues;
 
   return (
     <div className="space-y-6">

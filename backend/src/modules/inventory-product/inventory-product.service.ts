@@ -35,7 +35,7 @@ export const createInventoryProduct = async (data: CreateInventoryProductPayload
   }).save();
 
   const populated = await InventoryProduct.findById(inventoryProduct._id);
-  return resolveInventoryProductVariant(populated);
+  return enhanceInventoryProduct(populated);
 };
 
 export const getAllInventoryProducts = async (
@@ -53,14 +53,14 @@ export const getAllInventoryProducts = async (
   });
 
   if (result.data) {
-    result.data = result.data.map(resolveInventoryProductVariant);
+    result.data = await Promise.all(result.data.map(enhanceInventoryProduct));
   }
   return result;
 };
 
 export const getInventoryProductById = async (id: string) => {
   const ip = await InventoryProduct.findById(id);
-  return resolveInventoryProductVariant(ip);
+  return enhanceInventoryProduct(ip);
 };
 
 export const updateInventoryProduct = async (id: string, data: UpdateInventoryProductPayload) => {
@@ -68,7 +68,7 @@ export const updateInventoryProduct = async (id: string, data: UpdateInventoryPr
 
   if (!updated) return null;
 
-  return resolveInventoryProductVariant(updated);
+  return enhanceInventoryProduct(updated);
 };
 
 export const removeInventoryProduct = async (id: string) => {
@@ -96,5 +96,7 @@ export const eraseInventoryProduct = async (id: string) => {
 };
 
 export const setInventoryProductActiveStatus = async (id: string, active: boolean) => {
-  return InventoryProduct.findByIdAndUpdate(id, { active }, { new: true });
+  const updated = await InventoryProduct.findByIdAndUpdate(id, { active }, { new: true });
+  if (!updated) return null;
+  return enhanceInventoryProduct(updated);
 };

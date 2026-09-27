@@ -20,11 +20,12 @@ export const createInventoryProductSchema = z.object({
     .default(null),
 
   quantity: z
+    .coerce
     .number()
-    .int()
     .min(0, "Quantity cannot be negative"),
 
   price: z
+    .coerce
     .number()
     .min(0, "Price cannot be negative"),
 });
