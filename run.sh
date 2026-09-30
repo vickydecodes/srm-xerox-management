@@ -46,6 +46,10 @@ if [ ! -d "node_modules" ]; then \
 else \
   echo -e "${GREEN}✔ ${label} dependencies already present.${RESET}"; \
 fi && \
+if [ "${label}" = "BACKEND" ]; then \
+  echo -e "${CYAN}▶ Generating Prisma Client...${RESET}" && \
+  npx prisma generate; \
+fi && \
 echo -e "${CYAN}▶ Starting ${label} (npm run dev)...${RESET}" && \
 npm run dev; \
 echo -e "${RED}${label} process exited. Press Enter to close.${RESET}"; \

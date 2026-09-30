@@ -25,6 +25,9 @@ if not exist "node_modules" (
     echo %GREEN%✔ BACKEND dependencies already present.%RESET%
 )
 
+echo %CYAN%▶ Ensuring Prisma Client is generated...%RESET%
+call npx prisma generate
+
 echo %CYAN%▶ Starting BACKEND (npm run dev)...%RESET%
 call npm run dev
 

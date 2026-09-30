@@ -1,0 +1,12 @@
+{
+  "name": "srm-xerox-management",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "setup": "npm --prefix backend run setup && npm --prefix frontend install",
+    "setup:backend": "npm --prefix backend run setup",
+    "setup:frontend": "npm --prefix frontend install",
+    "migrate": "npm --prefix backend run migrate:deploy",
+    "seed": "npm --prefix backend run seed"
+  }
+}

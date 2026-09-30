@@ -11,7 +11,8 @@
     "migrate:deploy": "prisma migrate deploy",
     "start": "node dist/server.js",
     "seed": "npx tsx src/lib/seed.ts",
-    "postinstall": "prisma skills sync || exit 0",
+    "postinstall": "prisma generate",
+    "setup": "npm install && prisma generate",
     "contract:emit": "prisma contract emit"
   },
   "keywords": [],

@@ -40,15 +40,15 @@ type: short description
 
 | Type       | Usage                                            |
 | ---------- | ------------------------------------------------ |
-| `feat`     | Add a new feature                                |
-| `fix`      | Fix a bug                                        |
-| `refactor` | Improve code structure without changing behavior |
-| `chore`    | Maintenance, configuration, dependency updates   |
-| `style`    | UI/CSS or formatting changes (no logic changes)  |
-| `docs`     | Documentation updates                            |
-| `test`     | Add or update tests                              |
-| `perf`     | Performance improvements                         |
-| `hotfix`   | Urgent production fix                            |
+| `feat`     | add a new feature                                |
+| `fix`      | fix a bug                                        |
+| `refactor` | improve code structure without changing behavior |
+| `chore`    | maintenance, configuration, dependency updates   |
+| `style`    | ui/css or formatting changes (no logic changes)  |
+| `docs`     | documentation updates                            |
+| `test`     | add or update tests                              |
+| `perf`     | performance improvements                         |
+| `hotfix`   | urgent production fix                            |
 
 ## Examples
 
@@ -63,9 +63,9 @@ test: add order service unit tests
 hotfix: fix production login issue
 ```
 
-## Commit Guidelines
+## Commit Guidelines (Strict Lowercase Only)
 
-* Use **lowercase** commit messages.
+* **Strictly use lowercase letters only**: No uppercase letters are allowed anywhere in commit messages (e.g. `type: description`).
 * Keep descriptions **short and descriptive**.
 * One commit should represent **one logical change**.
 * Avoid vague messages such as `fix: changes` or `chore: update`.
