@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { AccessRequest } from '@core/middlewares/access.middleware.ts';
 
 import * as service from './shop.services.ts';
 
@@ -55,14 +56,14 @@ const controllers = {
   },
 
   getAllShops: async (
-    req: Request,
+    req: AccessRequest,
     res: Response
   ) => {
     const queries = buildQuery(req);
 
     const result = await service.getAllShops(
       queries,
-      'super_admin'
+      req.user?.role
     );
 
     return sendResponse.paginated(

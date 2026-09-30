@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { AccessRequest } from '@core/middlewares/access.middleware.ts';
 
 import * as service from './product.services.ts';
 
@@ -24,10 +25,10 @@ const controllers = {
     return sendResponse.created(res, 'Product', product);
   },
 
-  getAllProducts: async (req: Request, res: Response) => {
+  getAllProducts: async (req: AccessRequest, res: Response) => {
     const queries = buildQuery(req);
     const branch = extractBranch(queries);
-    const result = await service.getAllProducts(queries, 'super_admin', { branchId: branch });
+    const result = await service.getAllProducts(queries, req.user?.role, { branchId: branch });
     return sendResponse.paginated(res, 'product', result);
   },
 

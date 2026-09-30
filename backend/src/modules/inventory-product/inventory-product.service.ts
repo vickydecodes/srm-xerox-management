@@ -52,9 +52,9 @@ export const getAllInventoryProducts = async (
     rawQuery,
   });
 
-  if (result.data) {
+  /*if (result.data) {
     result.data = await Promise.all(result.data.map(enhanceInventoryProduct));
-  }
+  }*/
   return result;
 };
 

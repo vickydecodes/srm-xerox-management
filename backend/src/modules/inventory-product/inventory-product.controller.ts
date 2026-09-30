@@ -9,6 +9,7 @@ import { createStatusControllers } from '@core/constants/createstatuscontroller.
 import sendResponse from '@core/constants/responsewrapper.constant.ts';
 import { buildQuery } from '@core/constants/querybuilder.constant.ts';
 import { wrapControllers } from '@core/constants/wrapcontroller.constant.ts';
+import { AccessRequest } from '@core/middlewares/access.middleware.ts';
 
 const inventoryProductStatus = createStatusControllers(
   {
@@ -29,10 +30,11 @@ const controllers = {
     return sendResponse.created(res, 'Inventory Product', inventoryProduct);
   },
 
-  getAllInventoryProducts: async (req: Request, res: Response) => {
+  getAllInventoryProducts: async (req: AccessRequest, res: Response) => {
     const queries = buildQuery(req);
     const inventory = extractBranch(queries);
-    const result = await service.getAllInventoryProducts(queries, 'super_admin', {
+
+    const result = await service.getAllInventoryProducts(queries, req.user?.role, {
       inventoryId: inventory,
     });
 

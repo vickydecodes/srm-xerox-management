@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { AccessRequest } from '@core/middlewares/access.middleware.ts';
 
 import * as service from './branch.services.ts';
 
@@ -35,14 +36,14 @@ const controllers = {
   },
 
   getAllBranches: async (
-    req: Request,
+    req: AccessRequest,
     res: Response
   ) => {
     const queries = buildQuery(req);
 
     const result = await service.getAllBranches(
       queries,
-      'super_admin'
+      req.user?.role
     );
 
     return sendResponse.paginated(

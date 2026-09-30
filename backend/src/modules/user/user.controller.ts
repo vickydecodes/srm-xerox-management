@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { AccessRequest } from '@core/middlewares/access.middleware.ts';
 
 import * as service from './user.services.ts';
 
@@ -27,13 +28,13 @@ const controllers = {
     return sendResponse.created(res, 'User', user);
   },
 
-  getAllUsers: async (req: Request, res: Response) => {
+  getAllUsers: async (req: AccessRequest, res: Response) => {
     const queries = buildQuery(req);
     const branch = extractBranch(queries);
 
     const result = await service.getAllUsers(
       queries,
-      'super_admin',
+      req.user?.role,
       { branchId: branch }
     );
 

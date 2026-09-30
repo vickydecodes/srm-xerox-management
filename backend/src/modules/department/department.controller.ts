@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { AuthRequest } from '@core/middlewares/auth.middleware.ts';
+import { AccessRequest } from '@core/middlewares/access.middleware.ts';
 
 import * as service from './department.services.ts';
 
@@ -27,12 +28,12 @@ const controllers = {
     return sendResponse.created(res, 'Department', department);
   },
 
-  getAllDepartments: async (req: Request, res: Response) => {
+  getAllDepartments: async (req: AccessRequest, res: Response) => {
     const queries = buildQuery(req);
 
     const branch = extractBranch(queries);
 
-    const result = await service.getAllDepartments(queries, 'super_admin', { branch });
+    const result = await service.getAllDepartments(queries, req.user?.role, { branch });
 
     return sendResponse.paginated(res, 'department', result);
   },

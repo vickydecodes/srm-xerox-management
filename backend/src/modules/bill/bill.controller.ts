@@ -28,16 +28,16 @@ const controllers = {
     return sendResponse.created(res, 'Bill', bill);
   },
 
-  getAllBills: async (req: Request, res: Response) => {
+  getAllBills: async (req: AccessRequest, res: Response) => {
     const queries = buildQuery(req);
-    const result = await service.getAllBills(queries);
+    const result = await service.getAllBills(queries, req.user?.role);
     return sendResponse.paginated(res, 'bill', result);
   },
 
-  getBillsByDepartment: async (req: Request<{ id: string }>, res: Response) => {
+  getBillsByDepartment: async (req: AccessRequest<{ id: string }>, res: Response) => {
     const { id } = req.params;
     const queries = buildQuery(req);
-    const result = await service.getBillsByDepartment(id, queries);
+    const result = await service.getBillsByDepartment(id, queries, req.user?.role);
     return sendResponse.paginated(res, 'bill', result);
   },
 
