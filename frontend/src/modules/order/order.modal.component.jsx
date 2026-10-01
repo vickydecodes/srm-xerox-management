@@ -23,6 +23,7 @@ import { useSubmit } from "@/core/hooks/useSubmit";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/core/contexts/auth.context";
+import { useShopStore } from "@/modules/shop/shop.store";
 import {
   orderCreateSchema,
   orderEditSchema,
@@ -360,6 +361,7 @@ export const Create = ({
   exported,
 } = {}) => {
   const { user } = useAuth();
+  const shops = useShopStore((state) => state.list);
 
   const userBranchId =
     typeof user?.branch === "object" ? user.branch?._id : user?.branch || "";
@@ -441,7 +443,7 @@ export const Create = ({
             form={form}
             branches={exported?.branches?.state || []}
             departments={exported?.departments?.state || []}
-            shops={exported?.shops?.state || []}
+            shops={shops || []}
             BillingItemSearchCombobox={
               exported?.search?.BillingItemSearchCombobox
             }
@@ -469,6 +471,7 @@ export const Edit = ({
   closeModal = () => {},
   exported,
 } = {}) => {
+  const shops = useShopStore((state) => state.list);
   const form = useForm({
     resolver: zodResolver(orderEditSchema),
     defaultValues: {
@@ -547,7 +550,7 @@ export const Edit = ({
             form={form}
             branches={exported?.branches?.state || []}
             departments={exported?.departments?.state || []}
-            shops={exported?.shops?.state || []}
+            shops={shops || []}
             BillingItemSearchCombobox={
               exported?.search?.BillingItemSearchCombobox
             }

@@ -137,13 +137,13 @@ export default function BillCreation() {
 
       if (editingBill) {
         await bills.crud.edit(editingBill._id, payload);
-        navigate(`/${user.role}/bills`);
+        navigate(`/${user.role}/bill`);
       } else {
         const newBill = await bills.create(payload);
         if (newBill && newBill._id) {
           printBillPdf(newBill._id, newBill.code);
         }
-        navigate(`/${user.role}/bills`);
+        navigate(`/${user.role}/bill`);
       }
     } catch {
       // errors handled by CRUD layer
