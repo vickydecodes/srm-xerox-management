@@ -18,8 +18,6 @@ export const orderCreateSchema = z.object({
   orderType: z.enum(['WORK_ORDER', 'XEROX_ORDER'], {
     error: 'Please select type of order',
   }),
-  department: z.string().min(1, { message: 'Please select a department' }),
-  branch: z.string().min(1, { message: 'Please select a branch' }),
   purpose: z.string().optional(),
   attachmentEmail: z
     .string()
