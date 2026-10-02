@@ -79,7 +79,7 @@ export const useDepartmentAdminColumns = (departmentAdmins) => {
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() =>
-                      departmentAdmins.openActiveStatus(admin._id, admin.active)
+                      departmentAdmins.openActiveStatus(admin._id || admin.id, admin.active)
                     }
                   >
                     {admin.active ? "Deactivate" : "Activate"}

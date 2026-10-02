@@ -32,8 +32,9 @@ export const useDepartmentAdminModule = (exported) => {
   const { adminResetPassword } = useAuth();
 
   const openResetPassword = (admin) => {
+    const adminId = admin._id || admin.id;
     return openModal(modals.resetPassword, {
-      id: admin._id,
+      id: adminId,
       name: admin.name,
       submitFn: (targetId, newPassword) =>
         adminResetPassword(targetId, ROLE, newPassword),
@@ -53,17 +54,19 @@ export const useDepartmentAdminModule = (exported) => {
   };
 
   const openEdit = (admin) => {
+    const adminId = admin._id || admin.id;
     setCurrent(admin);
     return openModal(modals.edit, {
       admin,
-      submitFn: (formData) => crud.edit(admin._id, formData),
+      submitFn: (formData) => crud.edit(adminId, formData),
       exported,
     });
   };
 
   const openDelete = (admin) => {
+    const adminId = admin._id || admin.id;
     return openModal(modals.delete, {
-      id: admin._id,
+      id: adminId,
       name: admin.name,
       submitFn: (id) => crud.delete(id),
       exported,

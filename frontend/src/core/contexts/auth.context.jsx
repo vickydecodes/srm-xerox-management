@@ -157,7 +157,7 @@ export const AuthProvider = ({ children }) => {
   const adminResetPassword = async (targetId, targetRole, newPassword) => {
     try {
       const res = await crud.adminResetPassword({
-        adminId: user?._id,
+        adminId: user?._id || user?.id,
         adminRole: user?.role,
         targetId,
         targetRole,
