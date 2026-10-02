@@ -5,7 +5,7 @@ export const createDepartmentSchema = z.object({
 
   code: z.string().trim().min(1, 'Department code is required'),
 
-  branch: z.string().trim(),
+  branch: z.string().trim().optional(),
 });
 
 export const updateDepartmentSchema =

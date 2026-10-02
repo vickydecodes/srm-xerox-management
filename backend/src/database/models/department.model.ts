@@ -37,16 +37,20 @@ export class DepartmentDocument {
   }
 
   async save() {
+    const branchId = typeof this.branch === 'object' && this.branch !== null
+      ? ((this.branch as any)._id || (this.branch as any).id || null)
+      : (this.branch || null);
+
     if (this.isNew) {
       const created = await prisma.department.create({
         data: {
           name: this.name,
           code: this.code,
+          branch: branchId,
           active: this.active !== undefined ? this.active : true,
           deleted: this.deleted !== undefined ? this.deleted : false,
           outstandingCredit: this.outstandingCredit || 0,
           creditBalance: this.creditBalance || 0,
-          // branch relation (will need to be added to schema.prisma)
         } as any
       });
       this._id = created.id;
@@ -57,6 +61,7 @@ export class DepartmentDocument {
         data: {
           name: this.name,
           code: this.code,
+          branch: branchId,
           active: this.active,
           deleted: this.deleted,
           deletedAt: this.deletedAt,
@@ -87,6 +92,9 @@ export class DepartmentModel {
         updateData[key] = { increment: val };
       }
       delete updateData.$inc;
+    }
+    if (updateData.branch && typeof updateData.branch === 'object') {
+      updateData.branch = updateData.branch._id || updateData.branch.id || null;
     }
     const updated = await prisma.department.update({
       where: { id: id.toString() },
@@ -131,6 +139,9 @@ export class DepartmentModel {
         updateData[key] = { increment: val };
       }
       delete updateData.$inc;
+    }
+    if (updateData.branch && typeof updateData.branch === 'object') {
+      updateData.branch = updateData.branch._id || updateData.branch.id || null;
     }
     const existing = await prisma.department.findFirst({ where: query as any });
     if (!existing) return null;

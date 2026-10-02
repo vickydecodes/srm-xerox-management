@@ -22,8 +22,8 @@ const departmentStatus = createStatusControllers(
 
 const controllers = {
   createDepartment: async (req: AuthRequest & { body: CreateDepartmentPayload }, res: Response) => {
-    const { branchId } = req.user!;
-    const department = await service.createDepartment({ ...req.body, branch: branchId });
+    const branch = req.body.branch || req.user?.branch || req.user?.branchId;
+    const department = await service.createDepartment({ ...req.body, branch });
 
     return sendResponse.created(res, 'Department', department);
   },

@@ -76,6 +76,7 @@ describe('Department API Endpoint Suite', () => {
       createdDepartmentId = data._id;
       expect(data.name).to.be.a('string');
       expect(data.code).to.be.a('string');
+      expect(data.branch).to.be.ok;
     });
   });
 
