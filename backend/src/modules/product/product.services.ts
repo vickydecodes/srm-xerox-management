@@ -10,7 +10,6 @@ import {
   UPDATE_OPTIONS,
   SOFT_DELETE,
   RETRIEVE,
-  toObjectId,
   getVisibility,
 } from './product.constants.ts';
 import { enhanceProduct } from './product.util.ts';
@@ -23,14 +22,10 @@ export const createProduct = async (data: CreateProductPayload) => {
 
 export const getAllProducts = async (
   queries: Record<string, unknown>,
-  role?: Role,
-  options?: { branchId?: string }
+  role?: Role
 ) => {
-  const rawQuery = options?.branchId ? { branchId: toObjectId(options.branchId) } : undefined;
-
   return dynamicFilter(Product, productFilterConfig, queries, {
     visibility: getVisibility(role),
-    rawQuery,
   });
 };
 

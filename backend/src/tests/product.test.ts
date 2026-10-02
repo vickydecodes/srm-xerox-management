@@ -2,6 +2,9 @@ import { describe, it, beforeAll, afterAll, expect } from 'vitest';
 import mongoose from 'mongoose';
 import { bootstrap } from '../app.ts';
 import Product from '@db/models/product.model.ts';
+import User from '@db/models/user.model.js';
+import { generateToken } from '@lib/jwt.ts';
+import Branch from '@db/models/branch.model.ts';
 import { tester } from '@core/constants/tester.constant.ts';
 
 const baseRoute = '/api/v1/products';
@@ -91,6 +94,35 @@ describe('Product API Endpoint Suite', () => {
     const res = await tester.get(baseRoute, token);
 
     tester.assertFetched(res, 'product');
+  });
+
+  it('should successfully fetch all products as staff with a branch assigned', async () => {
+    const timestamp = Date.now();
+    const branch = await Branch.create({
+      name: `Test Staff Branch ${timestamp}`,
+      code: `TSB-${timestamp}`,
+      active: true,
+    });
+    const staff = await User.create({
+      name: `Test Staff ${timestamp}`,
+      email: `staff_${timestamp}@srm.edu`,
+      phone: '9876543204',
+      password: 'Password123',
+      role: 'staff',
+      branch: branch._id.toString(),
+      active: true,
+    });
+    const staffToken = generateToken({
+      id: staff._id,
+      role: 'staff',
+      branch: branch._id.toString(),
+    });
+
+    const res = await tester.get(baseRoute, staffToken);
+
+    tester.assertFetched(res, 'product');
+    await User.findByIdAndDelete(staff._id);
+    await Branch.findByIdAndDelete(branch._id);
   });
 
   it('should successfully fetch product by ID', async () => {

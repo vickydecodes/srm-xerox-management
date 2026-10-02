@@ -3,7 +3,6 @@ import { AccessRequest } from '@core/middlewares/access.middleware.ts';
 
 import * as service from './product.services.ts';
 
-import { extractBranch } from './product.constants.ts';
 import { CreateProductPayload, UpdateProductPayload } from '@typings/product.types.ts';
 import { createStatusControllers } from '@core/constants/createstatuscontroller.constant.ts';
 import sendResponse from '@core/constants/responsewrapper.constant.ts';
@@ -27,8 +26,7 @@ const controllers = {
 
   getAllProducts: async (req: AccessRequest, res: Response) => {
     const queries = buildQuery(req);
-    const branch = extractBranch(queries);
-    const result = await service.getAllProducts(queries, req.user?.role, { branchId: branch });
+    const result = await service.getAllProducts(queries, req.user?.role);
     return sendResponse.paginated(res, 'product', result);
   },
 
