@@ -96,16 +96,18 @@ const controllers = {
 
     const { targetId, newPassword } = req.body;
 
-    log('info', LOG.ADMIN_RESET.INITIATED, { adminId: admin.id, targetId });
+    const adminId = admin.id || (admin as any)._id;
+
+    log('info', LOG.ADMIN_RESET.INITIATED, { adminId, targetId });
 
     const result = await service.adminResetPassword({
-      adminId: admin.id,
+      adminId,
       adminRole: admin.role,
       targetId,
       newPassword,
     });
 
-    log('success', LOG.ADMIN_RESET.SUCCESS, { adminId: admin.id, targetId });
+    log('success', LOG.ADMIN_RESET.SUCCESS, { adminId, targetId });
 
     return sendResponse.success(res, result.message);
   },

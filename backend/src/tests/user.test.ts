@@ -172,6 +172,19 @@ describe('User API Endpoint Suite', () => {
     });
   });
 
+  it('should successfully reset user password via admin reset-password endpoint', async () => {
+    const res = await tester.post(
+      '/api/v1/auths/admin/reset-password',
+      {
+        targetId: createdUserId,
+        newPassword: 'NewPassword123',
+      },
+      token
+    );
+
+    tester.assertSuccess(res, 'Password reset successfully');
+  });
+
   it('should successfully update user active status', async () => {
     const res = await tester.patch(
       `${baseRoute}/${createdUserId}/active-status`,
