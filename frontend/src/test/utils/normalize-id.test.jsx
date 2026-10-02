@@ -9,9 +9,10 @@ describe("safeId", () => {
     expect(safeId(0)).toBe("");
   });
 
-  it("returns string id from object with _id", () => {
+  it("returns string id from object with _id or id", () => {
     expect(safeId({ _id: "abc123" })).toBe("abc123");
     expect(safeId({ _id: 99 })).toBe("99");
+    expect(safeId({ id: "xyz789" })).toBe("xyz789");
   });
 
   it("returns empty string for object without usable _id", () => {

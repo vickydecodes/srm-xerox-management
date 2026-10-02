@@ -23,6 +23,7 @@ import {
 export default function DepartmentAdminForm({
   form,
   isEdit = false,
+  isBranchAdmin = false,
   branches = [],
   departments = [],
 }) {
@@ -41,7 +42,7 @@ export default function DepartmentAdminForm({
     const currentDept = form.getValues("department");
     if (
       currentDept &&
-      !filteredDepartments.some((d) => d._id === currentDept)
+      !filteredDepartments.some((d) => (d._id || d.id) === currentDept)
     ) {
       form.setValue("department", "");
     }
@@ -86,18 +87,21 @@ export default function DepartmentAdminForm({
         render={({ field: f }) => (
           <FormItem>
             <FormLabel>Branch</FormLabel>
-            <Select onValueChange={f.onChange} value={f.value}>
+            <Select onValueChange={f.onChange} value={f.value} disabled={isBranchAdmin}>
               <FormControl>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select a branch" />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                {branches.map((branch) => (
-                  <SelectItem key={branch._id} value={branch._id}>
-                    {branch.name}
-                  </SelectItem>
-                ))}
+                {branches.map((branch) => {
+                  const bId = branch._id || branch.id;
+                  return (
+                    <SelectItem key={bId} value={bId}>
+                      {branch.name}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
             <FormMessage />
@@ -120,11 +124,14 @@ export default function DepartmentAdminForm({
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                {filteredDepartments.map((dept) => (
-                  <SelectItem key={dept._id} value={dept._id}>
-                    {dept.name}
-                  </SelectItem>
-                ))}
+                {filteredDepartments.map((dept) => {
+                  const dId = dept._id || dept.id;
+                  return (
+                    <SelectItem key={dId} value={dId}>
+                      {dept.name}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
             <FormMessage />

@@ -22,6 +22,8 @@ import { useLoader } from "@/core/hooks/useLoader";
 import { useEffect } from "react";
 import { useBranchStore } from "@/modules/branch/branch.store";
 import { useDepartmentStore } from "@/modules/department/department.store";
+import { useAuth } from "@/core/contexts/auth.context";
+import { safeId } from "@/core/utils/normalize-id";
 
 export const View = ({ admin } = {}) => (
   <DialogContent className="w-xl">
@@ -63,6 +65,10 @@ export const View = ({ admin } = {}) => (
 );
 
 export const Create = ({ submitFn = () => {}, closeModal = () => {}, exported } = {}) => {
+  const { user } = useAuth();
+  const isBranchAdmin = user?.role === "branch_admin";
+  const userBranchId = safeId(user?.branch);
+
   const form = useForm({
     resolver: zodResolver(departmentAdminCreateSchema),
     defaultValues: {
@@ -71,7 +77,7 @@ export const Create = ({ submitFn = () => {}, closeModal = () => {}, exported } 
       phone: "",
       address: "",
       password: "",
-      branch: "",
+      branch: isBranchAdmin ? userBranchId : "",
       department: "",
       active: true,
     },
@@ -99,6 +105,12 @@ export const Create = ({ submitFn = () => {}, closeModal = () => {}, exported } 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (isBranchAdmin && userBranchId && !form.getValues("branch")) {
+      form.setValue("branch", userBranchId);
+    }
+  }, [isBranchAdmin, userBranchId, form]);
+
   const branches = useBranchStore((s) => s.list);
   const departments = useDepartmentStore((s) => s.list);
 
@@ -113,6 +125,7 @@ export const Create = ({ submitFn = () => {}, closeModal = () => {}, exported } 
         <form className="grid gap-4 py-2" onSubmit={form.handleSubmit(onSubmit)}>
           <DepartmentAdminForm
             form={form}
+            isBranchAdmin={isBranchAdmin}
             branches={branches}
             departments={departments}
           />
@@ -132,6 +145,9 @@ export const Create = ({ submitFn = () => {}, closeModal = () => {}, exported } 
 };
 
 export const Edit = ({ admin, submitFn = () => {}, closeModal = () => {}, exported } = {}) => {
+  const { user } = useAuth();
+  const isBranchAdmin = user?.role === "branch_admin";
+
   const form = useForm({
     resolver: zodResolver(departmentAdminEditSchema),
     defaultValues: {
@@ -140,8 +156,8 @@ export const Edit = ({ admin, submitFn = () => {}, closeModal = () => {}, export
       email: admin?.email || "",
       phone: admin?.phone || "",
       address: admin?.address || "",
-      branch: admin?.branch?._id || admin?.branch || "",
-      department: admin?.department?._id || admin?.department || "",
+      branch: safeId(admin?.branch),
+      department: safeId(admin?.department),
       active: admin?.active ?? true,
     },
   });
@@ -183,6 +199,7 @@ export const Edit = ({ admin, submitFn = () => {}, closeModal = () => {}, export
           <DepartmentAdminForm
             form={form}
             isEdit
+            isBranchAdmin={isBranchAdmin}
             branches={branches}
             departments={departments}
           />
