@@ -8,6 +8,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { BillForm } from "./bill.form";
+import useAsync from "@/core/hooks/useAsync";
 
 const statusVariant = {
   UNPAID: 'outline',
@@ -97,3 +99,29 @@ export const Erase = ({ id, submitFn, closeModal }) => (
     </DialogFooter>
   </DialogContent>
 );
+
+export const Create = ({ submitFn = () => {}, closeModal = () => {} } = {}) => {
+  const { run, loading, ErrorAlert } = useAsync(submitFn);
+
+  return (
+    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogHeader>
+        <DialogTitle>Create New Bill</DialogTitle>
+        <DialogDescription>Generate a new POS invoice bill for walk-in or shop customers</DialogDescription>
+      </DialogHeader>
+
+      <ErrorAlert />
+
+      <BillForm
+        onSubmit={async (data) => {
+          const res = await run(data);
+          if (res?.success || res?.data) {
+            closeModal();
+          }
+        }}
+        loading={loading}
+      />
+    </DialogContent>
+  );
+};
+

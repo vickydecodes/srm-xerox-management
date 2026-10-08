@@ -1,6 +1,7 @@
 import DataTable from "@/components/ui/datatable";
 import { useApi } from "@/core/contexts/api.context";
 import { useLoader } from "@/core/hooks/useLoader";
+import { createbtn } from "@/core/utils/datatable.helper.util";
 import paginator from "@/core/utils/paginate.util";
 import sorter from "@/core/utils/sorter.util";
 import { useEffect } from "react";
@@ -40,6 +41,7 @@ export default function Bill() {
       data={state}
       columns={columns}
       searchKey={'code'}
+      create={createbtn('Create POS Bill', () => bills.openCreate(), true)}
       manualPagination={true}
       reset={bills.reset}
       loading={bills.loading.getAll}

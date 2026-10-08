@@ -72,11 +72,11 @@ export const View = ({ order, exported, closeModal } = {}) => {
 
   const canSubmit = order?.status === "draft" && (isSuperAdmin || isDeptAdmin);
 
- const canBranchApprove =
-  order?.status !== "draft" &&
-  order?.status !== "completed" &&
-  branchStatus !== "approved" &&
-  (isSuperAdmin || isBranchAdmin);
+  const canBranchApprove =
+    order?.status !== "draft" &&
+    order?.status !== "completed" &&
+    branchStatus !== "approved" &&
+    (isSuperAdmin || isBranchAdmin);
 
   const canSuperAdminApprove =
     order?.status !== "draft" &&
@@ -164,8 +164,8 @@ export const View = ({ order, exported, closeModal } = {}) => {
             <span>
               {order?.sponsors?.length
                 ? order.sponsors
-                    .map((s) => `${s.name} (${s.amount})`)
-                    .join(", ")
+                  .map((s) => `${s.name} (${s.amount})`)
+                  .join(", ")
                 : "-"}
             </span>
           </div>
@@ -180,7 +180,7 @@ export const View = ({ order, exported, closeModal } = {}) => {
               variant="outline"
               className={
                 approvalStatusStyles[
-                  order?.branchAdminApproval?.status || "pending"
+                order?.branchAdminApproval?.status || "pending"
                 ]
               }
             >
@@ -200,7 +200,7 @@ export const View = ({ order, exported, closeModal } = {}) => {
               variant="outline"
               className={
                 approvalStatusStyles[
-                  order?.superAdminApproval?.status || "pending"
+                order?.superAdminApproval?.status || "pending"
                 ]
               }
             >
@@ -224,15 +224,14 @@ export const View = ({ order, exported, closeModal } = {}) => {
                 <div key={idx} className="relative text-xs">
                   {/* Timeline dot */}
                   <span
-                    className={`absolute -left-[21px] top-1 size-2 rounded-full border bg-background ${
-                      history.status === "approved"
+                    className={`absolute -left-[21px] top-1 size-2 rounded-full border bg-background ${history.status === "approved"
                         ? "border-emerald-500 bg-emerald-50"
                         : history.status === "rejected"
                           ? "border-red-500 bg-red-50"
                           : history.status === "submitted"
                             ? "border-blue-500 bg-blue-50"
                             : "border-gray-400 bg-gray-50"
-                    }`}
+                      }`}
                   />
                   <div className="flex justify-between font-semibold text-foreground">
                     <span>
@@ -355,8 +354,8 @@ export const View = ({ order, exported, closeModal } = {}) => {
 };
 
 export const Create = ({
-  submitFn = () => {},
-  closeModal = () => {},
+  submitFn = () => { },
+  closeModal = () => { },
   exported,
 } = {}) => {
   const { user } = useAuth();
@@ -465,8 +464,8 @@ export const Create = ({
 
 export const Edit = ({
   order,
-  submitFn = () => {},
-  closeModal = () => {},
+  submitFn = () => { },
+  closeModal = () => { },
   exported,
 } = {}) => {
   const form = useForm({
@@ -571,8 +570,8 @@ export const Edit = ({
 export const Delete = ({
   id,
   code,
-  submitFn = () => {},
-  closeModal = () => {},
+  submitFn = () => { },
+  closeModal = () => { },
 }) => {
   const { run, loading, ErrorAlert } = useAsync(submitFn);
 
@@ -663,8 +662,8 @@ export const Retrieve = ({ id, submitFn, closeModal }) => {
 const ApprovalForm = ({
   title,
   id,
-  submitFn = () => {},
-  closeModal = () => {},
+  submitFn = () => { },
+  closeModal = () => { },
 }) => {
   const form = useForm({
     resolver: zodResolver(approvalSchema),

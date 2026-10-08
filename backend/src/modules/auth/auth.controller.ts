@@ -40,7 +40,7 @@ const controllers = {
       maxAge: rememberMe ? LONG_AGE : SHORT_AGE,
     });
 
-    return sendResponse.fetched(res, ENTITY.USER, user);
+    return sendResponse.fetched(res, ENTITY.USER, { ...user, token });
   },
 
   getCurrentUser: async (req: Request, res: Response, next: NextFunction) => {

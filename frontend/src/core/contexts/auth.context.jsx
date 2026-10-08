@@ -56,8 +56,11 @@ export const AuthProvider = ({ children }) => {
         setRole(null);
       });
 
-      navigateRef.current("/");
-      toast.error(message);
+      const currentPath = locationRef.current?.pathname || window.location.pathname;
+      if (!currentPath.startsWith('/verify')) {
+        navigateRef.current("/");
+        toast.error(message);
+      }
     });
   }, []);
 

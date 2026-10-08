@@ -142,13 +142,15 @@ export class BillDocument {
 export class BillModel {
   static prismaModelName = 'bill';
   static async findById(id: string) {
+    console.log('model check', id)
     if (!id) return null;
     const doc = await prisma.bill.findUnique({
       where: { id: id.toString() },
       include: { items: true, branchObj: true, departmentObj: true, orderObj: true, createdByObj: true }
     });
+    console.log('doc', doc)
     if (!doc) return null;
-    
+
     // Map items to match Mongoose output
     const mappedDoc = {
       ...doc,
@@ -164,9 +166,9 @@ export class BillModel {
 
   static async findByIdAndUpdate(id: string, data: any, options: any = {}) {
     if (data.$inc) {
-       // handle Mongoose $inc if needed, though Bill doesn't use it directly here
+      // handle Mongoose $inc if needed, though Bill doesn't use it directly here
     }
-    
+
     // Convert Mongoose $set to flat object if used
     let updateData: any = data.$set ? { ...data.$set } : { ...data };
     if (data.$inc) {
@@ -175,7 +177,7 @@ export class BillModel {
       }
       delete updateData.$inc;
     }
-    
+
     let itemsUpdate = {};
     if (updateData.items) {
       itemsUpdate = {
@@ -268,11 +270,11 @@ export class BillModel {
 }
 
 type BillModelType = typeof BillModel & {
-  new (data: any): BillDocument;
+  new(data: any): BillDocument;
   (data: any): BillDocument;
 };
 
-const BillFn = function(data: any) { return new BillDocument(data); };
+const BillFn = function (data: any) { return new BillDocument(data); };
 Object.setPrototypeOf(BillFn, BillModel);
 export const Bill = BillFn as unknown as BillModelType;
 export default Bill;

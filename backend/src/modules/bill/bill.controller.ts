@@ -94,6 +94,12 @@ const controllers = {
     return sendResponse.updated(res, 'bill', bill);
   },
 
+  verifyPublicBill: async (req: Request<{ id: string }>, res: Response) => {
+    const { id } = req.params;
+    const result = await service.verifyPublicBill(id);
+    res.status(200).json({ success: true, data: result });
+  },
+
   downloadBillPdf: async (req: Request<{ id: string }>, res: Response) => {
     const { id } = req.params;
     const { generateBillPdf } = await import('./exportbill.util.js');
@@ -117,4 +123,5 @@ export const {
   approveCreditBill,
   rejectCreditBill,
   downloadBillPdf,
+  verifyPublicBill,
 } = wrapControllers(controllers);

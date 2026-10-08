@@ -3,9 +3,15 @@ backend/.env
 backend/dist
 backend/migrations/*
 
-
 frontend/node_modules
 frontend/.env
 frontend/dist
+
+flutter-client/.dart_tool/
+flutter-client/.pub/
+flutter-client/.pub-cache/
+flutter-client/build/
+flutter-client/windows/flutter/ephemeral/
+flutter-client/.env
 
 gitstats.py

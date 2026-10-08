@@ -232,7 +232,7 @@ export const getBillsByDepartment = async (
   queries: Record<string, unknown>,
   role?: Role
 ) => {
-  return dynamicFilter(Bill, billFilterConfig, {...queries, full: true, status: 'UNPAID'}, {
+  return dynamicFilter(Bill, billFilterConfig, { ...queries, full: true, status: 'UNPAID' }, {
     visibility: getVisibility(role),
     rawQuery: { department: departmentId },
   });
@@ -297,4 +297,42 @@ export const setBillActiveStatus = async (id: string, active: boolean) => {
     { new: true }
   );
 };
-
+
+export const verifyPublicBill = async (id: string) => {
+  const bill = await Bill.findById(id);
+  console.log(id, bill)
+  if (!bill || bill.deleted) {
+    return {
+      isVerified: false,
+      status: 'UNVERIFIED',
+      message: 'No official bill record found matching this ID.',
+      bill: null,
+    };
+  }
+
+  const isInvalid = bill.status === 'CANCELLED' || bill.approvalStatus === 'rejected';
+
+  return {
+    isVerified: !isInvalid,
+    status: isInvalid ? 'INVALID' : 'VERIFIED',
+    message: isInvalid
+      ? 'This bill has been cancelled or rejected.'
+      : 'Official Verified SRM Xerox Management Bill',
+    bill: {
+      id: bill._id || (bill as any).id,
+      code: bill.code,
+      subtotal: bill.subtotal,
+      discount: bill.discount,
+      tax: bill.tax,
+      total: bill.total,
+      paymentMethod: bill.paymentMethod,
+      status: bill.status,
+      approvalStatus: bill.approvalStatus,
+      createdAt: bill.createdAt,
+      branch: bill.branch ? (typeof bill.branch === 'object' ? bill.branch : { name: 'SRM Campus Branch' }) : null,
+      department: bill.department ? (typeof bill.department === 'object' ? bill.department : { name: 'Department' }) : null,
+      createdBy: bill.createdBy ? (typeof bill.createdBy === 'object' ? bill.createdBy : { name: 'Staff Operator' }) : null,
+      items: bill.items || [],
+    },
+  };
+};

@@ -18,7 +18,16 @@ export const applySecurityMiddlewares = (app: Express) => {
   app.use(
     cors({
       origin: (origin, callback) => {
-        if (!origin || origins.includes(origin)) {
+        if (
+          !origin ||
+          origins.includes(origin) ||
+          process.env.NODE_ENV !== 'production' ||
+          origin.startsWith('http://localhost:') ||
+          origin.startsWith('http://127.0.0.1:') ||
+          origin.startsWith('http://192.168.') ||
+          origin.startsWith('http://10.') ||
+          origin.startsWith('http://172.')
+        ) {
           callback(null, true);
         } else {
           callback(new Error('Not allowed by CORS'));
@@ -26,7 +35,7 @@ export const applySecurityMiddlewares = (app: Express) => {
       },
       credentials: true,
       exposedHeaders: ['Content-Disposition'],
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     })
   );
   console.log(`✅ CORS enabled for origins: ${origins.join(', ')}`);

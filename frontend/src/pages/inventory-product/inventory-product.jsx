@@ -41,10 +41,10 @@ export default function InventoryProduct() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Alert className="border-indigo-100 bg-indigo-50/50 dark:border-indigo-950/50 dark:bg-indigo-950/20 text-indigo-900 dark:text-indigo-200">
-        <IconInfoCircle className="h-4 w-4 text-indigo-500" />
-        <AlertTitle className="text-indigo-800 dark:text-indigo-300 font-semibold">Inventory System Notice</AlertTitle>
-        <AlertDescription className="text-indigo-600 dark:text-indigo-400">
+      <Alert className="border-blue-100 bg-blue-50/50 dark:border-blue-950/50 dark:bg-blue-950/20 text-blue-900 dark:text-blue-200">
+        <IconInfoCircle className="h-4 w-4 text-blue-500" />
+        <AlertTitle className="text-blue-800 dark:text-blue-300 font-semibold">Inventory System Notice</AlertTitle>
+        <AlertDescription className="text-blue-600 dark:text-blue-400">
           Only one primary inventory is allowed in this system. All product variations created below will automatically map to this central default inventory.
         </AlertDescription>
       </Alert>

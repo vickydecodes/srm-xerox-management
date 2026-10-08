@@ -171,10 +171,12 @@ export async function dynamicFilter<T extends Record<string, any>>(
 
   if (strategy.type === 'plain') {
     // fast path — real orderBy + skip/take, one query does the work
+    const include = tableName.toLowerCase() === 'bill' ? { items: true } : undefined;
     [data, total] = await Promise.all([
       delegate.findMany({
         where,
         orderBy: { [sortBy]: order },
+        ...(include ? { include } : {}),
         ...(limit ? { skip: (page - 1) * limit, take: limit } : {}),
       }),
       delegate.count({ where }),
@@ -201,6 +203,29 @@ export async function dynamicFilter<T extends Record<string, any>>(
 
     data = rows;
     total = Number(countRow[0]?.count ?? 0);
+  }
+
+  /* ---------- batch fetch bill items if table is Bill ---------- */
+  if (tableName.toLowerCase() === 'bill' && data.length > 0) {
+    const billIds = data.map((d: any) => d.id || d._id).filter(Boolean);
+    if (billIds.length > 0) {
+      const items = await prisma.billItem.findMany({
+        where: { bill: { in: billIds } },
+      });
+      const itemsByBill = new Map<string, any[]>();
+      for (const item of items) {
+        if (!itemsByBill.has(item.bill)) itemsByBill.set(item.bill, []);
+        itemsByBill.get(item.bill)!.push({ ...item, _id: item.id });
+      }
+      for (const doc of data) {
+        const id = doc.id || doc._id;
+        if (!doc.items || !Array.isArray(doc.items) || doc.items.length === 0) {
+          doc.items = itemsByBill.get(id) || [];
+        } else {
+          doc.items = doc.items.map((i: any) => ({ ...i, _id: i._id || i.id }));
+        }
+      }
+    }
   }
 
   /* ---------- strip sensitive fields (was Mongo's $project: { password: 0 }) ---------- */

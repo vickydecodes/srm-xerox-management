@@ -13,6 +13,10 @@ export const setupInterceptors = (onUnauthorized) => {
     (res) => res,
     (error) => {
       if (error.response?.status === 401) {
+        const path = window.location.pathname;
+        if (path.startsWith('/verify')) {
+          return Promise.reject(error);
+        }
         if (!isLoggingOut) {
           isLoggingOut = true;
           const message =

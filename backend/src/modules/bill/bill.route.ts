@@ -17,9 +17,14 @@ import {
   rejectCreditBill,
   getBillsByDepartment,
   downloadBillPdf,
+  verifyPublicBill,
 } from './bill.controller.js';
 
 const router = Router();
+
+// Public route for QR verification
+router.get("/public/verify/:id", verifyPublicBill);
+router.get("/verify/:id", verifyPublicBill);
 
 router.use(authMiddleware);
 // const MODULE = '-bill';
