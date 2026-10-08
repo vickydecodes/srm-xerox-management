@@ -85,10 +85,12 @@ export const useOrderModule = (exported) => {
     const modalKey = isBranch ? "branchAdminApproval" : "superAdminApproval";
     return openModal(modals[modalKey], {
       id: order._id,
+      order,
       submitFn: (id, data) =>
         crud[isBranch ? "branchApprove" : "superAdminApprove"](id, {
           status: data.status,
           remarks: data.remarks,
+          verifyProofs: data.verifyProofs,
         }),
       exported,
     });

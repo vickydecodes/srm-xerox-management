@@ -172,6 +172,73 @@ export const View = ({ order, exported, closeModal } = {}) => {
           </div>
         </div>
 
+        <div className="rounded-md border p-3">
+          <span className="text-muted-foreground block mb-2 font-medium">
+            Proof Documents ({order?.proofs?.length || 0})
+          </span>
+          {order?.proofs?.length ? (
+            <div className="space-y-2">
+              {order.proofs.map((p, idx) => {
+                const displayName =
+                  p.filename ||
+                  (p.proof.startsWith("data:")
+                    ? `Proof Document #${idx + 1}`
+                    : p.proof.split("/").pop());
+                const isImage =
+                  p.mimetype?.startsWith("image") ||
+                  p.proof.startsWith("data:image");
+
+                return (
+                  <div
+                    key={idx}
+                    className="flex flex-col gap-2 bg-muted/40 p-2.5 rounded text-xs border"
+                  >
+                    <div className="flex items-center justify-between">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!p?.proof) return;
+                          const win = window.open();
+                          if (win) {
+                            if (isImage) {
+                              win.document.write(
+                                `<body style="margin:0;background:#111;display:flex;justify-content:center;align-items:center;min-height:100vh;"><img src="${p.proof}" style="max-width:100%;max-height:100vh;" /></body>`
+                              );
+                            } else {
+                              win.document.write(
+                                `<body style="margin:0;"><iframe src="${p.proof}" frameborder="0" style="width:100vw;height:100vh;"></iframe></body>`
+                              );
+                            }
+                          }
+                        }}
+                        className="text-blue-600 dark:text-blue-400 underline hover:text-blue-800 font-medium truncate max-w-[280px] text-left"
+                      >
+                        📄 {displayName}
+                      </button>
+                      <Badge variant={p.verified ? "default" : "secondary"}>
+                        {p.verified ? "Verified ✓" : "Unverified"}
+                      </Badge>
+                    </div>
+                    {isImage && (
+                      <div className="mt-1 max-w-full overflow-hidden rounded border bg-background p-1">
+                        <img
+                          src={p.proof}
+                          alt={displayName}
+                          className="max-h-36 rounded object-contain"
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <span className="text-xs text-muted-foreground">
+              No proof documents attached
+            </span>
+          )}
+        </div>
+
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-md border p-3">
             <span className="text-muted-foreground block">
@@ -666,12 +733,13 @@ export const Retrieve = ({ id, submitFn, closeModal }) => {
 const ApprovalForm = ({
   title,
   id,
+  order,
   submitFn = () => {},
   closeModal = () => {},
 }) => {
   const form = useForm({
     resolver: zodResolver(approvalSchema),
-    defaultValues: { status: "approved", remarks: "" },
+    defaultValues: { status: "approved", remarks: "", verifyProofs: true },
   });
 
   const { run, loading, ErrorAlert, clearError } = useAsync((data) =>
@@ -681,11 +749,76 @@ const ApprovalForm = ({
   const onSubmit = useSubmit({ run, form, onSuccess: closeModal });
 
   return (
-    <DialogContent className="sm:max-w-[450px]">
+    <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle>{title}</DialogTitle>
-        <DialogDescription>Approve or reject this order</DialogDescription>
+        <DialogDescription>
+          Verify signature proof documents & submit approval decision
+        </DialogDescription>
       </DialogHeader>
+
+      {order?.proofs && order.proofs.length > 0 && (
+        <div className="rounded-md border p-3 bg-muted/20 space-y-2">
+          <span className="text-xs font-semibold text-foreground block">
+            Attached Proof Documents & Signatures ({order.proofs.length})
+          </span>
+          <div className="space-y-2">
+            {order.proofs.map((p, idx) => {
+              const displayName =
+                p.filename ||
+                (p.proof.startsWith("data:")
+                  ? `Proof Document #${idx + 1}`
+                  : p.proof.split("/").pop());
+              const isImage =
+                p.mimetype?.startsWith("image") ||
+                p.proof.startsWith("data:image");
+
+              return (
+                <div
+                  key={idx}
+                  className="flex flex-col gap-1.5 bg-background p-2 rounded border text-xs"
+                >
+                  <div className="flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!p?.proof) return;
+                        const win = window.open();
+                        if (win) {
+                          if (isImage) {
+                            win.document.write(
+                              `<body style="margin:0;background:#111;display:flex;justify-content:center;align-items:center;min-height:100vh;"><img src="${p.proof}" style="max-width:100%;max-height:100vh;" /></body>`
+                            );
+                          } else {
+                            win.document.write(
+                              `<body style="margin:0;"><iframe src="${p.proof}" frameborder="0" style="width:100vw;height:100vh;"></iframe></body>`
+                            );
+                          }
+                        }
+                      }}
+                      className="text-blue-600 dark:text-blue-400 underline hover:text-blue-800 font-medium truncate max-w-[240px] text-left"
+                    >
+                      📄 {displayName}
+                    </button>
+                    <Badge variant={p.verified ? "default" : "secondary"}>
+                      {p.verified ? "Verified ✓" : "Pending Verification"}
+                    </Badge>
+                  </div>
+                  {isImage && (
+                    <div className="mt-1 max-w-full overflow-hidden rounded border bg-muted/20 p-1">
+                      <img
+                        src={p.proof}
+                        alt={displayName}
+                        className="max-h-28 rounded object-contain"
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <Form {...form}>
         <form
@@ -721,6 +854,31 @@ const ApprovalForm = ({
             )}
           />
 
+          {order?.proofs && order.proofs.length > 0 && (
+            <FormField
+              control={form.control}
+              name="verifyProofs"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-xs">
+                      Verify Signatures & Documents
+                    </FormLabel>
+                    <p className="text-[11px] text-muted-foreground">
+                      Confirm all signatures on PDF/Image proofs are verified
+                    </p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={field.value ?? true}
+                    onChange={(e) => field.onChange(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                  />
+                </FormItem>
+              )}
+            />
+          )}
+
           <FormField
             control={form.control}
             name="remarks"
@@ -741,7 +899,7 @@ const ApprovalForm = ({
               <Button variant="outline">Cancel</Button>
             </DialogClose>
             <Button type="submit" loading={loading} loadingText="Submitting..">
-              Submit
+              Submit Approval
             </Button>
           </DialogFooter>
         </form>
@@ -757,3 +915,4 @@ export const BranchAdminApproval = (props) => (
 export const SuperAdminApproval = (props) => (
   <ApprovalForm title="Super Admin Approval" {...props} />
 );
+

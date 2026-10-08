@@ -31,6 +31,19 @@ const controllers = {
     },
     res: Response
   ) => {
+    const files = (req.files as Express.Multer.File[]) || (req.file ? [req.file] : []);
+    const existingProofs = (req.body as any).proofs || [];
+
+    if (files && files.length > 0) {
+      const uploadedProofs = files.map((file) => ({
+        proof: `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
+        filename: file.originalname,
+        mimetype: file.mimetype,
+        verified: false,
+      }));
+      (req.body as any).proofs = [...existingProofs, ...uploadedProofs];
+    }
+
     const order = await service.createOrder(
       req.body,
       req.user!.id
@@ -94,6 +107,19 @@ const controllers = {
     res: Response
   ) => {
     const { id } = req.params;
+
+    const files = (req.files as Express.Multer.File[]) || (req.file ? [req.file] : []);
+
+    if (files && files.length > 0) {
+      const uploadedProofs = files.map((file) => ({
+        proof: `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
+        filename: file.originalname,
+        mimetype: file.mimetype,
+        verified: false,
+      }));
+      const existingProofs = (req.body as any).proofs || [];
+      (req.body as any).proofs = [...existingProofs, ...uploadedProofs];
+    }
 
     const order = await service.updateOrder(
       id,
@@ -305,6 +331,49 @@ const controllers = {
       order
     );
   },
+
+  uploadOrderProofs: async (
+    req: Request<{ id: string }>,
+    res: Response
+  ) => {
+    const { id } = req.params;
+    const files = (req.files as Express.Multer.File[]) || (req.file ? [req.file] : []);
+
+    if (!files || files.length === 0) {
+      return sendResponse.badRequest(res, 'No proof documents uploaded');
+    }
+
+    const proofItems = files.map((file) => ({
+      proof: `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
+      filename: file.originalname,
+      mimetype: file.mimetype,
+    }));
+    const order = await service.addOrderProofs(id, proofItems);
+
+    if (!order) {
+      return sendResponse.notFound(res, 'order');
+    }
+
+    return sendResponse.updated(res, 'order', order);
+  },
+
+  verifyOrderProof: async (
+    req: Request<
+      { id: string },
+      {},
+      { proofIndex?: number; proofUrl?: string; verified: boolean }
+    >,
+    res: Response
+  ) => {
+    const { id } = req.params;
+    const order = await service.verifyOrderProof(id, req.body);
+
+    if (!order) {
+      return sendResponse.notFound(res, 'order');
+    }
+
+    return sendResponse.updated(res, 'order', order);
+  },
 };
 
 export const {
@@ -321,4 +390,6 @@ export const {
   markOrderInProgress,
   markOrderReadyForPickup,
   markOrderDelivered,
-} = wrapControllers(controllers);
+  uploadOrderProofs,
+  verifyOrderProof,
+} = wrapControllers(controllers);

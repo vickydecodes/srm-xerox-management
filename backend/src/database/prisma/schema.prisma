@@ -82,6 +82,7 @@ model Order {
   // JSON fields for complex nested docs
   sponsors            Json @default("[]")
   items               Json @default("[]")
+  proofs              Json @default("[]")
   branchAdminApproval Json @default("{}")
   superAdminApproval  Json @default("{}")
   approvalHistory     Json @default("[]")

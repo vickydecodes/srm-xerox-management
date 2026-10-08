@@ -10,6 +10,30 @@ const approvalSchema = z.object({
   remarks: z.string().trim().optional(),
 });
 
+const parseJsonIfNeeded = (val: unknown) => {
+  if (typeof val === 'string') {
+    try {
+      return JSON.parse(val);
+    } catch {
+      return val;
+    }
+  }
+  return val;
+};
+
+export const proofSchema = z.object({
+  proof: z.string().trim().min(1, 'Proof data is required'),
+  filename: z.string().trim().optional(),
+  mimetype: z.string().trim().optional(),
+  verified: z.coerce.boolean().optional().default(false),
+});
+
+export const verifyProofSchema = z.object({
+  proofIndex: z.coerce.number().int().min(0).optional(),
+  proofUrl: z.string().trim().optional(),
+  verified: z.coerce.boolean(),
+});
+
 export const createOrderSchema = z.object({
   orderType: z.enum(['WORK_ORDER', 'XEROX_ORDER']),
   shop: objectId,
@@ -25,67 +49,69 @@ export const createOrderSchema = z.object({
     .email('Invalid email address'),
 
   managementAmount: z
-    .number()
-    .min(0, 'Management amount cannot be negative')
+    .preprocess(parseJsonIfNeeded, z.coerce.number().min(0, 'Management amount cannot be negative'))
     .optional(),
 
-  sponsors: z
-    .array(
-      z.object({
-        name: z
-          .string()
-          .trim()
-          .min(1, 'Sponsor name is required'),
+  sponsors: z.preprocess(
+    parseJsonIfNeeded,
+    z
+      .array(
+        z.object({
+          name: z
+            .string()
+            .trim()
+            .min(1, 'Sponsor name is required'),
 
-        amount: z
-          .number()
-          .min(0, 'Sponsor amount cannot be negative'),
-      })
-    )
-    .optional()
-    .default([]),
+          amount: z.coerce.number().min(0, 'Sponsor amount cannot be negative'),
+        })
+      )
+      .optional()
+      .default([])
+  ),
 
-  items: z
-    .array(
-      z.object({
-        type: z.enum(['InventoryProduct', 'Service']),
+  items: z.preprocess(
+    parseJsonIfNeeded,
+    z
+      .array(
+        z.object({
+          type: z.enum(['InventoryProduct', 'Service']),
 
-        item: z
-          .string()
-          .trim()
-          .min(1, 'Item is required'),
+          item: z
+            .string()
+            .trim()
+            .min(1, 'Item is required'),
 
-        name: z
-          .string()
-          .trim()
-          .min(1, 'Item name is required'),
+          name: z
+            .string()
+            .trim()
+            .min(1, 'Item name is required'),
 
-        quantity: z
-          .number()
-          .min(0, 'Quantity cannot be negative'),
+          quantity: z.coerce.number().min(0, 'Quantity cannot be negative'),
 
-        price: z
-          .number()
-          .min(0, 'Price cannot be negative'),
-      })
-    )
-    .optional()
-    .default([]),
+          price: z.coerce.number().min(0, 'Price cannot be negative'),
+        })
+      )
+      .optional()
+      .default([])
+  ),
+
+  proofs: z.preprocess(parseJsonIfNeeded, z.array(proofSchema).optional().default([])),
 
   branchAdminApproval: approvalSchema.optional(),
   superAdminApproval: approvalSchema.optional(),
 
   status: z
-  .enum([
-    'draft',
-    'pending',
-    'in_progress',
-    'ready_for_pickup',
-    'delivered',
-    'rejected',
-  ])
-  .optional(),
+    .enum([
+      'draft',
+      'pending',
+      'in_progress',
+      'ready_for_pickup',
+      'delivered',
+      'rejected',
+    ])
+    .optional(),
 });
 
 export const updateOrderSchema =
   createOrderSchema.partial();
+

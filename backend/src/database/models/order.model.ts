@@ -41,6 +41,13 @@ export interface ISponsor {
   amount: number;
 }
 
+export interface IProof {
+  proof: string;
+  filename?: string;
+  mimetype?: string;
+  verified: boolean;
+}
+
 export class OrderDocument {
   _id!: string;
   code?: string;
@@ -56,6 +63,7 @@ export class OrderDocument {
   sponsors!: ISponsor[];
 
   items!: IOrderItem[];
+  proofs!: IProof[];
 
   branchAdminApproval!: IApproval;
   superAdminApproval!: IApproval;
@@ -93,6 +101,7 @@ export class OrderDocument {
     // Default initializations to replicate Mongoose behavior
     if (!this.sponsors) this.sponsors = [];
     if (!this.items) this.items = [];
+    if (!this.proofs) this.proofs = [];
     if (!this.branchAdminApproval) this.branchAdminApproval = { status: 'pending' };
     if (!this.superAdminApproval) this.superAdminApproval = { status: 'pending' };
     if (!this.approvalHistory) this.approvalHistory = [];
@@ -174,6 +183,7 @@ export class OrderDocument {
       // Complex json types
       sponsors: this.sponsors as any,
       items: this.items as any,
+      proofs: this.proofs as any,
       branchAdminApproval: this.branchAdminApproval as any,
       superAdminApproval: this.superAdminApproval as any,
       approvalHistory: this.approvalHistory as any,

@@ -186,6 +186,8 @@ export const branchApproveOrder = async (
   approvalData: {
     status: 'approved' | 'rejected';
     remarks?: string;
+    verifyProofs?: boolean;
+    proofs?: { proof: string; verified: boolean }[];
   }
 ) => {
   const order = await Order.findById(id);
@@ -199,6 +201,12 @@ export const branchApproveOrder = async (
     throw new Error(
       'Order cannot be approved in its current status'
     );
+  }
+
+  if (approvalData.proofs) {
+    order.proofs = approvalData.proofs;
+  } else if (approvalData.verifyProofs && order.proofs) {
+    order.proofs = order.proofs.map((p) => ({ ...p, verified: true }));
   }
 
   order.branchAdminApproval = {
@@ -234,6 +242,8 @@ export const superAdminApproveOrder = async (
   approvalData: {
     status: 'approved' | 'rejected';
     remarks?: string;
+    verifyProofs?: boolean;
+    proofs?: { proof: string; verified: boolean }[];
   }
 ) => {
   const order = await Order.findById(id);
@@ -248,6 +258,12 @@ export const superAdminApproveOrder = async (
     throw new Error(
       'Order must be approved by branch admin first'
     );
+  }
+
+  if (approvalData.proofs) {
+    order.proofs = approvalData.proofs;
+  } else if (approvalData.verifyProofs && order.proofs) {
+    order.proofs = order.proofs.map((p) => ({ ...p, verified: true }));
   }
 
   order.superAdminApproval = {
@@ -355,3 +371,46 @@ export const markOrderDelivered = async (
 
   return enhanceOrder(order);
 };
+
+export const addOrderProofs = async (
+  id: string,
+  proofItems: { proof: string; filename?: string; mimetype?: string }[]
+) => {
+  const order = await Order.findById(id);
+  if (!order) return null;
+
+  if (!order.proofs) order.proofs = [];
+  for (const item of proofItems) {
+    order.proofs.push({
+      proof: item.proof,
+      filename: item.filename,
+      mimetype: item.mimetype,
+      verified: false,
+    });
+  }
+
+  await order.save();
+  return enhanceOrder(order);
+};
+
+export const verifyOrderProof = async (
+  id: string,
+  data: { proofIndex?: number; proofUrl?: string; verified: boolean }
+) => {
+  const order = await Order.findById(id);
+  if (!order) return null;
+
+  if (!order.proofs) order.proofs = [];
+
+  if (typeof data.proofIndex === 'number' && order.proofs[data.proofIndex]) {
+    order.proofs[data.proofIndex].verified = data.verified;
+  } else if (data.proofUrl) {
+    const item = order.proofs.find((p) => p.proof === data.proofUrl);
+    if (item) item.verified = data.verified;
+  } else {
+    order.proofs = order.proofs.map((p) => ({ ...p, verified: data.verified }));
+  }
+
+  await order.save();
+  return enhanceOrder(order);
+};

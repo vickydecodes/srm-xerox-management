@@ -10,6 +10,8 @@ import { unallocatedHandler } from '@core/middlewares/unallocated.middleware.ts'
 import '@db/models/branch.model.ts'; // ensures Branch schema is registered before any populate() calls
 import '@db/models/inventory.model.ts';
 
+import path from 'path';
+
 const app: Express = express();
 
 app.get('/', (req: Request, res: Response) => {
@@ -18,6 +20,8 @@ app.get('/', (req: Request, res: Response) => {
 
 app.use(express.json());
 app.use(tracer);
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+
 
 export const bootstrap = async (): Promise<void> => {
   await prisma.$connect();
