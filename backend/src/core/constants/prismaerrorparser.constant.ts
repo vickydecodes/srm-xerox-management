@@ -38,7 +38,7 @@ export const parsePrismaError = (err: any) => {
 
   return {
     message: err.message || 'Unknown error',
-    code: 'UNKNOWN_ERROR',
-    status: 500,
+    code: err.code || 'UNKNOWN_ERROR',
+    status: err.statusCode || err.status || 500,
   };
 };

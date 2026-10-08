@@ -2,6 +2,8 @@ import { describe, it, beforeAll, afterAll, expect } from 'vitest';
 import mongoose from 'mongoose';
 
 import { bootstrap } from '../app.ts';
+import app from '../app.ts';
+import request from 'supertest';
 
 import Order from '@db/models/order.model.ts';
 import Branch from '@db/models/branch.model.ts';
@@ -198,28 +200,30 @@ describe('Order API Endpoint Suite', () => {
   // Create
   // --------------------------------------------------
 
-  it('should successfully create a WORK_ORDER in draft status', async () => {
-    const res = await tester.post(
-      baseRoute,
-      {
-        orderType: 'WORK_ORDER',
+  it('should successfully create a WORK_ORDER in draft status with image and PDF proof documents', async () => {
+    const pngBuffer = Buffer.from('fake-signature-png-binary-data');
+    const pdfBuffer = Buffer.from('%PDF-1.4\nfake-pdf-document-binary-data');
 
-        shop: testShopId,
-
-        purpose: 'Annual Conference Materials',
-
-        attachmentEmail: 'conference@srmist.edu.in',
-
-        managementAmount: 500,
-
-        sponsors: [
+    const res = await request(app)
+      .post(baseRoute)
+      .set('Authorization', `Bearer ${token}`)
+      .field('orderType', 'WORK_ORDER')
+      .field('shop', testShopId)
+      .field('purpose', 'Annual Conference Materials')
+      .field('attachmentEmail', 'conference@srmist.edu.in')
+      .field('managementAmount', '500')
+      .field(
+        'sponsors',
+        JSON.stringify([
           {
             name: 'Tech Sponsor',
             amount: 200,
           },
-        ],
-
-        items: [
+        ])
+      )
+      .field(
+        'items',
+        JSON.stringify([
           {
             type: 'InventoryProduct',
             item: testInventoryProductId,
@@ -227,10 +231,16 @@ describe('Order API Endpoint Suite', () => {
             quantity: 5,
             price: 50,
           },
-        ],
-      },
-      token
-    );
+        ])
+      )
+      .attach('proofs', pngBuffer, {
+        filename: 'dean_signature_proof.png',
+        contentType: 'image/png',
+      })
+      .attach('proofs', pdfBuffer, {
+        filename: 'approval_workorder_proof.pdf',
+        contentType: 'application/pdf',
+      });
 
     tester.assertCreated(res, 'Order', (data) => {
       createdOrderId = data._id;
@@ -239,12 +249,42 @@ describe('Order API Endpoint Suite', () => {
       expect(data.status).to.equal('draft');
       expect(data.managementAmount).to.equal(500);
       expect(data.items).to.have.lengthOf(1);
+      expect(data.proofs).to.have.lengthOf(2);
+
+      // Verify image proof
+      expect(data.proofs[0].filename).to.equal('dean_signature_proof.png');
+      expect(data.proofs[0].mimetype).to.equal('image/png');
+      expect(data.proofs[0].proof).to.include('data:image/png;base64,');
+      expect(data.proofs[0].verified).to.be.false;
+
+      // Verify PDF proof
+      expect(data.proofs[1].filename).to.equal('approval_workorder_proof.pdf');
+      expect(data.proofs[1].mimetype).to.equal('application/pdf');
+      expect(data.proofs[1].proof).to.include('data:application/pdf;base64,');
+      expect(data.proofs[1].verified).to.be.false;
     });
   });
 
   // --------------------------------------------------
-  // Validation
+  // Validation & File Type Filtering
   // --------------------------------------------------
+
+  it('should reject proof upload with invalid file types (e.g. text/plain)', async () => {
+    const res = await request(app)
+      .post(baseRoute)
+      .set('Authorization', `Bearer ${token}`)
+      .field('orderType', 'WORK_ORDER')
+      .field('shop', testShopId)
+      .field('attachmentEmail', 'invalid_file@srm.edu')
+      .attach('proofs', Buffer.from('unsupported text content'), {
+        filename: 'unsupported_document.txt',
+        contentType: 'text/plain',
+      });
+
+    expect(res.status).to.equal(400);
+    expect(res.body.success).to.be.false;
+    expect(res.body.message).to.include('Invalid file type');
+  });
 
   it('should return validation error on order creation with invalid payload', async () => {
     const res = await tester.post(
@@ -257,6 +297,79 @@ describe('Order API Endpoint Suite', () => {
     );
 
     tester.assertValidationError(res);
+  });
+
+  // --------------------------------------------------
+  // Proof Upload & Verification Endpoints
+  // --------------------------------------------------
+
+  it('should successfully upload additional proof documents via POST /:id/proofs', async () => {
+    const additionalProofBuffer = Buffer.from('fake-webp-image-data');
+
+    const res = await request(app)
+      .post(`${baseRoute}/${createdOrderId}/proofs`)
+      .set('Authorization', `Bearer ${token}`)
+      .attach('proofs', additionalProofBuffer, {
+        filename: 'additional_hod_signature.webp',
+        contentType: 'image/webp',
+      });
+
+    tester.assertUpdated(res, 'order', (data) => {
+      expect(data.proofs).to.have.lengthOf(3);
+      expect(data.proofs[2].filename).to.equal('additional_hod_signature.webp');
+      expect(data.proofs[2].mimetype).to.equal('image/webp');
+      expect(data.proofs[2].verified).to.be.false;
+    });
+  });
+
+  it('should reject proof upload when no files are provided via POST /:id/proofs', async () => {
+    const res = await tester.post(
+      `${baseRoute}/${createdOrderId}/proofs`,
+      undefined,
+      token
+    );
+
+    expect(res.status).to.equal(400);
+    expect(res.body.success).to.be.false;
+    expect(res.body.message).to.include('No proof documents uploaded');
+  });
+
+  it('should reject proof upload from unauthorized roles (e.g. shop_admin)', async () => {
+    const shopAdminToken = generateToken({
+      id: userId,
+      role: 'shop_admin',
+      shop: testShopId,
+    });
+
+    const res = await request(app)
+      .post(`${baseRoute}/${createdOrderId}/proofs`)
+      .set('Authorization', `Bearer ${shopAdminToken}`)
+      .attach('proofs', Buffer.from('fake-data'), {
+        filename: 'unauthorized.png',
+        contentType: 'image/png',
+      });
+
+    expect(res.status).to.equal(403);
+    expect(res.body.success).to.be.false;
+    expect(res.body.message).to.include(
+      'Only department admin can upload proof documents'
+    );
+  });
+
+  it('should successfully verify a specific proof document via PATCH /:id/proofs/verify', async () => {
+    const res = await tester.patch(
+      `${baseRoute}/${createdOrderId}/proofs/verify`,
+      {
+        proofIndex: 0,
+        verified: true,
+      },
+      token
+    );
+
+    tester.assertUpdated(res, 'order', (data) => {
+      expect(data.proofs[0].verified).to.be.true;
+      expect(data.proofs[1].verified).to.be.false;
+    });
   });
 
   // --------------------------------------------------
@@ -311,6 +424,44 @@ describe('Order API Endpoint Suite', () => {
   // Submit
   // --------------------------------------------------
 
+  it('should reject submitting a draft order without proof documents', async () => {
+    const draftRes = await tester.post(
+      baseRoute,
+      {
+        orderType: 'WORK_ORDER',
+        shop: testShopId,
+        purpose: 'Draft without proofs',
+        attachmentEmail: 'draft@srmist.edu.in',
+        managementAmount: 100,
+        items: [
+          {
+            type: 'InventoryProduct',
+            item: testInventoryProductId,
+            name: 'Test Order Product',
+            quantity: 1,
+            price: 50,
+          },
+        ],
+      },
+      token
+    );
+    const draftId = draftRes.body.data._id;
+
+    const submitRes = await tester.patch(
+      `${baseRoute}/${draftId}/submit`,
+      undefined,
+      token
+    );
+
+    expect(submitRes.status).to.equal(400);
+    expect(submitRes.body.success).to.be.false;
+    expect(submitRes.body.message).to.include(
+      'Order cannot be submitted without at least one proof document'
+    );
+
+    await Order.findByIdAndDelete(draftId);
+  });
+
   it('should submit draft order for approval', async () => {
     const res = await tester.patch(
       `${baseRoute}/${createdOrderId}/submit`,
@@ -327,18 +478,20 @@ describe('Order API Endpoint Suite', () => {
   // Branch approval
   // --------------------------------------------------
 
-  it('should branch-approve order', async () => {
+  it('should branch-approve order and verify all attached proof documents', async () => {
     const res = await tester.patch(
       `${baseRoute}/${createdOrderId}/branch-approve`,
       {
         status: 'approved',
-        remarks: 'Approved by Branch Admin',
+        remarks: 'Approved by Branch Admin with signatures verified',
+        verifyProofs: true,
       },
       token
     );
 
     tester.assertUpdated(res, 'order', (data) => {
       expect(data.status).to.equal('in_progress');
+      expect(data.proofs.every((p: any) => p.verified)).to.be.true;
     });
   });
 
@@ -346,17 +499,21 @@ describe('Order API Endpoint Suite', () => {
   // Super admin approval
   // --------------------------------------------------
 
-  it('should super-admin-approve order', async () => {
+  it('should super-admin-approve order and retain verified proofs', async () => {
     const res = await tester.patch(
       `${baseRoute}/${createdOrderId}/super-admin-approve`,
       {
         status: 'approved',
         remarks: 'Approved by Super Admin',
+        verifyProofs: true,
       },
       token
     );
 
-    tester.assertUpdated(res, 'order');
+    tester.assertUpdated(res, 'order', (data) => {
+      expect(data.superAdminApproval.status).to.equal('approved');
+      expect(data.proofs.every((p: any) => p.verified)).to.be.true;
+    });
   });
 
   // --------------------------------------------------

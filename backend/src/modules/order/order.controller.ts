@@ -35,6 +35,9 @@ const controllers = {
     const existingProofs = (req.body as any).proofs || [];
 
     if (files && files.length > 0) {
+      if (req.user?.role !== 'department_admin' && req.user?.role !== 'super_admin') {
+        return sendResponse.forbidden(res, 'Only department admin can upload proof documents');
+      }
       const uploadedProofs = files.map((file) => ({
         proof: `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
         filename: file.originalname,
@@ -99,7 +102,7 @@ const controllers = {
   },
 
   updateOrder: async (
-    req: Request<
+    req: AuthRequest & Request<
       { id: string },
       {},
       UpdateOrderPayload
@@ -111,6 +114,9 @@ const controllers = {
     const files = (req.files as Express.Multer.File[]) || (req.file ? [req.file] : []);
 
     if (files && files.length > 0) {
+      if (req.user?.role !== 'department_admin' && req.user?.role !== 'super_admin') {
+        return sendResponse.forbidden(res, 'Only department admin can upload proof documents');
+      }
       const uploadedProofs = files.map((file) => ({
         proof: `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
         filename: file.originalname,
@@ -333,9 +339,12 @@ const controllers = {
   },
 
   uploadOrderProofs: async (
-    req: Request<{ id: string }>,
+    req: AuthRequest & Request<{ id: string }>,
     res: Response
   ) => {
+    if (req.user?.role !== 'department_admin' && req.user?.role !== 'super_admin') {
+      return sendResponse.forbidden(res, 'Only department admin can upload proof documents');
+    }
     const { id } = req.params;
     const files = (req.files as Express.Multer.File[]) || (req.file ? [req.file] : []);
 

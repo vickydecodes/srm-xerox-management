@@ -22,11 +22,11 @@ const proofFileFilter = (
   if (allowedMimeTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(
-      new Error(
-        'Invalid file type. Only PDF and Image files (JPEG, PNG, WEBP) are allowed.'
-      )
+    const error: any = new Error(
+      'Invalid file type. Only PDF and Image files (JPEG, PNG, WEBP) are allowed.'
     );
+    error.statusCode = 400;
+    cb(error);
   }
 };
 

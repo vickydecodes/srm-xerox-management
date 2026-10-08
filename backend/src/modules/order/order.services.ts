@@ -162,6 +162,14 @@ export const submitOrder = async (
     throw new Error('Order is not in draft status');
   }
 
+  if (!order.proofs || order.proofs.length === 0) {
+    const error: any = new Error(
+      'Order cannot be submitted without at least one proof document (Image or PDF)'
+    );
+    error.statusCode = 400;
+    throw error;
+  }
+
   order.status = 'pending';
 
   if (!order.approvalHistory) {
