@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/core/contexts/auth.context";
 
 const formatVariant = (variant) => {
   if (!variant) return "";
@@ -37,6 +38,10 @@ export default function OrderForm({
   BillingItemSearchCombobox,
   searchProducts,
 }) {
+  const { user } = useAuth();
+  const isDeptAdmin =
+    user?.role === "department_admin" || user?.role === "super_admin";
+
   const {
     fields: itemFields,
     append: appendItem,
@@ -425,6 +430,62 @@ export default function OrderForm({
       ))}
 
       <Separator className="my-2" />
+
+      {/* Proof Documents Upload (Department Admin Only) */}
+      {isDeptAdmin && (
+        <FormField
+          control={form.control}
+          name="proofFiles"
+          render={({ field }) => (
+            <FormItem className="space-y-2 rounded-lg border p-3 bg-muted/20">
+              <div className="flex items-center justify-between">
+                <FormLabel className="text-xs font-semibold">
+                  Proof Documents & Signatures (Images or PDF)
+                  <span className="text-destructive ml-1">*</span>
+                </FormLabel>
+                <span className="text-[11px] text-muted-foreground">
+                  Required before saving
+                </span>
+              </div>
+              <FormControl>
+                <Input
+                  type="file"
+                  multiple
+                  accept="image/png,image/jpeg,image/webp,application/pdf"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []);
+                    const current = field.value || [];
+                    field.onChange([...current, ...files]);
+                  }}
+                />
+              </FormControl>
+              <FormMessage />
+              {Array.isArray(field.value) && field.value.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {field.value.map((f, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-1.5 bg-background border px-2.5 py-1 rounded text-xs"
+                    >
+                      <span className="truncate max-w-[180px]">📄 {f.name}</span>
+                      <button
+                        type="button"
+                        className="text-red-500 font-bold ml-1 hover:text-red-700"
+                        onClick={() => {
+                          const updated = field.value.filter((_, idx) => idx !== i);
+                          field.onChange(updated);
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </FormItem>
+          )}
+        />
+      )}
 
       {/* Summary */}
       <div className="flex flex-col items-end gap-1 text-sm">

@@ -26,11 +26,17 @@ export const orderCreateSchema = z.object({
   managementAmount: z.coerce.number().min(0).optional(),
   sponsors: z.array(sponsorSchema).default([]),
   items: z.array(orderItemSchema).min(1, { error: 'Add at least one item' }),
+  proofFiles: z
+    .array(z.any())
+    .min(1, { message: 'At least one proof document (Image or PDF) is required' }),
 });
 
-export const orderEditSchema = orderCreateSchema;
+export const orderEditSchema = orderCreateSchema.extend({
+  proofFiles: z.array(z.any()).optional().default([]),
+});
 
 export const approvalSchema = z.object({
   status: z.enum(['approved', 'rejected'], { error: 'Select approve or reject' }),
   remarks: z.string().optional(),
-});
+  verifyProofs: z.boolean().optional(),
+});

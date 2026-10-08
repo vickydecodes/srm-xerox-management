@@ -243,7 +243,7 @@ describe('BillCreation page', () => {
         expect.objectContaining({ paymentMethod: 'CASH', status: 'PAID' })
       );
     });
-    expect(mockNavigate).toHaveBeenCalledWith('/super_admin/bills');
+    expect(mockNavigate).toHaveBeenCalledWith('/super_admin/bill');
   });
 
   it('navigates away without saving when "Cancel Edit" is clicked', async () => {

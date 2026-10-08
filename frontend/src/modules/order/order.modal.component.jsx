@@ -351,10 +351,21 @@ export const View = ({ order, exported, closeModal } = {}) => {
         )}
       </div>
 
-      <DialogFooter className="flex items-center justify-between gap-2 mt-4">
-        <div className="flex gap-2">
+      <DialogFooter className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mt-4">
+        {order?.status === "draft" && (!order?.proofs || order.proofs.length === 0) && (
+          <div className="w-full text-xs p-2.5 rounded border border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-300">
+            ⚠️ At least one proof document (Image or signed PDF) is required before this order can be submitted for approval.
+          </div>
+        )}
+        <div className="flex flex-wrap gap-2">
           {canSubmit && (
             <Button
+              disabled={!order?.proofs || order.proofs.length === 0}
+              title={
+                !order?.proofs || order.proofs.length === 0
+                  ? "Upload at least one proof document before submitting"
+                  : ""
+              }
               onClick={async () => {
                 await orders.submit(order._id);
                 if (closeModal) closeModal();
@@ -451,6 +462,7 @@ export const Create = ({
       managementAmount: 0,
       sponsors: [],
       items: [],
+      proofFiles: [],
     },
   });
 
@@ -464,7 +476,27 @@ export const Create = ({
 
   useClearError(form, clearError);
 
-  const onSubmit = useSubmit({ run, form, onSuccess: closeModal });
+  const onSubmit = useSubmit({
+    run: (data) => {
+      const { proofFiles, ...rest } = data;
+      if (proofFiles && proofFiles.length > 0) {
+        const formData = new FormData();
+        Object.entries(rest).forEach(([key, val]) => {
+          if (val !== undefined && val !== null) {
+            formData.append(
+              key,
+              typeof val === "object" ? JSON.stringify(val) : String(val)
+            );
+          }
+        });
+        proofFiles.forEach((file) => formData.append("proofs", file));
+        return submitFn(formData);
+      }
+      return submitFn(rest);
+    },
+    form,
+    onSuccess: closeModal,
+  });
 
   useEffect(() => {
     if (exported?.branches) loadBranches();
@@ -549,6 +581,7 @@ export const Edit = ({
       attachmentEmail: order?.attachmentEmail || "",
       managementAmount: order?.managementAmount || 0,
       sponsors: order?.sponsors || [],
+      proofFiles: [],
       items:
         order?.items?.map((i) => ({
           type: i.type,
@@ -571,7 +604,27 @@ export const Edit = ({
 
   useClearError(form, clearError);
 
-  const onSubmit = useSubmit({ run, form, onSuccess: closeModal });
+  const onSubmit = useSubmit({
+    run: (data) => {
+      const { proofFiles, ...rest } = data;
+      if (proofFiles && proofFiles.length > 0) {
+        const formData = new FormData();
+        Object.entries(rest).forEach(([key, val]) => {
+          if (val !== undefined && val !== null) {
+            formData.append(
+              key,
+              typeof val === "object" ? JSON.stringify(val) : String(val)
+            );
+          }
+        });
+        proofFiles.forEach((file) => formData.append("proofs", file));
+        return submitFn(formData);
+      }
+      return submitFn(rest);
+    },
+    form,
+    onSuccess: closeModal,
+  });
 
   useEffect(() => {
     if (exported?.branches) loadBranches();

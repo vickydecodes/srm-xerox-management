@@ -16,6 +16,7 @@ function Wrapper(props) {
       attachmentEmail: '',
       items: [],
       sponsors: [],
+      proofFiles: [],
     },
   });
   return (
@@ -39,5 +40,12 @@ describe('OrderForm', () => {
 
     expect(screen.getByText('Attending Shop')).toBeInTheDocument();
     expect(screen.getByText('Type of Order')).toBeInTheDocument();
+  });
+
+  it('renders proof documents upload section for admin', () => {
+    render(<Wrapper />);
+
+    expect(screen.getByText(/Proof Documents & Signatures/i)).toBeInTheDocument();
+    expect(screen.getByText(/Required before saving/i)).toBeInTheDocument();
   });
 });

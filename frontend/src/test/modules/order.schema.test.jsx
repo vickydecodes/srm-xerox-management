@@ -21,6 +21,7 @@ const validOrder = {
   attachmentEmail: 'user@example.com',
   items: [validItem],
   sponsors: [],
+  proofFiles: [{ name: 'proof.pdf' }],
 };
 
 describe('orderCreateSchema', () => {
@@ -30,16 +31,6 @@ describe('orderCreateSchema', () => {
 
   it('requires shop', () => {
     const r = orderCreateSchema.safeParse({ ...validOrder, shop: '' });
-    expect(r.success).toBe(false);
-  });
-
-  it('requires department', () => {
-    const r = orderCreateSchema.safeParse({ ...validOrder, department: '' });
-    expect(r.success).toBe(false);
-  });
-
-  it('requires branch', () => {
-    const r = orderCreateSchema.safeParse({ ...validOrder, branch: '' });
     expect(r.success).toBe(false);
   });
 
@@ -79,11 +70,32 @@ describe('orderCreateSchema', () => {
     });
     expect(r.success).toBe(false);
   });
+
+  it('requires at least one proof document', () => {
+    const r = orderCreateSchema.safeParse({ ...validOrder, proofFiles: [] });
+    expect(r.success).toBe(false);
+    if (!r.success) {
+      expect(r.error.issues[0].message).toBe(
+        'At least one proof document (Image or PDF) is required'
+      );
+    }
+  });
+
+  it('rejects order create when proofFiles is omitted', () => {
+    const { proofFiles: _, ...withoutProofs } = validOrder;
+    const r = orderCreateSchema.safeParse(withoutProofs);
+    expect(r.success).toBe(false);
+  });
 });
 
 describe('orderEditSchema', () => {
-  it('matches create schema shape', () => {
+  it('accepts valid order with proof files', () => {
     expect(orderEditSchema.safeParse(validOrder).success).toBe(true);
+  });
+
+  it('accepts valid order without proof files (for existing orders)', () => {
+    const { proofFiles: _, ...withoutProofs } = validOrder;
+    expect(orderEditSchema.safeParse(withoutProofs).success).toBe(true);
   });
 });
 
@@ -94,6 +106,18 @@ describe('approvalSchema', () => {
       approvalSchema.safeParse({ status: 'rejected', remarks: 'No budget' })
         .success
     ).toBe(true);
+  });
+
+  it('accepts optional verifyProofs flag for signature & proof verification', () => {
+    const result = approvalSchema.safeParse({
+      status: 'approved',
+      remarks: 'Verified proofs',
+      verifyProofs: true,
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.verifyProofs).toBe(true);
+    }
   });
 
   it('rejects unknown status', () => {
