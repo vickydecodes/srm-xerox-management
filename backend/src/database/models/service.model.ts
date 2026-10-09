@@ -14,6 +14,8 @@ export interface IService {
   price: number;
   materials: IServiceMaterial[];
   isWorkOrder: boolean;
+  isCustomSize: boolean;
+  sizes: string[];
   active: boolean;
   deleted: boolean;
   deletedAt?: Date;
@@ -30,6 +32,8 @@ export class ServiceDocument {
   price!: number;
   materials!: IServiceMaterial[];
   isWorkOrder: boolean = false;
+  isCustomSize: boolean = false;
+  sizes: string[] = [];
   active!: boolean;
   deleted!: boolean;
   deletedAt?: Date;
@@ -46,6 +50,8 @@ export class ServiceDocument {
     }
     
     if (this.isWorkOrder === undefined) this.isWorkOrder = false;
+    if (this.isCustomSize === undefined) this.isCustomSize = false;
+    if (!this.sizes) this.sizes = [];
     if (this.active === undefined) this.active = true;
     if (this.deleted === undefined) this.deleted = false;
     if (!this.materials) this.materials = [];
@@ -73,6 +79,8 @@ export class ServiceDocument {
       price: this.price,
       materials: this.materials as any,
       isWorkOrder: this.isWorkOrder ?? false,
+      isCustomSize: this.isCustomSize ?? false,
+      sizes: this.sizes || [],
       active: this.active,
       deleted: this.deleted,
       deletedAt: this.deletedAt,

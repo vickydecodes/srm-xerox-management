@@ -13,6 +13,8 @@ export const serviceCreateSchema = z.object({
   unit: z.string().min(1, { error: 'Please enter the unit' }),
   price: z.coerce.number().min(0, { error: 'Price cannot be negative' }),
   isWorkOrder: z.boolean().default(false),
+  isCustomSize: z.boolean().default(false),
+  sizes: z.array(z.string()).default([]),
   active: z.boolean().default(true),
   materials: z.array(serviceMaterialSchema).default([]),
 });
@@ -20,4 +22,6 @@ export const serviceCreateSchema = z.object({
 export const serviceEditSchema = serviceCreateSchema.extend({
   active: z.boolean().optional(),
   isWorkOrder: z.boolean().optional(),
+  isCustomSize: z.boolean().optional(),
+  sizes: z.array(z.string()).optional(),
 });

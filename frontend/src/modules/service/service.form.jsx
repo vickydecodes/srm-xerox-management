@@ -76,6 +76,95 @@ export default function ServiceForm({ form, isEdit = false, inventoryProducts = 
         )}
       />
 
+      <FormField
+        control={form.control}
+        name="isCustomSize"
+        render={({ field }) => (
+          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs bg-muted/10">
+            <div className="space-y-0.5">
+              <FormLabel className="text-sm font-medium">Allow Custom Size</FormLabel>
+              <p className="text-xs text-muted-foreground">
+                Enable if customers can specify custom dimensions for this service
+              </p>
+            </div>
+            <FormControl>
+              <Checkbox
+                checked={field.value ?? false}
+                onCheckedChange={field.onChange}
+              />
+            </FormControl>
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="sizes"
+        render={({ field }) => {
+          const currentSizes = Array.isArray(field.value) ? field.value : [];
+          return (
+            <FormItem className="space-y-2 rounded-lg border p-3 bg-muted/10">
+              <div className="flex items-center justify-between">
+                <FormLabel className="text-sm font-medium">Fixed Sizes</FormLabel>
+                <span className="text-xs text-muted-foreground">e.g. 6x3 ft, A4, 8x4 ft</span>
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  id="new-size-input"
+                  placeholder="Enter a size and click Add"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const val = e.currentTarget.value.trim();
+                      if (val && !currentSizes.includes(val)) {
+                        field.onChange([...currentSizes, val]);
+                        e.currentTarget.value = "";
+                      }
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    const input = document.getElementById("new-size-input");
+                    const val = input?.value?.trim();
+                    if (val && !currentSizes.includes(val)) {
+                      field.onChange([...currentSizes, val]);
+                      if (input) input.value = "";
+                    }
+                  }}
+                >
+                  Add Size
+                </Button>
+              </div>
+              {currentSizes.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {currentSizes.map((s, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center gap-1 bg-background border px-2.5 py-1 rounded text-xs"
+                    >
+                      <span>{s}</span>
+                      <button
+                        type="button"
+                        className="text-muted-foreground hover:text-destructive ml-1"
+                        onClick={() => {
+                          field.onChange(currentSizes.filter((_, i) => i !== idx));
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <FormMessage />
+            </FormItem>
+          );
+        }}
+      />
+
       <div className="space-y-2">
         <FormLabel>Materials</FormLabel>
         {materialFields.map((item, index) => (

@@ -31,6 +31,8 @@ export const Create = ({ submitFn = () => { }, closeModal = () => { }, exported 
       unit: "",
       price: 0,
       isWorkOrder: false,
+      isCustomSize: false,
+      sizes: [],
       active: true,
       materials: [],
     },
@@ -100,6 +102,8 @@ export const Edit = ({
       unit: service?.unit || "",
       price: service?.price || 0,
       isWorkOrder: service?.isWorkOrder ?? false,
+      isCustomSize: service?.isCustomSize ?? false,
+      sizes: service?.sizes || [],
       active: service?.active ?? true,
       materials: service?.materials?.map((m) => {
         const prodId = m.product && typeof m.product === 'object' ? (m.product._id ? String(m.product._id) : String(m.product)) : (m.product ? String(m.product) : "");
@@ -250,6 +254,24 @@ export const View = ({ service } = {}) => {
             <p className="text-sm font-medium text-muted-foreground">Price</p>
             <p className="text-sm font-semibold">
               {service?.price != null ? Number(service.price).toFixed(2) : "—"}
+            </p>
+          </div>
+        </div>
+
+        {/* Sizes & Custom Size */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-muted-foreground">Fixed Sizes</p>
+            <p className="text-sm">
+              {service?.sizes && service.sizes.length > 0
+                ? service.sizes.join(", ")
+                : "None"}
+            </p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-muted-foreground">Custom Dimensions</p>
+            <p className="text-sm">
+              {service?.isCustomSize ? "Allowed ✓" : "Not Allowed"}
             </p>
           </div>
         </div>

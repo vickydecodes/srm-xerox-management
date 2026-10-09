@@ -141,6 +141,11 @@ export const View = ({ order, exported, closeModal } = {}) => {
               >
                 <span>
                   {item.name}{" "}
+                  {item.size && (
+                    <span className="text-xs text-muted-foreground font-medium">
+                      ({item.size === "Custom" && item.customSize ? item.customSize : item.size})
+                    </span>
+                  )}{" "}
                   <span className="text-muted-foreground">
                     x{item.quantity}
                   </span>

@@ -97,6 +97,10 @@ export default function OrderForm({
         shouldValidate: true,
       });
     } else {
+      const itemSizes = selectedItem.sizes || selectedItem.details?.sizes || [];
+      const itemIsCustom = selectedItem.isCustomSize ?? selectedItem.details?.isCustomSize ?? false;
+      const initialSize = itemSizes.length > 0 ? itemSizes[0] : "";
+
       appendItem({
         type: selectedItem.type,
         item: selectedItem._id,
@@ -104,6 +108,10 @@ export default function OrderForm({
         quantity: 1,
         price: selectedItem.price ?? 0,
         variant: selectedItem.variant,
+        size: initialSize,
+        customSize: "",
+        sizes: itemSizes,
+        isCustomSize: itemIsCustom,
       });
     }
   };
@@ -279,6 +287,69 @@ export default function OrderForm({
                         "Service"
                       )}
                     </span>
+
+                    {/* Size Selector for services with fixed sizes or isCustomSize */}
+                    {((items[index]?.sizes && items[index]?.sizes.length > 0) || items[index]?.isCustomSize) && (
+                      <div className="mt-1.5 space-y-1.5 w-full max-w-[240px]">
+                        <FormField
+                          control={form.control}
+                          name={`items.${index}.size`}
+                          render={({ field }) => (
+                            <FormItem className="space-y-0.5">
+                              <FormLabel className="text-[10px] font-medium text-muted-foreground">
+                                Size
+                              </FormLabel>
+                              <Select
+                                value={field.value ? String(field.value) : undefined}
+                                onValueChange={(val) => {
+                                  field.onChange(val);
+                                  if (val !== "Custom") {
+                                    form.setValue(`items.${index}.customSize`, "");
+                                  }
+                                }}
+                              >
+                                <SelectTrigger className="h-7 text-xs bg-background">
+                                  <SelectValue placeholder="Select size" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {items[index]?.sizes?.map((sz) => (
+                                    <SelectItem key={sz} value={sz} className="text-xs">
+                                      {sz}
+                                    </SelectItem>
+                                  ))}
+                                  {items[index]?.isCustomSize && (
+                                    <SelectItem value="Custom" className="text-xs font-semibold text-primary">
+                                      Custom
+                                    </SelectItem>
+                                  )}
+                                </SelectContent>
+                              </Select>
+                            </FormItem>
+                          )}
+                        />
+
+                        {/* Show custom input field only if Custom is selected */}
+                        {items[index]?.isCustomSize && items[index]?.size === "Custom" && (
+                          <FormField
+                            control={form.control}
+                            name={`items.${index}.customSize`}
+                            render={({ field }) => (
+                              <FormItem className="space-y-0.5">
+                                <FormControl>
+                                  <Input
+                                    placeholder="Enter custom size (e.g. 12x4 ft)"
+                                    className="h-7 text-xs bg-background"
+                                    {...field}
+                                    value={field.value || ""}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <FormField

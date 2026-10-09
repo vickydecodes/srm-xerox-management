@@ -16,17 +16,23 @@ describe('serviceCreateSchema', () => {
     });
     expect(res.success).toBe(true);
     expect(res.data.isWorkOrder).toBe(false);
+    expect(res.data.isCustomSize).toBe(false);
+    expect(res.data.sizes).toEqual([]);
   });
 
-  it('accepts isWorkOrder as true when specified', () => {
+  it('accepts isWorkOrder, isCustomSize, and sizes when specified', () => {
     const res = serviceCreateSchema.safeParse({
       name: 'Binding Spiral',
       unit: 'book',
       price: 30,
       isWorkOrder: true,
+      isCustomSize: true,
+      sizes: ['4x2 ft', '6x3 ft'],
     });
     expect(res.success).toBe(true);
     expect(res.data.isWorkOrder).toBe(true);
+    expect(res.data.isCustomSize).toBe(true);
+    expect(res.data.sizes).toEqual(['4x2 ft', '6x3 ft']);
   });
 
   it('requires name min length 2', () => {

@@ -11,6 +11,10 @@ export const createServiceSchema = z.object({
 
   isWorkOrder: z.boolean().optional().default(false),
 
+  isCustomSize: z.boolean().optional().default(false),
+
+  sizes: z.array(z.string().trim()).optional().default([]),
+
   materials: z
     .array(
       z.object({

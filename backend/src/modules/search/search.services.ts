@@ -99,6 +99,8 @@ export const searchProducts = async (
         inventory: null,
         code: s.code || '',
         isWorkOrder: s.isWorkOrder ?? false,
+        isCustomSize: s.isCustomSize ?? false,
+        sizes: s.sizes || [],
         details: s,
       }),
     });

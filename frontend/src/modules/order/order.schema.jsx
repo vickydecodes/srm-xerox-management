@@ -6,6 +6,10 @@ const orderItemSchema = z.object({
   name: z.string().min(1, { error: 'Item name is required' }),
   quantity: z.coerce.number().min(1, { error: 'Quantity must be at least 1' }),
   price: z.coerce.number().min(0, { error: 'Price cannot be negative' }),
+  size: z.string().optional(),
+  customSize: z.string().optional(),
+  sizes: z.array(z.string()).optional(),
+  isCustomSize: z.boolean().optional(),
 });
 
 const sponsorSchema = z.object({

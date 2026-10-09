@@ -89,6 +89,10 @@ export const createOrderSchema = z.object({
           quantity: z.coerce.number().min(0, 'Quantity cannot be negative'),
 
           price: z.coerce.number().min(0, 'Price cannot be negative'),
+
+          size: z.string().trim().optional(),
+
+          customSize: z.string().trim().optional(),
         })
       )
       .optional()

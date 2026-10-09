@@ -100,9 +100,11 @@ model Service {
   description String?
   unit        String
   price       Float
-  materials   Json      @default("[]")
-  isWorkOrder Boolean   @default(false)
-  active      Boolean   @default(true)
+  materials    Json      @default("[]")
+  isWorkOrder  Boolean   @default(false)
+  isCustomSize Boolean   @default(false)
+  sizes        Json      @default("[]")
+  active       Boolean   @default(true)
   deleted     Boolean   @default(false)
   deletedAt   DateTime?
   createdAt   DateTime  @default(now())
