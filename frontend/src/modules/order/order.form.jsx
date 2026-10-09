@@ -457,7 +457,7 @@ export default function OrderForm({
 
       {/* Sponsors */}
       <div className="flex items-center justify-between">
-        <FormLabel>Sponsors</FormLabel>
+        <FormLabel>Self Support</FormLabel>
         <Button
           type="button"
           size="sm"
@@ -465,7 +465,7 @@ export default function OrderForm({
           onClick={() => appendSponsor({ name: "", amount: 0 })}
           disabled={totalAvailable >= totalCost}
         >
-          Add Sponsor
+          Add Self Support
         </Button>
       </div>
 
@@ -473,11 +473,11 @@ export default function OrderForm({
         <div key={item.id} className="flex gap-2 items-start">
           <FormField
             control={form.control}
-            name={`sponsors.${index}.name`}
+            name={`Self Support`}
             render={({ field }) => (
               <FormItem className="flex-1">
                 <FormControl>
-                  <Input placeholder="Sponsor name" {...field} />
+                  <Input placeholder="Self Support name" value={"Self Support"} disabled />
                 </FormControl>
                 <FormMessage />
               </FormItem>

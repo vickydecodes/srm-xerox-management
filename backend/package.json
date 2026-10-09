@@ -12,7 +12,7 @@
     "start": "node dist/server.js",
     "seed": "npx tsx src/lib/seed.ts",
     "postinstall": "prisma generate",
-    "setup": "npm install && prisma generate",
+    "setup": "npm install && prisma db push && prisma generate",
     "contract:emit": "prisma contract emit"
   },
   "keywords": [],

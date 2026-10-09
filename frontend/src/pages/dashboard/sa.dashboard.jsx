@@ -117,10 +117,11 @@ export default function SaDashboard({ data, refreshData }) {
   ];
 
   const quickActions = [
-    { title: "Create Invoice", icon: <IconReceipt className="w-5 h-5" />, path: "/super_admin/bill-creation" },
     { title: "Manage Branches", icon: <IconBuildingCommunity className="w-5 h-5" />, path: "/super_admin/branch" },
-    { title: "Register Operator", icon: <IconUsers className="w-5 h-5" />, path: "/super_admin/department-admin" },
-    { title: "Service Catalog", icon: <IconClipboardList className="w-5 h-5" />, path: "/super_admin/services" },
+    { title: "Manage Branch Admins", icon: <IconUsers className="w-5 h-5" />, path: "/super_admin/branch-admin" },
+    { title: "Manage Departments", icon: <IconBuildingCommunity className="w-5 h-5" />, path: "/super_admin/department" },
+    { title: "Manage Department Admins", icon: <IconUsers className="w-5 h-5" />, path: "/super_admin/department-admin" },
+
   ];
 
   const bentoCard = "bg-card rounded-3xl p-6 shadow-sm border border-border/40 hover:shadow-md transition-all duration-300 flex flex-col";
