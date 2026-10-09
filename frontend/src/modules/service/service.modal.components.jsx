@@ -30,6 +30,7 @@ export const Create = ({ submitFn = () => { }, closeModal = () => { }, exported 
       description: "",
       unit: "",
       price: 0,
+      isWorkOrder: false,
       active: true,
       materials: [],
     },
@@ -98,6 +99,7 @@ export const Edit = ({
       description: service?.description || "",
       unit: service?.unit || "",
       price: service?.price || 0,
+      isWorkOrder: service?.isWorkOrder ?? false,
       active: service?.active ?? true,
       materials: service?.materials?.map((m) => {
         const prodId = m.product && typeof m.product === 'object' ? (m.product._id ? String(m.product._id) : String(m.product)) : (m.product ? String(m.product) : "");
@@ -208,6 +210,11 @@ export const View = ({ service } = {}) => {
           <Badge variant={service?.active ? "default" : "secondary"}>
             {service?.active ? "Active" : "Inactive"}
           </Badge>
+          {service?.isWorkOrder && (
+            <Badge variant="outline" className="border-blue-500 text-blue-600 dark:text-blue-400">
+              Work Order
+            </Badge>
+          )}
         </DialogTitle>
         <DialogDescription>
           {service?.code && (

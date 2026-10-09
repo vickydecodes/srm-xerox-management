@@ -9,6 +9,8 @@ export const createServiceSchema = z.object({
 
   price: z.number().min(0, "Price cannot be negative"),
 
+  isWorkOrder: z.boolean().optional().default(false),
+
   materials: z
     .array(
       z.object({

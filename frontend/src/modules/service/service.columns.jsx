@@ -32,6 +32,15 @@ export const useServiceColumns = (services) => {
       cell: ({ row }) => <span>{row.getValue("price")}</span>,
     },
     {
+      accessorKey: "isWorkOrder",
+      header: () => Hint("Work Order", "Whether this service is designated for work orders"),
+      cell: ({ row }) => (
+        <span className={row.getValue("isWorkOrder") ? "text-blue-600 dark:text-blue-400 font-medium" : "text-muted-foreground"}>
+          {row.getValue("isWorkOrder") ? "Yes" : "No"}
+        </span>
+      ),
+    },
+    {
       accessorKey: "active",
       header: () => Hint("Active", "Whether this service is currently active"),
       cell: ({ row }) => (

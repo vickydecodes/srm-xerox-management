@@ -13,6 +13,7 @@ export interface IService {
   unit: string;
   price: number;
   materials: IServiceMaterial[];
+  isWorkOrder: boolean;
   active: boolean;
   deleted: boolean;
   deletedAt?: Date;
@@ -28,6 +29,7 @@ export class ServiceDocument {
   unit!: string;
   price!: number;
   materials!: IServiceMaterial[];
+  isWorkOrder: boolean = false;
   active!: boolean;
   deleted!: boolean;
   deletedAt?: Date;
@@ -43,6 +45,7 @@ export class ServiceDocument {
       this.isNew = true;
     }
     
+    if (this.isWorkOrder === undefined) this.isWorkOrder = false;
     if (this.active === undefined) this.active = true;
     if (this.deleted === undefined) this.deleted = false;
     if (!this.materials) this.materials = [];
@@ -69,6 +72,7 @@ export class ServiceDocument {
       unit: this.unit,
       price: this.price,
       materials: this.materials as any,
+      isWorkOrder: this.isWorkOrder ?? false,
       active: this.active,
       deleted: this.deleted,
       deletedAt: this.deletedAt,

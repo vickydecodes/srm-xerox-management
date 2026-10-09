@@ -101,6 +101,7 @@ model Service {
   unit        String
   price       Float
   materials   Json      @default("[]")
+  isWorkOrder Boolean   @default(false)
   active      Boolean   @default(true)
   deleted     Boolean   @default(false)
   deletedAt   DateTime?

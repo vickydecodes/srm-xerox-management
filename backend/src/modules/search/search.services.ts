@@ -22,7 +22,7 @@ const strictInventoryProductFilterConfig: FilterConfig<any> = {
 const strictServiceFilterConfig: FilterConfig<any> = {
   table: 'Service',
   searchable: ['name'],
-  filterable: ['active', 'deleted'],
+  filterable: ['active', 'deleted', 'isWorkOrder'],
   sortable: ['name'],
   defaultSort: 'name',
 };
@@ -98,6 +98,7 @@ export const searchProducts = async (
         quantity: null,
         inventory: null,
         code: s.code || '',
+        isWorkOrder: s.isWorkOrder ?? false,
         details: s,
       }),
     });
@@ -106,12 +107,36 @@ export const searchProducts = async (
   const isTypeQuery = isServiceKeyword || isProductKeyword;
   const filterParams = {
     ...extraParams,
-    ...(isTypeQuery ? {} : { search: query }),
+    ...(isTypeQuery || !cleanQuery ? {} : { search: query }),
   };
 
-  return multiModelDynamicFilter(
+  const results = await multiModelDynamicFilter(
     configs,
     filterParams,
     { visibility: 'active-only' }
   );
+
+  const isWorkOrderFilter =
+    extraParams.orderType === 'WORK_ORDER' ||
+    extraParams.isWorkOrder === true ||
+    extraParams.isWorkOrder === 'true';
+
+  const isXeroxOrderFilter =
+    extraParams.orderType === 'XEROX_ORDER' ||
+    extraParams.isWorkOrder === false ||
+    extraParams.isWorkOrder === 'false';
+
+  if (isWorkOrderFilter) {
+    return results.filter((item) => {
+      return item.isWorkOrder === true || item.details?.isWorkOrder === true;
+    });
+  }
+
+  if (isXeroxOrderFilter) {
+    return results.filter((item) => {
+      return !(item.isWorkOrder === true || item.details?.isWorkOrder === true);
+    });
+  }
+
+  return results;
 };

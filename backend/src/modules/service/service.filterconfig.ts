@@ -4,7 +4,7 @@ import { IService } from "@db/models/service.model.ts";
 export const serviceFilterConfig: FilterConfig<IService> = {
   table: 'Service',
   searchable: ["name", "code", "description"],
-  filterable: ["active", "deleted", "unit"],
+  filterable: ["active", "deleted", "unit", "isWorkOrder"],
   sortable: ["name", "code", "price", "createdAt", "active"],
   defaultSort: "name",
 };

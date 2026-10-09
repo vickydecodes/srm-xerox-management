@@ -6,16 +6,27 @@ import {
 } from '@/modules/service/service.schema';
 
 describe('serviceCreateSchema', () => {
-  it('accepts valid service', () => {
-    expect(
-      serviceCreateSchema.safeParse({
-        name: 'Xerox A4',
-        unit: 'page',
-        price: 2,
-        active: true,
-        materials: [],
-      }).success
-    ).toBe(true);
+  it('accepts valid service and defaults isWorkOrder to false', () => {
+    const res = serviceCreateSchema.safeParse({
+      name: 'Xerox A4',
+      unit: 'page',
+      price: 2,
+      active: true,
+      materials: [],
+    });
+    expect(res.success).toBe(true);
+    expect(res.data.isWorkOrder).toBe(false);
+  });
+
+  it('accepts isWorkOrder as true when specified', () => {
+    const res = serviceCreateSchema.safeParse({
+      name: 'Binding Spiral',
+      unit: 'book',
+      price: 30,
+      isWorkOrder: true,
+    });
+    expect(res.success).toBe(true);
+    expect(res.data.isWorkOrder).toBe(true);
   });
 
   it('requires name min length 2', () => {

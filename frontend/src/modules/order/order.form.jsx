@@ -60,6 +60,7 @@ export default function OrderForm({
     name: "sponsors",
   });
 
+  const orderType = useWatch({ control: form.control, name: "orderType" });
   const items = useWatch({ control: form.control, name: "items" }) || [];
   const sponsors = useWatch({ control: form.control, name: "sponsors" }) || [];
   const managementAmount =
@@ -77,6 +78,15 @@ export default function OrderForm({
   const overBudget = totalCost > totalAvailable;
 
   const handleSelectItem = (selectedItem) => {
+    // If orderType is WORK_ORDER, only allow items with isWorkOrder === true (whether product or service)
+    if (
+      orderType === "WORK_ORDER" &&
+      !selectedItem.isWorkOrder &&
+      !selectedItem.details?.isWorkOrder
+    ) {
+      return;
+    }
+
     const existingIndex = items.findIndex(
       (i) => String(i.item) === String(selectedItem._id)
     );
@@ -96,6 +106,21 @@ export default function OrderForm({
         variant: selectedItem.variant,
       });
     }
+  };
+
+  const handleSearchProducts = async (q, extraParams = {}) => {
+    if (!searchProducts) return [];
+    const results = await searchProducts(q, { ...extraParams, orderType });
+    if (orderType === "WORK_ORDER") {
+      return results.filter(
+        (item) => item.isWorkOrder === true || item.details?.isWorkOrder === true
+      );
+    } else if (orderType === "XEROX_ORDER") {
+      return results.filter(
+        (item) => !(item.isWorkOrder === true || item.details?.isWorkOrder === true)
+      );
+    }
+    return results;
   };
 
   return (
@@ -200,11 +225,17 @@ export default function OrderForm({
 
           {BillingItemSearchCombobox ? (
             <BillingItemSearchCombobox
+              key={orderType || "all"}
               value=""
               currentItemName=""
               onSelect={handleSelectItem}
-              placeholder="Search by product or service name..."
-              searchProducts={searchProducts}
+              placeholder={
+                orderType === "WORK_ORDER"
+                  ? "Search products or work-order services..."
+                  : "Search by product or service name..."
+              }
+              searchProducts={handleSearchProducts}
+              queryParams={{ orderType }}
             />
           ) : (
             <p className="text-sm text-muted-foreground">

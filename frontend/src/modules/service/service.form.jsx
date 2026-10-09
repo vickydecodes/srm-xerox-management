@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function ServiceForm({ form, isEdit = false, inventoryProducts = [] }) {
   const fields = ["name", "description", "unit", "price"];
@@ -53,6 +54,27 @@ export default function ServiceForm({ form, isEdit = false, inventoryProducts = 
           )}
         />
       ))}
+
+      <FormField
+        control={form.control}
+        name="isWorkOrder"
+        render={({ field }) => (
+          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs bg-muted/10">
+            <div className="space-y-0.5">
+              <FormLabel className="text-sm font-medium">Work Order Service</FormLabel>
+              <p className="text-xs text-muted-foreground">
+                Enable if this service is for Work Orders
+              </p>
+            </div>
+            <FormControl>
+              <Checkbox
+                checked={field.value ?? false}
+                onCheckedChange={field.onChange}
+              />
+            </FormControl>
+          </FormItem>
+        )}
+      />
 
       <div className="space-y-2">
         <FormLabel>Materials</FormLabel>

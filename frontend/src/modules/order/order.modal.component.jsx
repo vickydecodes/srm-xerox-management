@@ -211,13 +211,10 @@ export const View = ({ order, exported, closeModal } = {}) => {
                             }
                           }
                         }}
-                        className="text-blue-600 dark:text-blue-400 underline hover:text-blue-800 font-medium truncate max-w-[280px] text-left"
+                        className="text-blue-600 dark:text-blue-400 underline hover:text-blue-800 font-medium truncate max-w-full text-left"
                       >
                         📄 {displayName}
                       </button>
-                      <Badge variant={p.verified ? "default" : "secondary"}>
-                        {p.verified ? "Verified ✓" : "Unverified"}
-                      </Badge>
                     </div>
                     {isImage && (
                       <div className="mt-1 max-w-full overflow-hidden rounded border bg-background p-1">
@@ -806,7 +803,7 @@ const ApprovalForm = ({
       <DialogHeader>
         <DialogTitle>{title}</DialogTitle>
         <DialogDescription>
-          Verify signature proof documents & submit approval decision
+          Review proof documents & submit approval decision
         </DialogDescription>
       </DialogHeader>
 
@@ -849,13 +846,10 @@ const ApprovalForm = ({
                           }
                         }
                       }}
-                      className="text-blue-600 dark:text-blue-400 underline hover:text-blue-800 font-medium truncate max-w-[240px] text-left"
+                      className="text-blue-600 dark:text-blue-400 underline hover:text-blue-800 font-medium truncate max-w-full text-left"
                     >
                       📄 {displayName}
                     </button>
-                    <Badge variant={p.verified ? "default" : "secondary"}>
-                      {p.verified ? "Verified ✓" : "Pending Verification"}
-                    </Badge>
                   </div>
                   {isImage && (
                     <div className="mt-1 max-w-full overflow-hidden rounded border bg-muted/20 p-1">
@@ -907,30 +901,7 @@ const ApprovalForm = ({
             )}
           />
 
-          {order?.proofs && order.proofs.length > 0 && (
-            <FormField
-              control={form.control}
-              name="verifyProofs"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-xs">
-                      Verify Signatures & Documents
-                    </FormLabel>
-                    <p className="text-[11px] text-muted-foreground">
-                      Confirm all signatures on PDF/Image proofs are verified
-                    </p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={field.value ?? true}
-                    onChange={(e) => field.onChange(e.target.checked)}
-                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                  />
-                </FormItem>
-              )}
-            />
-          )}
+
 
           <FormField
             control={form.control}

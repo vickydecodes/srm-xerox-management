@@ -34,11 +34,9 @@ export function BillingItemSearchCombobox({
   useEffect(() => {
     let active = true;
 
+    if (!open) return;
+
     const fetchItems = async () => {
-      if (searchQuery.trim().length < 2) {
-        setItems([]);
-        return;
-      }
       if (!searchProducts) {
         console.warn('BillingItemSearchCombobox: searchProducts prop is missing');
         return;
@@ -46,7 +44,7 @@ export function BillingItemSearchCombobox({
 
       setLoading(true);
       try {
-        const results = await searchProducts(searchQuery, queryParams);
+        const results = await searchProducts(searchQuery.trim(), queryParams);
         if (active) {
           setItems(results || []);
         }
@@ -61,14 +59,14 @@ export function BillingItemSearchCombobox({
 
     const timer = setTimeout(() => {
       fetchItems();
-    }, 300);
+    }, searchQuery.trim() ? 250 : 0);
 
     return () => {
       active = false;
       clearTimeout(timer);
       setLoading(false);
     };
-  }, [searchQuery,]);
+  }, [open, searchQuery, JSON.stringify(queryParams)]);
 
   const selectedItem = items.find((item) => item._id === value);
 
@@ -132,6 +130,11 @@ export function BillingItemSearchCombobox({
                         {item.type === 'InventoryProduct' && item.variant && (
                           <span className="text-[10px] bg-secondary text-secondary-foreground font-semibold px-1.5 py-0.5 rounded truncate max-w-[150px]">
                             {formatVariant(item.variant)}
+                          </span>
+                        )}
+                        {item.type === 'Service' && (item.isWorkOrder || item.details?.isWorkOrder) && (
+                          <span className="text-[10px] bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 font-semibold px-1.5 py-0.5 rounded">
+                            Work Order
                           </span>
                         )}
                       </div>
