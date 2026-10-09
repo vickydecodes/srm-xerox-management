@@ -53,13 +53,13 @@ export default function ShopAdminDashboard({ data, refreshData }) {
     {
       title: "Shop Revenue",
       value: currencyFormatter(stats.totalRevenue || 0),
-      description: "All-time local sales",
+      description: "Revenue from paid invoices in the selected range",
       icon: <IconCoin className="w-8 h-8 text-primary opacity-80" />,
     },
     {
       title: "Invoices Logged",
       value: stats.totalBills || 0,
-      description: "Total shop transactions",
+      description: "Invoices in the selected range",
       icon: <IconReceipt className="w-8 h-8 text-primary opacity-80" />,
     },
     {
@@ -125,14 +125,14 @@ export default function ShopAdminDashboard({ data, refreshData }) {
       </div>
 
       {/* Analytics Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
         
         {/* Left Column (Span 2) */}
-        <div className="lg:col-span-2 space-y-4 lg:space-y-6">
+        <div className="lg:col-span-2 space-y-6 lg:space-y-8">
           
           {/* Revenue Area Chart */}
-          <div className="flex flex-col p-5 bg-card border border-border/60 rounded-lg shadow-sm">
-            <div className="mb-4 space-y-1">
+          <div className="flex flex-col rounded-lg border border-border/60 bg-card p-6 shadow-sm">
+            <div className="mb-5 space-y-1">
               <h3 className="text-sm font-medium text-foreground">Shop Revenue Trajectory</h3>
               <p className="text-xs text-muted-foreground">Local sales performance over the last 6 months.</p>
             </div>
@@ -202,7 +202,7 @@ export default function ShopAdminDashboard({ data, refreshData }) {
         </div>
 
         {/* Right Column (Span 1) */}
-        <div className="space-y-4 lg:space-y-6">
+        <div className="space-y-6 lg:space-y-8">
           
           {/* Minor KPIs Vertical Stack */}
           <div className="grid grid-cols-1 gap-4">
@@ -218,12 +218,12 @@ export default function ShopAdminDashboard({ data, refreshData }) {
           </div>
 
           {/* Top Items Bar Chart */}
-          <div className="flex flex-col p-5 bg-card border border-border/60 rounded-lg shadow-sm">
-            <div className="mb-4 space-y-1">
+          <div className="flex flex-col rounded-lg border border-border/60 bg-card p-6 shadow-sm">
+            <div className="mb-5 space-y-1">
               <h3 className="text-sm font-medium text-foreground">Top Items</h3>
               <p className="text-xs text-muted-foreground">By quantity sold at this shop.</p>
             </div>
-            <div className="h-[220px] w-full">
+            <div className="h-[240px] w-full">
               {topItemsData.length === 0 ? (
                 <div className="h-full flex items-center justify-center text-xs text-muted-foreground">No items sold.</div>
               ) : (

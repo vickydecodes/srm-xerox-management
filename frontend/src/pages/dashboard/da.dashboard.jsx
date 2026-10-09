@@ -27,13 +27,13 @@ export default function DaDashboard({ data, refreshData }) {
     {
       title: "Total Spent",
       value: currencyFormatter(stats.totalSpend || 0),
-      description: "All-time departmental spending",
+      description: "Paid department spending in the selected range",
       icon: <IconCoin className="w-8 h-8 text-primary opacity-80" />,
     },
     {
       title: "Invoices Logged",
       value: stats.totalBills || 0,
-      description: "Total checkout transactions",
+      description: "Invoices in the selected range",
       icon: <IconReceipt className="w-8 h-8 text-primary opacity-80" />,
     },
     {
@@ -123,14 +123,15 @@ export default function DaDashboard({ data, refreshData }) {
                   {recentOrders.slice(0, 5).map((order, idx) => (
                     <tr key={order._id} className={`${idx !== recentOrders.length - 1 ? 'border-b border-border/40' : ''} hover:bg-muted/30 transition-colors`}>
                       <td className="py-3 px-5 font-medium">{order.code || order._id.slice(-6)}</td>
-                      <td className="py-3 px-5 text-muted-foreground">{order.type || "N/A"}</td>
+                      <td className="py-3 px-5 text-muted-foreground">{order.orderType?.replace(/_/g, " ") || "N/A"}</td>
                       <td className="py-3 px-5 text-right">
                         <Badge variant="outline" className={`text-[10px] font-medium px-2 py-0 h-5 rounded-md ${
-                          order.status === "completed" ? "text-emerald-600 border-emerald-200 bg-emerald-50" :
+                          order.status === "delivered" ? "text-emerald-600 border-emerald-200 bg-emerald-50" :
                           order.status === "pending" ? "text-amber-600 border-amber-200 bg-amber-50" :
+                          order.status === "rejected" ? "text-red-600 border-red-200 bg-red-50" :
                           "text-blue-600 border-blue-200 bg-blue-50"
                         }`}>
-                          {order.status}
+                          {order.status?.replace(/_/g, " ") || "Unknown"}
                         </Badge>
                       </td>
                     </tr>

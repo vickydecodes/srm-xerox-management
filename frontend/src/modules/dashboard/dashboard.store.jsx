@@ -34,10 +34,14 @@ export const useDashboardStore = create((set) => ({
       let lt = undefined;
       let gt = undefined;
       if (dateRange?.to) {
-        lt = new Date(dateRange.to).toISOString();
+        const endDate = new Date(dateRange.to);
+        endDate.setHours(23, 59, 59, 999);
+        lt = endDate.toISOString();
       }
       if (dateRange?.from) {
-        gt = new Date(dateRange.from).toISOString();
+        const startDate = new Date(dateRange.from);
+        startDate.setHours(0, 0, 0, 0);
+        gt = startDate.toISOString();
       }
 
       const res = await apiRequest("get", config.url(lt, gt));

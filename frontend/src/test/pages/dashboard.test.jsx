@@ -158,12 +158,15 @@ describe('Dashboard page', () => {
   describe('role-specific dashboards', () => {
     it('renders the Super Admin dashboard with its KPIs and quick actions', () => {
       authState.user = { role: 'super_admin', name: 'Root' };
-      dashboardState.data = { stats: { totalRevenue: 1000, branches: 3, users: 10, totalBills: 5 } };
+      dashboardState.data = {
+        stats: { totalRevenue: 1000, branches: 3, users: 10, totalBills: 5, pendingApprovals: 2 },
+      };
 
       renderDashboard();
 
       expect(screen.getByText(/^Total Revenue$/i)).toBeInTheDocument();
       expect(screen.getByText(/^Active Branches$/i)).toBeInTheDocument();
+      expect(screen.getByText('2')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /manage branches/i })).toBeInTheDocument();
     });
 
@@ -187,13 +190,37 @@ describe('Dashboard page', () => {
       expect(screen.getByText('₹900')).toBeInTheDocument();
     });
 
+    it('renders department requisition type and delivered status from the API fields', () => {
+      authState.user = { role: 'department_admin', name: 'Dana', department: 'dept-1' };
+      dashboardState.data = {
+        stats: {},
+        recentOrders: [{
+          _id: 'order-1',
+          code: 'ORD-001',
+          orderType: 'WORK_ORDER',
+          status: 'delivered',
+        }],
+      };
+
+      renderDashboard();
+
+      expect(screen.getByText('WORK ORDER')).toBeInTheDocument();
+      expect(screen.getByText('delivered')).toBeInTheDocument();
+      expect(screen.queryByText('N/A')).not.toBeInTheDocument();
+    });
+
     it('renders the Shop Admin dashboard with its KPIs and quick actions', () => {
       authState.user = { role: 'shop_admin', name: 'Sam' };
-      dashboardState.data = { stats: { totalRevenue: 200, inventoryProducts: 12, users: 3, totalBills: 6 } };
+      dashboardState.data = {
+        stats: { totalRevenue: 200, inventoryProducts: 12, users: 3, totalBills: 6 },
+        topItems: [{ _id: 'A4 Paper', count: 4, revenue: 200 }],
+      };
 
       renderDashboard();
 
       expect(screen.getByText(/^Shop Revenue$/i)).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /^Top Items$/i })).toBeInTheDocument();
+      expect(screen.queryByText(/no items sold/i)).not.toBeInTheDocument();
       expect(screen.getByRole('button', { name: /view bills/i })).toBeInTheDocument();
     });
 
@@ -201,12 +228,15 @@ describe('Dashboard page', () => {
       authState.user = { role: 'staff', name: 'Steve' };
       dashboardState.data = {
         stats: { totalRevenue: 300, totalBills: 4, totalPaidBills: 3 },
+        topItems: [{ _id: 'A4 Paper', count: 4, revenue: 200 }],
       };
 
       renderDashboard();
 
       expect(screen.getByText(/my total revenue/i)).toBeInTheDocument();
       expect(screen.getByText(/paid invoices/i)).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /^Top Items$/i })).toBeInTheDocument();
+      expect(screen.queryByText(/no items sold/i)).not.toBeInTheDocument();
       expect(screen.getByText('3')).toBeInTheDocument();
     });
 

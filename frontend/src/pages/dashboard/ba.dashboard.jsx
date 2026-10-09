@@ -42,6 +42,10 @@ const chartConfig = {
     label: "Amount",
     color: "var(--primary)",
   },
+  "No Data": {
+    label: "No data",
+    color: "var(--muted)",
+  },
   UPI: {
     label: "UPI",
     color: "var(--chart-1)",
@@ -94,13 +98,13 @@ export default function BaDashboard({ data, refreshData }) {
     {
       title: "Branch Revenue",
       value: currencyFormatter(stats.totalRevenue),
-      description: "All-time completed sales",
+      description: "Revenue from paid invoices in the selected range",
       icon: <IconCoin className="w-8 h-8 text-primary opacity-80" />,
     },
     {
       title: "Invoices Generated",
       value: stats.totalBills,
-      description: "Total checkout transactions",
+      description: "Invoices in the selected range",
       icon: <IconReceipt className="w-8 h-8 text-primary opacity-80" />,
     },
     {
@@ -304,7 +308,7 @@ export default function BaDashboard({ data, refreshData }) {
                 <PieChart>
                   <Pie data={statusPieData} cx="50%" cy="50%" innerRadius={50} outerRadius={70} paddingAngle={2} dataKey="amount" stroke="none" />
                   <ChartTooltip content={<ChartTooltipContent formatter={(value) => currencyFormatter(value)} />} />
-                  <ChartLegend content={<ChartLegendContent />} />
+                  <ChartLegend content={<ChartLegendContent nameKey="name" />} />
                 </PieChart>
               </ChartContainer>
             </div>

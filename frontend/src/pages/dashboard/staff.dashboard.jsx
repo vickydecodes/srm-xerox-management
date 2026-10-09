@@ -20,6 +20,8 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
+  BarChart,
+  Bar,
   PieChart,
   Pie,
 } from "recharts";
@@ -38,6 +40,14 @@ const chartConfig = {
   },
   amount: {
     label: "Amount",
+    color: "var(--primary)",
+  },
+  "No Data": {
+    label: "No data",
+    color: "var(--muted)",
+  },
+  Count: {
+    label: "Quantity sold",
     color: "var(--primary)",
   },
   UPI: {
@@ -64,6 +74,7 @@ export default function StaffDashboard({ data, refreshData }) {
   const recentBills = data?.recentBills || [];
   const monthlyRevenue = data?.monthlyRevenue || [];
   const paymentMethods = data?.paymentMethods || [];
+  const topItems = data?.topItems || [];
 
   const currencyFormatter = (val) =>
     new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(val);
@@ -78,13 +89,13 @@ export default function StaffDashboard({ data, refreshData }) {
     {
       title: "Total Bills Billed",
       value: stats.totalBills || 0,
-      description: "All transactions processed by you",
+      description: "Invoices processed by you in the selected range",
       icon: <IconReceipt className="w-8 h-8 text-primary opacity-80" />,
     },
     {
       title: "Paid Invoices",
       value: stats.totalPaidBills || 0,
-      description: "Successful cash/UPI collections",
+      description: "Invoices marked as paid in the selected range",
       icon: <IconClipboardList className="w-8 h-8 text-emerald-500 opacity-80" />,
     },
   ];
@@ -109,6 +120,11 @@ export default function StaffDashboard({ data, refreshData }) {
       }))
     : [{ name: "No Data", amount: 1, fill: "hsl(var(--muted))" }];
 
+  const topItemsData = topItems.map((item) => ({
+    name: item._id,
+    Count: item.count,
+    Revenue: item.revenue,
+  }));
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-500">
@@ -145,14 +161,14 @@ export default function StaffDashboard({ data, refreshData }) {
       </div>
 
       {/* Analytics Grid */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
         
         {/* Panels are ordered into two rows: stock/invoices, then charts. */}
         <div className="contents">
           
           {/* Revenue Area Chart */}
-          <div className="order-3 flex min-w-0 flex-col rounded-lg border border-border/60 bg-card p-5 shadow-sm">
-            <div className="mb-4 space-y-1">
+          <div className="order-3 flex min-w-0 flex-col rounded-lg border border-border/60 bg-card p-6 shadow-sm">
+            <div className="mb-5 space-y-1">
               <h3 className="text-sm font-medium text-foreground">My Collection Trajectory</h3>
               <p className="text-xs text-muted-foreground">My individual sales performance.</p>
             </div>
@@ -223,18 +239,59 @@ export default function StaffDashboard({ data, refreshData }) {
 
         <div className="contents">
           
+          <div className="order-4 flex min-w-0 flex-col rounded-lg border border-border/60 bg-card p-6 shadow-sm">
+            <div className="mb-5 space-y-1">
+              <h3 className="text-sm font-medium text-foreground">Top Items</h3>
+              <p className="text-xs text-muted-foreground">Your best-selling items by quantity.</p>
+            </div>
+            <div className="h-[240px] w-full">
+              {topItemsData.length === 0 ? (
+                <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
+                  No items sold.
+                </div>
+              ) : (
+                <ChartContainer config={chartConfig} className="h-full w-full">
+                  <BarChart
+                    data={topItemsData}
+                    layout="vertical"
+                    margin={{ top: 0, right: 8, left: 12, bottom: 0 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      horizontal={true}
+                      vertical={false}
+                      stroke="var(--border)"
+                      opacity={0.3}
+                    />
+                    <XAxis type="number" hide />
+                    <YAxis
+                      dataKey="name"
+                      type="category"
+                      tickLine={false}
+                      axisLine={false}
+                      width={90}
+                      tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                    />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar dataKey="Count" fill="var(--color-Count)" radius={[0, 3, 3, 0]} maxBarSize={18} />
+                  </BarChart>
+                </ChartContainer>
+              )}
+            </div>
+          </div>
+
           {/* Method Donut Chart */}
-          <div className="order-4 flex min-w-0 flex-col rounded-lg border border-border/60 bg-card p-5 shadow-sm">
-            <div className="mb-2 space-y-1">
+          <div className="order-5 flex min-w-0 flex-col rounded-lg border border-border/60 bg-card p-6 shadow-sm">
+            <div className="mb-5 space-y-1">
               <h3 className="text-sm font-medium text-foreground">My Payment Methods</h3>
-              <p className="text-xs text-muted-foreground">Cash vs UPI distribution.</p>
+              <p className="text-xs text-muted-foreground">Paid invoice value by payment method.</p>
             </div>
             <div className="flex-1 flex flex-col justify-center h-[200px]">
               <ChartContainer config={chartConfig} className="h-full w-full">
                 <PieChart>
                   <Pie data={paymentPieData} cx="50%" cy="50%" innerRadius={50} outerRadius={70} paddingAngle={2} dataKey="amount" stroke="none" />
                   <ChartTooltip content={<ChartTooltipContent formatter={(value) => currencyFormatter(value)} />} />
-                  <ChartLegend content={<ChartLegendContent />} />
+                  <ChartLegend content={<ChartLegendContent nameKey="name" />} />
                 </PieChart>
               </ChartContainer>
             </div>
