@@ -9,9 +9,12 @@ import {
 export type Role = 'super_admin' | 'branch_admin' | 'department_admin' | 'shop_admin' | 'staff';
 export interface AuthUser {
   id: string;
-  branch: string;
-  department: string;
+  loginId?: string;
+  branch?: string;
+  department?: string;
+  shop?: string;
   role: Role;
+  active?: boolean;
 }
 
 // export interface LoginPayload {

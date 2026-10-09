@@ -154,7 +154,14 @@ export async function dynamicFilter<T extends Record<string, any>>(
       }
     }
 
-    if (orConditions.length) where.OR = orConditions;
+    if (orConditions.length) {
+      if (where.OR) {
+        where.AND = [...(where.AND || []), { OR: where.OR }, { OR: orConditions }];
+        delete where.OR;
+      } else {
+        where.OR = orConditions;
+      }
+    }
   }
 
   /* ---------- sort strategy ---------- */

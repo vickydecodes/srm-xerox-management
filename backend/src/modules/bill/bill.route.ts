@@ -22,7 +22,7 @@ import {
 const router = Router();
 
 router.use(authMiddleware);
-// const MODULE = '-bill';
+router.use(accessControl);
 router.post('/', zodValidate(createBillSchema, 'body', 'CreateBillSchema'), createBill);
 
 router.get('/', getAllBills);

@@ -4,9 +4,12 @@ import { useLoader } from "@/core/hooks/useLoader";
 import paginator from "@/core/utils/paginate.util";
 import sorter from "@/core/utils/sorter.util";
 import { useEffect } from "react";
+import { useAuth } from "@/core/contexts/auth.context";
 
 export default function Bill() {
   const { bills } = useApi();
+  const { user } = useAuth();
+  const isSuperOrShop = user?.role === 'super_admin' || user?.role === 'shop_admin' || user?.role === 'staff';
 
   const { useBillColumns, state } = bills;
   const { load } = useLoader();
@@ -29,6 +32,18 @@ export default function Bill() {
         { label: 'Cancelled', action: () => bills.filters.filterByField('status', 'CANCELLED') },
       ],
     },
+    ...(isSuperOrShop
+      ? [
+          {
+            title: 'Payment Method',
+            filters: [
+              { label: 'Cash', action: () => bills.filters.filterByField('paymentMethod', 'CASH') },
+              { label: 'UPI', action: () => bills.filters.filterByField('paymentMethod', 'UPI') },
+              { label: 'Credit', action: () => bills.filters.filterByField('paymentMethod', 'CREDIT') },
+            ],
+          },
+        ]
+      : []),
   ];
 
   useEffect(() => {

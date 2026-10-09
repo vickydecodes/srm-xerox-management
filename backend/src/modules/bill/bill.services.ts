@@ -113,6 +113,13 @@ export const createBill = async (data: CreateBillPayload, createdBy: string) => 
     approvalStatus = 'approved';
   }
 
+  if (data.department && !data.branch) {
+    const dept = await Department.findById(data.department);
+    if (dept?.branch) {
+      data.branch = dept.branch.toString();
+    }
+  }
+
   const bill = new Bill({
     ...data,
     status,
@@ -207,16 +214,75 @@ export const rejectCreditBill = async (id: string, userId: string, remarks?: str
   return enhanceBill(bill);
 };
 
+export interface BillUserContext {
+  id?: string;
+  role?: Role;
+  department?: string;
+  branch?: string;
+  shop?: string;
+}
+
 export const getAllBills = async (
   queries: Record<string, unknown>,
-  role?: Role,
+  userContext?: BillUserContext | Role,
   options?: { createdBy?: string }
 ) => {
-  const rawQuery = options?.createdBy ? { createdBy: options.createdBy } : undefined;
+  let rawQuery: Record<string, any> = options?.createdBy ? { createdBy: options.createdBy } : {};
+
+  const role: Role | undefined = typeof userContext === 'string' ? userContext : userContext?.role;
+  const ctx: BillUserContext | undefined = typeof userContext === 'object' ? userContext : undefined;
+
+  if (role === 'department_admin') {
+    // Dept user should only get their department's bills, and only CREDIT bills (no CASH or UPI)
+    let userDept = ctx?.department;
+    if (!userDept && ctx?.id) {
+      const dbUser = await User.findById(ctx.id);
+      if (dbUser?.department) userDept = dbUser.department.toString();
+    }
+
+    delete queries.department;
+    delete queries.paymentMethod;
+
+    rawQuery = {
+      ...rawQuery,
+      department: userDept || '__NONE__',
+      paymentMethod: 'CREDIT',
+    };
+  } else if (role === 'branch_admin') {
+    // Branch user should only get their branch's bills, and only CREDIT bills (no CASH or UPI)
+    let userBranch = ctx?.branch;
+    if (!userBranch && ctx?.id) {
+      const dbUser = await User.findById(ctx.id);
+      if (dbUser?.branch) userBranch = dbUser.branch.toString();
+    }
+
+    delete queries.branch;
+    delete queries.paymentMethod;
+
+    if (userBranch) {
+      const depts = await Department.find({ branch: userBranch });
+      const deptIds = depts.map((d: any) => d._id.toString());
+
+      rawQuery = {
+        ...rawQuery,
+        paymentMethod: 'CREDIT',
+        OR: [
+          { branch: userBranch },
+          ...(deptIds.length > 0 ? [{ department: { in: deptIds } }] : []),
+        ],
+      };
+    } else {
+      rawQuery = {
+        ...rawQuery,
+        branch: '__NONE__',
+        paymentMethod: 'CREDIT',
+      };
+    }
+  }
 
   return dynamicFilter(Bill, billFilterConfig, queries, {
     visibility: getVisibility(role),
-    rawQuery,
+    rawQuery: Object.keys(rawQuery).length > 0 ? rawQuery : undefined,
   });
 };
 
@@ -297,4 +363,3 @@ export const setBillActiveStatus = async (id: string, active: boolean) => {
     { new: true }
   );
 };
-

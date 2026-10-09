@@ -6,6 +6,7 @@ import {
     IconLayoutDashboard,
     IconClipboardList,
     IconCreditCard,
+    IconReceipt,
 } from '@tabler/icons-react';
 
 import Department from "@/pages/department/department";
@@ -15,6 +16,7 @@ import Profile from "@/pages/profile/profile";
 import Dashboard from "@/pages/dashboard/dashboard";
 import Order from "@/pages/order/order";
 import Credits from "@/pages/credits/credits";
+import Bill from "@/pages/bill/bill";
 
 
 export const branchAdminRoutes = {
@@ -75,6 +77,14 @@ export const branchAdminRoutes = {
               description: "Track credit allocations, department spending, user spending, and credit payments.",
               icon: <IconCreditCard className="h-5 w-5 shrink-0" />,
               element: <Credits />,
+            },
+            {
+              path: "/branch_admin/bill",
+              label: "Bills",
+              title: "Billing & Invoices",
+              description: "View, manage, and track all branch bills and invoices.",
+              icon: <IconReceipt className="h-5 w-5 shrink-0" />,
+              element: <Bill />,
             },
     ],
     logout: {

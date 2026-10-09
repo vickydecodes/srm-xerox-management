@@ -97,7 +97,7 @@ export class UserDocument {
 
 export class UserModel {
   static prismaModelName = 'user';
-  static async findById(id: string) {
+  static async findById(id?: string | null) {
     if (!id) return null;
     const doc = await prisma.user.findUnique({
       where: { id: id.toString() },

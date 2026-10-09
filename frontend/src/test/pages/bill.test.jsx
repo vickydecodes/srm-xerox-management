@@ -68,6 +68,10 @@ vi.mock('@/core/contexts/api.context', () => ({
   useApi: () => ({ bills: billsState }),
 }));
 
+vi.mock('@/core/contexts/auth.context', () => ({
+  useAuth: () => ({ user: { role: 'super_admin' } }),
+}));
+
 beforeEach(() => {
   vi.clearAllMocks();
   billsState.state = [];

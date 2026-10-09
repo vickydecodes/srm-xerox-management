@@ -7,6 +7,13 @@ import { buildQuery } from '@core/constants/querybuilder.constant.ts';
 import { wrapControllers } from '@core/constants/wrapcontroller.constant.ts';
 import { AccessRequest } from '@core/middlewares/access.middleware.ts';
 
+import User from '@db/models/user.model.ts';
+import Department from '@db/models/department.model.ts';
+import { Role } from '@typings/auth.types.ts';
+
+const isShopOrSuper = (role?: string) =>
+  role === 'shop_admin' || role === 'staff' || role === 'super_admin';
+
 const billStatus = createStatusControllers(
   {
     remove: service.removeBill,
@@ -22,6 +29,10 @@ const controllers = {
       return sendResponse.unauthorized?.(res) ?? res.status(401).json({ message: 'Unauthorized' });
     }
 
+    if (!isShopOrSuper(req.user.role)) {
+      return sendResponse.forbidden?.(res, 'Only shop users and super admin can create bills') ?? res.status(403).json({ message: 'Forbidden' });
+    }
+
     const createdBy = String(req.user.id ?? (req.user as any)._id);
 
     const bill = await service.createBill(req.body, createdBy);
@@ -30,36 +41,103 @@ const controllers = {
 
   getAllBills: async (req: AccessRequest, res: Response) => {
     const queries = buildQuery(req);
-    const result = await service.getAllBills(queries, req.user?.role);
+    const userContext = req.user ? {
+      id: String(req.user.id ?? (req.user as any)._id),
+      role: req.user.role as Role,
+      department: req.user.department ? String(req.user.department) : undefined,
+      branch: req.user.branch ? String(req.user.branch) : undefined,
+      shop: req.user.shop ? String(req.user.shop) : undefined,
+    } : undefined;
+
+    const result = await service.getAllBills(queries, userContext);
     return sendResponse.paginated(res, 'bill', result);
   },
 
   getBillsByDepartment: async (req: AccessRequest<{ id: string }>, res: Response) => {
     const { id } = req.params;
+    const role = req.user?.role;
+
+    if (role === 'department_admin') {
+      const userDept = req.user?.department ? String(req.user.department) : (req.user?.id ? (await User.findById(req.user.id))?.department?.toString() : undefined);
+      if (!userDept || userDept !== id) {
+        return sendResponse.forbidden?.(res, 'Access denied to bills for this department') ?? res.status(403).json({ message: 'Forbidden' });
+      }
+    } else if (role === 'branch_admin') {
+      const userBranch = req.user?.branch ? String(req.user.branch) : (req.user?.id ? (await User.findById(req.user.id))?.branch?.toString() : undefined);
+      const dept = await Department.findById(id);
+      if (!dept || String(dept.branch) !== String(userBranch)) {
+        return sendResponse.forbidden?.(res, 'Access denied to bills for this department') ?? res.status(403).json({ message: 'Forbidden' });
+      }
+    }
+
     const queries = buildQuery(req);
     const result = await service.getBillsByDepartment(id, queries, req.user?.role);
     return sendResponse.paginated(res, 'bill', result);
   },
 
-  getBillById: async (req: Request<{ id: string }>, res: Response) => {
+  getBillById: async (req: AccessRequest<{ id: string }>, res: Response) => {
     const { id } = req.params;
     const bill = await service.getBillById(id);
     if (!bill) return sendResponse.notFound(res, 'bill');
+
+    const role = req.user?.role;
+    if (role === 'department_admin') {
+      const userDept = req.user?.department ? String(req.user.department) : (req.user?.id ? (await User.findById(req.user.id))?.department?.toString() : undefined);
+      if (bill.paymentMethod !== 'CREDIT' || String(bill.department) !== String(userDept)) {
+        return sendResponse.forbidden?.(res, 'Access denied to this bill') ?? res.status(403).json({ message: 'Forbidden' });
+      }
+    } else if (role === 'branch_admin') {
+      const userBranch = req.user?.branch ? String(req.user.branch) : (req.user?.id ? (await User.findById(req.user.id))?.branch?.toString() : undefined);
+      let isBranch = String(bill.branch) === String(userBranch);
+      if (!isBranch && bill.department) {
+        const dept = await Department.findById(bill.department);
+        if (dept && String(dept.branch) === String(userBranch)) {
+          isBranch = true;
+        }
+      }
+      if (bill.paymentMethod !== 'CREDIT' || !isBranch) {
+        return sendResponse.forbidden?.(res, 'Access denied to this bill') ?? res.status(403).json({ message: 'Forbidden' });
+      }
+    }
+
     return sendResponse.fetched(res, 'bill', bill);
   },
 
-  updateBill: async (req: Request<{ id: string }, {}, UpdateBillPayload>, res: Response) => {
+  updateBill: async (req: AccessRequest<{ id: string }, {}, UpdateBillPayload>, res: Response) => {
+    if (!isShopOrSuper(req.user?.role)) {
+      return sendResponse.forbidden?.(res, 'Only shop users and super admin can edit bills') ?? res.status(403).json({ message: 'Forbidden' });
+    }
     const { id } = req.params;
     const bill = await service.updateBill(id, req.body);
     if (!bill) return sendResponse.notFound(res, 'bill');
     return sendResponse.updated(res, 'bill', bill);
   },
 
-  deleteBill: billStatus.softDelete,
-  setBillActiveStatus: billStatus.setActiveStatus,
-  retrieveBill: billStatus.retrieve,
+  deleteBill: async (req: AccessRequest<{ id: string }>, res: Response) => {
+    if (!isShopOrSuper(req.user?.role)) {
+      return sendResponse.forbidden?.(res, 'Only shop users and super admin can delete bills') ?? res.status(403).json({ message: 'Forbidden' });
+    }
+    return billStatus.softDelete(req, res);
+  },
 
-  eraseBill: async (req: Request<{ id: string }>, res: Response) => {
+  setBillActiveStatus: async (req: AccessRequest<{ id: string }>, res: Response) => {
+    if (!isShopOrSuper(req.user?.role)) {
+      return sendResponse.forbidden?.(res, 'Only shop users and super admin can modify bill status') ?? res.status(403).json({ message: 'Forbidden' });
+    }
+    return billStatus.setActiveStatus(req, res);
+  },
+
+  retrieveBill: async (req: AccessRequest<{ id: string }>, res: Response) => {
+    if (!isShopOrSuper(req.user?.role)) {
+      return sendResponse.forbidden?.(res, 'Only shop users and super admin can retrieve bills') ?? res.status(403).json({ message: 'Forbidden' });
+    }
+    return billStatus.retrieve(req, res);
+  },
+
+  eraseBill: async (req: AccessRequest<{ id: string }>, res: Response) => {
+    if (!isShopOrSuper(req.user?.role)) {
+      return sendResponse.forbidden?.(res, 'Only shop users and super admin can permanently delete bills') ?? res.status(403).json({ message: 'Forbidden' });
+    }
     const { id } = req.params;
     const bill = await service.eraseBill(id);
     if (!bill) return sendResponse.notFound(res, 'bill');
@@ -94,8 +172,31 @@ const controllers = {
     return sendResponse.updated(res, 'bill', bill);
   },
 
-  downloadBillPdf: async (req: Request<{ id: string }>, res: Response) => {
+  downloadBillPdf: async (req: AccessRequest<{ id: string }>, res: Response) => {
     const { id } = req.params;
+    const bill = await service.getBillById(id);
+    if (!bill) return sendResponse.notFound(res, 'bill');
+
+    const role = req.user?.role;
+    if (role === 'department_admin') {
+      const userDept = req.user?.department ? String(req.user.department) : (req.user?.id ? (await User.findById(req.user.id))?.department?.toString() : undefined);
+      if (bill.paymentMethod !== 'CREDIT' || String(bill.department) !== String(userDept)) {
+        return sendResponse.forbidden?.(res, 'Access denied to this bill') ?? res.status(403).json({ message: 'Forbidden' });
+      }
+    } else if (role === 'branch_admin') {
+      const userBranch = req.user?.branch ? String(req.user.branch) : (req.user?.id ? (await User.findById(req.user.id))?.branch?.toString() : undefined);
+      let isBranch = String(bill.branch) === String(userBranch);
+      if (!isBranch && bill.department) {
+        const dept = await Department.findById(bill.department);
+        if (dept && String(dept.branch) === String(userBranch)) {
+          isBranch = true;
+        }
+      }
+      if (bill.paymentMethod !== 'CREDIT' || !isBranch) {
+        return sendResponse.forbidden?.(res, 'Access denied to this bill') ?? res.status(403).json({ message: 'Forbidden' });
+      }
+    }
+
     const { generateBillPdf } = await import('./exportbill.util.js');
     const pdfBuffer = await generateBillPdf(id);
     res.setHeader('Content-Type', 'application/pdf');

@@ -12,9 +12,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { MoreHorizontal, Printer } from "lucide-react";
+import { MoreHorizontal, Printer, Eye } from "lucide-react";
 import { Hint } from "@/core/utils/tooltip.util";
 import { printPdf } from "@/core/api/api.service";
+import { useAuth } from "@/core/contexts/auth.context";
 
 export const printBillPdf = async (billId, code) => {
   try {
@@ -31,6 +32,9 @@ const statusVariant = {
 };
 
 export const useBillColumns = (bills) => {
+  const { user } = useAuth();
+  const isShopOrSuper = user?.role === 'shop_admin' || user?.role === 'staff' || user?.role === 'super_admin';
+
   return [
     {
       accessorKey: 'code',
@@ -112,6 +116,32 @@ export const useBillColumns = (bills) => {
       header: () => Hint('Actions', 'View or manage this bill'),
       cell: ({ row }) => {
         const bill = row.original;
+
+        if (!isShopOrSuper) {
+          return (
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8 text-primary hover:text-primary hover:bg-primary/10"
+                onClick={() => bills.openView(bill)}
+                title="View Bill"
+              >
+                <Eye className="size-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:text-indigo-200 dark:hover:bg-indigo-950/50"
+                onClick={() => printBillPdf(bill._id, bill.code)}
+                title="Print Bill"
+              >
+                <Printer className="size-4" />
+              </Button>
+            </div>
+          );
+        }
+
         return (
           <div className="flex items-center gap-1">
             <Button
