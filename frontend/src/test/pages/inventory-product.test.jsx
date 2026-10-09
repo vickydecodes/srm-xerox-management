@@ -5,8 +5,9 @@
  * DataTable is mocked; asserts page wiring only.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render as testingLibraryRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 
 import InventoryProduct from '@/pages/inventory-product/inventory-product';
 
@@ -80,6 +81,7 @@ const inventoryProductsState = {
   },
   reset: vi.fn(),
   openCreate: vi.fn(),
+  openEdit: vi.fn(),
   loading: { getAll: false },
   pagination: { page: 1, limit: 10, pages: 1, total: 0 },
   fetch: vi.fn(),
@@ -91,11 +93,18 @@ vi.mock('@/core/contexts/api.context', () => ({
   useApi: () => ({ inventoryProducts: inventoryProductsState }),
 }));
 
+const render = (ui, { initialEntry = '/staff/inventory', ...options } = {}) =>
+  testingLibraryRender(
+    <MemoryRouter initialEntries={[initialEntry]}>{ui}</MemoryRouter>,
+    options,
+  );
+
 beforeEach(() => {
   vi.clearAllMocks();
   inventoryProductsState.state = [];
   inventoryProductsState.loading = { getAll: false };
   inventoryProductsState.pagination = { page: 1, limit: 10, pages: 1, total: 0 };
+  inventoryProductsState.openEdit = vi.fn();
 });
 
 describe('InventoryProduct page', () => {
@@ -131,6 +140,18 @@ describe('InventoryProduct page', () => {
       screen.getByRole('button', { name: /create inventory product/i })
     );
     expect(inventoryProductsState.openCreate).toHaveBeenCalled();
+  });
+
+  it('opens the selected inventory product edit modal from dashboard navigation', () => {
+    const product = { _id: 'ip-low-stock', quantity: 5 };
+    render(<InventoryProduct />, {
+      initialEntry: {
+        pathname: '/staff/inventory',
+        state: { editInventoryProduct: product },
+      },
+    });
+
+    expect(inventoryProductsState.openEdit).toHaveBeenCalledWith(product);
   });
 
   it('renders the row count from state', () => {

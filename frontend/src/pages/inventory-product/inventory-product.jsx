@@ -7,12 +7,15 @@ import sorter from "@/core/utils/sorter.util";
 import { useEffect } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { IconInfoCircle } from "@tabler/icons-react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export default function InventoryProduct() {
   const { inventoryProducts } = useApi();
 
   const { useInventoryProductColumns, state } = inventoryProducts;
   const { load } = useLoader();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const columns = useInventoryProductColumns(inventoryProducts);
 
@@ -37,7 +40,19 @@ export default function InventoryProduct() {
 
   useEffect(() => {
     load(inventoryProducts);
+    // The API module object is rebuilt by ApiProvider on store updates.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const productToEdit = location.state?.editInventoryProduct;
+    if (!productToEdit) return;
+
+    inventoryProducts.openEdit(productToEdit);
+    navigate(location.pathname, { replace: true, state: null });
+    // Re-running when ApiProvider rebuilds its module object would reopen the modal.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, location.state, navigate]);
 
   return (
     <div className="flex flex-col gap-4">

@@ -151,6 +151,12 @@ describe("Route configs (shape)", () => {
       ])
     );
   });
+
+  it("shop admin routes include inventory for low-stock editing", () => {
+    expect(shopAdminRoutes.routes.map((route) => route.path)).toContain(
+      "/shop_admin/inventory",
+    );
+  });
 });
 
 describe("AppRoutes", () => {

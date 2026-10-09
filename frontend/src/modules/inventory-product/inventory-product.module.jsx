@@ -29,7 +29,6 @@ export const useInventoryProductModule = (exported) => {
     };
   
     const openEdit = (inventoryProduct) => {
-        console.log(inventoryProduct)
       return openModal(modals.edit, {
         inventoryProduct,
         submitFn: (data) => crud.edit(inventoryProduct._id, data),

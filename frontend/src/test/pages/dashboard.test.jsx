@@ -58,10 +58,12 @@ vi.mock('recharts', () => {
 const dashboardState = { data: null, loading: false, fetch: vi.fn() };
 const billsState = { crud: { edit: vi.fn() } };
 const departmentsState = { crud: { getOne: vi.fn() } };
+const inventoryProductsState = { crud: { getAll: vi.fn() } };
 const apiState = {
   dashboard: dashboardState,
   bills: billsState,
   departments: departmentsState,
+  inventoryProducts: inventoryProductsState,
 };
 
 vi.mock('@/core/contexts/api.context', () => ({
@@ -90,6 +92,7 @@ beforeEach(() => {
     outstandingCredit: 0,
     creditBalance: 0,
   });
+  inventoryProductsState.crud.getAll = vi.fn().mockResolvedValue([]);
   authState.user = null;
 });
 
@@ -205,6 +208,43 @@ describe('Dashboard page', () => {
       expect(screen.getByText(/my total revenue/i)).toBeInTheDocument();
       expect(screen.getByText(/paid invoices/i)).toBeInTheDocument();
       expect(screen.getByText('3')).toBeInTheDocument();
+    });
+
+    it('shows low-stock products and navigates to edit the selected product', async () => {
+      authState.user = { role: 'staff', name: 'Steve' };
+      const lowStockProduct = {
+        _id: 'inventory-product-1',
+        product: { name: 'A4 Paper' },
+        quantity: 42,
+        active: true,
+      };
+      inventoryProductsState.crud.getAll.mockResolvedValue([
+        lowStockProduct,
+        {
+          _id: 'inventory-product-2',
+          product: { name: 'Staples' },
+          quantity: 100,
+          active: true,
+        },
+      ]);
+      const user = userEvent.setup();
+
+      renderDashboard();
+
+      expect(await screen.findByRole('table')).toBeInTheDocument();
+      expect(screen.getByRole('row', { name: /a4 paper 42 edit product/i })).toBeInTheDocument();
+      expect(screen.queryByText(/staples/i)).not.toBeInTheDocument();
+      expect(
+        screen.getByRole('heading', { name: /low inventory stock/i }).closest('.order-1'),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('heading', { name: /recent invoices i generated/i }).closest('.order-2'),
+      ).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: /edit product/i }));
+
+      expect(mockNavigate).toHaveBeenCalledWith('/staff/inventory', {
+        state: { editInventoryProduct: lowStockProduct },
+      });
     });
   });
 

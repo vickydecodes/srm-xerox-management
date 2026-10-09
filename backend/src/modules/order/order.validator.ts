@@ -43,6 +43,13 @@ export const createOrderSchema = z.object({
     .trim()
     .optional(),
 
+  eventName: z.string().trim().optional(),
+
+  eventDate: z.preprocess(
+    (value) => (value === '' || value === null ? undefined : value),
+    z.coerce.date().optional()
+  ),
+
   attachmentEmail: z
     .string()
     .trim()

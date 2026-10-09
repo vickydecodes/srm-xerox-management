@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useApi } from "@/core/contexts/api.context";
 import { toast } from "sonner";
+import LowStockAlert from "./low-stock-alert";
 import {
   IconBuildingCommunity,
   IconUsers,
@@ -111,7 +112,6 @@ export default function StaffDashboard({ data, refreshData }) {
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-500">
-      
       {/* Quick Actions Bar - Minimalist */}
       <div className="flex flex-wrap items-center gap-2">
         {quickActions.map((act, i) => (
@@ -145,13 +145,13 @@ export default function StaffDashboard({ data, refreshData }) {
       </div>
 
       {/* Analytics Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
         
-        {/* Left Column (Span 2) */}
-        <div className="lg:col-span-2 space-y-4 lg:space-y-6">
+        {/* Panels are ordered into two rows: stock/invoices, then charts. */}
+        <div className="contents">
           
           {/* Revenue Area Chart */}
-          <div className="flex flex-col p-5 bg-card border border-border/60 rounded-lg shadow-sm">
+          <div className="order-3 flex min-w-0 flex-col rounded-lg border border-border/60 bg-card p-5 shadow-sm">
             <div className="mb-4 space-y-1">
               <h3 className="text-sm font-medium text-foreground">My Collection Trajectory</h3>
               <p className="text-xs text-muted-foreground">My individual sales performance.</p>
@@ -175,8 +175,12 @@ export default function StaffDashboard({ data, refreshData }) {
             </div>
           </div>
 
+          <div className="order-1 min-w-0">
+            <LowStockAlert inventoryPath="/staff/inventory" />
+          </div>
+
           {/* Recent Invoices Table */}
-          <div className="flex flex-col bg-card border border-border/60 rounded-lg shadow-sm overflow-hidden">
+          <div className="order-2 flex min-w-0 flex-col overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm">
             <div className="p-5 border-b border-border/60 flex items-center justify-between">
               <div className="space-y-1">
                 <h3 className="text-sm font-medium text-foreground">Recent Invoices I Generated</h3>
@@ -217,11 +221,10 @@ export default function StaffDashboard({ data, refreshData }) {
           </div>
         </div>
 
-        {/* Right Column (Span 1) */}
-        <div className="space-y-4 lg:space-y-6">
+        <div className="contents">
           
           {/* Method Donut Chart */}
-          <div className="flex flex-col p-5 bg-card border border-border/60 rounded-lg shadow-sm">
+          <div className="order-4 flex min-w-0 flex-col rounded-lg border border-border/60 bg-card p-5 shadow-sm">
             <div className="mb-2 space-y-1">
               <h3 className="text-sm font-medium text-foreground">My Payment Methods</h3>
               <p className="text-xs text-muted-foreground">Cash vs UPI distribution.</p>

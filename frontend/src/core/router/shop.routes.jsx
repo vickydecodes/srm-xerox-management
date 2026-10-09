@@ -6,6 +6,7 @@ import {
   IconUser,
   IconLayoutDashboard,
   IconClipboardList,
+  IconPackages,
 } from "@tabler/icons-react";
 
 import Bill from "@/pages/bill/bill";
@@ -14,6 +15,7 @@ import ChangePassword from "@/pages/changepassword/changepassword";
 import Profile from "@/pages/profile/profile";
 import Dashboard from "@/pages/dashboard/dashboard";
 import Order from "@/pages/order/order";
+import InventoryProduct from "@/pages/inventory-product/inventory-product";
 
 export const shopAdminRoutes = {
   role: "shop_admin",
@@ -49,6 +51,14 @@ export const shopAdminRoutes = {
       description: "View and fulfill approved department orders",
       element: <Order />,
       icon: <IconClipboardList className="h-5 w-5 shrink-0" />,
+    },
+    {
+      path: "/shop_admin/inventory",
+      label: "Inventory",
+      title: "Inventory Management",
+      description: "Manage inventory items and stock levels.",
+      element: <InventoryProduct />,
+      icon: <IconPackages className="h-5 w-5 shrink-0" />,
     },
     {
       path: "/shop_admin/changepassword",

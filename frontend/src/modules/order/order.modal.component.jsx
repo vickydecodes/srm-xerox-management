@@ -121,6 +121,20 @@ export const View = ({ order, exported, closeModal } = {}) => {
       <div className="grid gap-3 text-sm">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="rounded-md border p-3">
+            <span className="text-muted-foreground block">Event Name</span>
+            <span>{order?.eventName || "-"}</span>
+          </div>
+          <div className="rounded-md border p-3">
+            <span className="text-muted-foreground block">Event Date</span>
+            <span>
+              {order?.eventDate
+                ? new Date(order.eventDate).toLocaleDateString(undefined, {
+                    timeZone: "UTC",
+                  })
+                : "-"}
+            </span>
+          </div>
+          <div className="rounded-md border p-3">
             <span className="text-muted-foreground block">Purpose</span>
             <span>{order?.purpose || "-"}</span>
           </div>
@@ -459,6 +473,8 @@ export const Create = ({
       department: userDeptId ? String(userDeptId) : "",
       shop: "",
       orderType: undefined,
+      eventName: "",
+      eventDate: "",
       purpose: "",
       attachmentEmail: "",
       managementAmount: 0,
@@ -579,6 +595,11 @@ export const Edit = ({
       shop: order?.shop?._id || order?.shop || "",
       branch: order?.branch?._id || order?.branch || "",
       department: order?.department?._id || order?.department || "",
+      orderType: order?.orderType || undefined,
+      eventName: order?.eventName || "",
+      eventDate: order?.eventDate
+        ? new Date(order.eventDate).toISOString().slice(0, 10)
+        : "",
       purpose: order?.purpose || "",
       attachmentEmail: order?.attachmentEmail || "",
       managementAmount: order?.managementAmount || 0,
@@ -944,4 +965,3 @@ export const BranchAdminApproval = (props) => (
 export const SuperAdminApproval = (props) => (
   <ApprovalForm title="Super Admin Approval" {...props} />
 );
-

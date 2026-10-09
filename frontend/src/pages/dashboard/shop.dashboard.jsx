@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useApi } from "@/core/contexts/api.context";
 import { toast } from "sonner";
+import LowStockAlert from "./low-stock-alert";
 import {
   IconBuildingCommunity,
   IconUsers,
@@ -91,7 +92,6 @@ export default function ShopAdminDashboard({ data, refreshData }) {
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-500">
-      
       {/* Quick Actions Bar - Minimalist */}
       <div className="flex flex-wrap items-center gap-2">
         {quickActions.map((act, i) => (
@@ -154,6 +154,8 @@ export default function ShopAdminDashboard({ data, refreshData }) {
               </ChartContainer>
             </div>
           </div>
+
+          <LowStockAlert inventoryPath="/shop_admin/inventory" />
 
           {/* Recent Invoices Table */}
           <div className="flex flex-col bg-card border border-border/60 rounded-lg shadow-sm overflow-hidden">

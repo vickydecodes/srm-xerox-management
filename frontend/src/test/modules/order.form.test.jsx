@@ -40,6 +40,8 @@ describe('OrderForm', () => {
 
     expect(screen.getByText('Attending Shop')).toBeInTheDocument();
     expect(screen.getByText('Type of Order')).toBeInTheDocument();
+    expect(screen.getByLabelText('Event Name')).toBeInTheDocument();
+    expect(screen.getByLabelText('Event Date')).toBeInTheDocument();
   });
 
   it('renders proof documents upload section for admin', () => {

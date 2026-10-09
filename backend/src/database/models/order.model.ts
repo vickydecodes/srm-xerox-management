@@ -58,6 +58,8 @@ export class OrderDocument {
   shop?: string;
 
   purpose?: string;
+  eventName?: string;
+  eventDate?: Date;
 
   managementAmount?: number;
   sponsors!: ISponsor[];
@@ -169,6 +171,8 @@ export class OrderDocument {
       code: this.code,
       orderType: this.orderType,
       purpose: this.purpose,
+      eventName: this.eventName,
+      eventDate: this.eventDate,
       attachmentEmail: this.attachmentEmail,
       managementAmount: this.managementAmount,
       status: this.status,

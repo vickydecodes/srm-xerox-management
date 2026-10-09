@@ -191,6 +191,35 @@ export default function OrderForm({
       {/* Purpose */}
       <FormField
         control={form.control}
+        name="eventName"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Event Name</FormLabel>
+            <FormControl>
+              <Input placeholder="Name of the event (optional)" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="eventDate"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Event Date</FormLabel>
+            <FormControl>
+              <Input type="date" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      {/* Purpose */}
+      <FormField
+        control={form.control}
         name="purpose"
         render={({ field }) => (
           <FormItem>

@@ -210,6 +210,8 @@ describe('Order API Endpoint Suite', () => {
       .field('orderType', 'WORK_ORDER')
       .field('shop', testShopId)
       .field('purpose', 'Annual Conference Materials')
+      .field('eventName', 'SRM Annual Conference')
+      .field('eventDate', '2026-11-15')
       .field('attachmentEmail', 'conference@srmist.edu.in')
       .field('managementAmount', '500')
       .field(
@@ -248,6 +250,8 @@ describe('Order API Endpoint Suite', () => {
       expect(data.orderType).to.equal('WORK_ORDER');
       expect(data.status).to.equal('draft');
       expect(data.managementAmount).to.equal(500);
+      expect(data.eventName).to.equal('SRM Annual Conference');
+      expect(new Date(data.eventDate).toISOString()).to.include('2026-11-15');
       expect(data.items).to.have.lengthOf(1);
       expect(data.proofs).to.have.lengthOf(2);
 

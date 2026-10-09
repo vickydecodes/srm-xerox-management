@@ -71,6 +71,8 @@ model Order {
   branch           String
   shop             String?
   purpose          String?
+  eventName        String?
+  eventDate        DateTime?
   attachmentEmail  String?
   managementAmount Float?
   status           String    @default("draft")
