@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/core/contexts/auth.context";
+import { cn } from "@/lib/utils";
 
 const formatVariant = (variant) => {
   if (!variant) return "";
@@ -97,13 +98,20 @@ export default function OrderForm({
         shouldValidate: true,
       });
     } else {
-      const itemSizes = selectedItem.sizes || selectedItem.details?.sizes || [];
+      const rawSizes = selectedItem.sizes || selectedItem.details?.sizes || [];
       const itemIsCustom = selectedItem.isCustomSize ?? selectedItem.details?.isCustomSize ?? false;
+      const itemSizes = itemIsCustom
+        ? rawSizes.filter((s) => (typeof s === "object" ? s.size !== "Standard" : s !== "Standard"))
+        : rawSizes;
       const firstSize = itemSizes.length > 0 ? itemSizes[0] : null;
-      const initialSize = firstSize ? (typeof firstSize === 'object' ? firstSize.size : firstSize) : "";
+      const initialSize = firstSize
+        ? (typeof firstSize === 'object' ? firstSize.size : firstSize)
+        : (itemIsCustom ? "Custom" : "");
       let initialPrice = Number(selectedItem.price) || 0;
       if (firstSize && typeof firstSize === 'object' && firstSize.price !== undefined) {
         initialPrice = Number(firstSize.price) || 0;
+      } else if (initialSize === "Custom") {
+        initialPrice = 0;
       }
 
       appendItem({
@@ -114,10 +122,35 @@ export default function OrderForm({
         price: initialPrice,
         variant: selectedItem.variant,
         size: initialSize,
-        customSize: "",
+        customWidth: "",
+        customHeight: "",
+        customUnit: (selectedItem.unit === "inch" || selectedItem.details?.unit === "inch") ? "inch" : "ft",
+        customRate: Number(selectedItem.price) || (firstSize && typeof firstSize === 'object' && Number(firstSize.price)) || 0,
         sizes: itemSizes,
         isCustomSize: itemIsCustom,
+        customPriceAdded: false,
       });
+    }
+  };
+
+  const recalcCustomPrice = (index, width, height, unit = "ft", rate) => {
+    const w = Number(width) || 0;
+    const h = Number(height) || 0;
+    const r = Number(rate) || 0;
+
+    if (w > 0 && h > 0) {
+      const area = Math.round(w * h * 100) / 100;
+      const calculatedPrice = r > 0 ? Math.round(area * r * 100) / 100 : 0;
+      const label = `${h}x${w}`;
+
+      if (calculatedPrice > 0) {
+        form.setValue(`items.${index}.price`, calculatedPrice, { shouldValidate: true });
+      }
+      form.setValue(`items.${index}.customSize`, label, { shouldValidate: true });
+      form.setValue(`items.${index}.customPriceAdded`, true, { shouldValidate: true });
+    } else {
+      const label = (w > 0 && h > 0) ? `${h}x${w}` : "";
+      form.setValue(`items.${index}.customSize`, label);
     }
   };
 
@@ -339,6 +372,9 @@ export default function OrderForm({
                                   field.onChange(val);
                                   if (val !== "Custom") {
                                     form.setValue(`items.${index}.customSize`, "");
+                                    form.setValue(`items.${index}.customWidth`, "");
+                                    form.setValue(`items.${index}.customHeight`, "");
+                                    form.setValue(`items.${index}.customPriceAdded`, false);
                                     // Update price based on selected size
                                     const allSizes = items[index]?.sizes || [];
                                     const matchedSize = allSizes.find((sz) =>
@@ -347,6 +383,17 @@ export default function OrderForm({
                                     if (matchedSize && typeof matchedSize === "object" && matchedSize.price !== undefined) {
                                       form.setValue(`items.${index}.price`, Number(matchedSize.price) || 0, { shouldValidate: true });
                                     }
+                                  } else {
+                                    // Custom size selected: calculate from dimensions if already set
+                                    const w = items[index]?.customWidth;
+                                    const h = items[index]?.customHeight;
+                                    const u = items[index]?.customUnit || "ft";
+                                    const currentRate = items[index]?.customRate;
+                                    const r = (currentRate !== undefined && currentRate !== "") ? Number(currentRate) : (Number(items[index]?.price) || 0);
+                                    if (currentRate === undefined || currentRate === "") {
+                                      form.setValue(`items.${index}.customRate`, r);
+                                    }
+                                    recalcCustomPrice(index, w, h, u, r);
                                   }
                                 }}
                               >
@@ -374,25 +421,47 @@ export default function OrderForm({
                           )}
                         />
 
-                        {/* Show custom input field only if Custom is selected */}
+                        {/* Dimension inputs when Custom is selected */}
                         {items[index]?.isCustomSize && items[index]?.size === "Custom" && (
-                          <FormField
-                            control={form.control}
-                            name={`items.${index}.customSize`}
-                            render={({ field }) => (
-                              <FormItem className="space-y-0.5">
-                                <FormControl>
-                                  <Input
-                                    placeholder="Enter custom size (e.g. 12x4 ft)"
-                                    className="h-7 text-xs bg-background"
-                                    {...field}
-                                    value={field.value || ""}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                          <div className="rounded-md border p-2 bg-muted/20 space-y-1.5 mt-1.5 w-full min-w-[200px]">
+                            <div className="flex items-center justify-between text-[11px] font-semibold text-muted-foreground">
+                              <span>Dimensions</span>
+                              <span className="text-[10px] text-primary">Length × Width</span>
+                            </div>
+
+                            {/* Length x Width */}
+                            <div className="flex items-center gap-1.5">
+                              <Input
+                                type="number"
+                                min="0.1"
+                                step="0.1"
+                                placeholder="Length"
+                                className="h-7 text-xs bg-background flex-1"
+                                value={items[index]?.customHeight ?? ""}
+                                onFocus={(e) => e.target.select()}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  form.setValue(`items.${index}.customHeight`, val);
+                                  recalcCustomPrice(index, items[index]?.customWidth, val, items[index]?.customUnit, items[index]?.customRate);
+                                }}
+                              />
+                              <span className="text-xs text-muted-foreground font-bold">×</span>
+                              <Input
+                                type="number"
+                                min="0.1"
+                                step="0.1"
+                                placeholder="Width"
+                                className="h-7 text-xs bg-background flex-1"
+                                value={items[index]?.customWidth ?? ""}
+                                onFocus={(e) => e.target.select()}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  form.setValue(`items.${index}.customWidth`, val);
+                                  recalcCustomPrice(index, val, items[index]?.customHeight, items[index]?.customUnit, items[index]?.customRate);
+                                }}
+                              />
+                            </div>
+                          </div>
                         )}
                       </div>
                     )}
@@ -432,8 +501,18 @@ export default function OrderForm({
                             </span>
                             <Input
                               type="number"
-                              className="pl-6"
-                              {...field}
+                              step="0.01"
+                              min="0"
+                              placeholder="0"
+                              className="bg-background pl-6 text-muted-foreground"
+                              value={
+                                field.value === 0 ||
+                                field.value === "0" ||
+                                field.value === "" ||
+                                field.value === undefined
+                                  ? ""
+                                  : field.value
+                              }
                               disabled
                               readOnly
                             />
@@ -445,9 +524,15 @@ export default function OrderForm({
                   />
 
                   <div className="flex items-center gap-2 pt-2">
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">
-                      ₹{(qty * price).toFixed(2)}
-                    </span>
+                    {items[index]?.type === "Service" && items[index]?.size === "Custom" && (!price || price === 0) ? (
+                      <span className="text-xs text-amber-600 dark:text-amber-400 font-medium whitespace-nowrap">
+                        — (Enter dimensions)
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        ₹{(qty * price).toFixed(2)}
+                      </span>
+                    )}
                     <Button
                       type="button"
                       size="icon"
@@ -508,7 +593,7 @@ export default function OrderForm({
           type="button"
           size="sm"
           variant="outline"
-          onClick={() => appendSponsor({ name: "", amount: 0 })}
+          onClick={() => appendSponsor({ name: "Self Support", amount: 0 })}
           disabled={totalAvailable >= totalCost}
         >
           Add Self Support
@@ -519,11 +604,11 @@ export default function OrderForm({
         <div key={item.id} className="flex gap-2 items-start">
           <FormField
             control={form.control}
-            name={`Self Support`}
+            name={`sponsors.${index}.name`}
             render={({ field }) => (
               <FormItem className="flex-1">
                 <FormControl>
-                  <Input placeholder="Self Support name" value={"Self Support"} disabled />
+                  <Input placeholder="Self Support name" {...field} value={"Self Support"} disabled />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -647,7 +732,7 @@ export default function OrderForm({
         </div>
         {overBudget && (
           <span className="text-destructive text-xs">
-            Order total exceeds available funds (management + sponsorship)
+            Order total exceeds available funds (management + self support)
           </span>
         )}
       </div>

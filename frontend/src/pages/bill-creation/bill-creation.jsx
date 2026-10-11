@@ -100,13 +100,18 @@ export default function BillCreation() {
             discount: 0,
             tax: 0,
             order: order._id,
-            items: order.items.map((item) => ({
-              type: item.type,
-              item: typeof item.item === "object" ? item.item?._id : item.item,
-              name: item.name,
-              quantity: item.quantity,
-              price: item.price,
-            })),
+            items: order.items.map((item) => {
+              const mapped = {
+                type: item.type,
+                item: typeof item.item === "object" ? item.item?._id : item.item,
+                name: item.name,
+                quantity: item.quantity,
+                price: item.price,
+              };
+              if (item.size) mapped.size = item.size;
+              if (item.customSize) mapped.customSize = item.customSize;
+              return mapped;
+            }),
           });
           setOrderContext({
             code: order.code || "",

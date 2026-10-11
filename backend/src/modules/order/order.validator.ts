@@ -100,6 +100,11 @@ export const createOrderSchema = z.object({
           size: z.string().trim().optional(),
 
           customSize: z.string().trim().optional(),
+          customPriceAdded: z.coerce.boolean().optional().default(false),
+          customWidth: z.coerce.number().optional(),
+          customHeight: z.coerce.number().optional(),
+          customUnit: z.string().trim().optional(),
+          customRate: z.coerce.number().optional(),
         })
       )
       .optional()

@@ -18,10 +18,18 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function ServiceForm({ form, isEdit = false, inventoryProducts = [] }) {
-  const fields = ["name", "description", "unit"];
+  const isCustomSize = form.watch("isCustomSize");
   const hasMultipleSizes = form.watch("hasMultipleSizes");
+  const fields = isCustomSize ? ["name", "description"] : ["name", "description", "unit"];
 
   const { fields: materialFields, append, remove } = useFieldArray({
     control: form.control,
@@ -75,7 +83,7 @@ export default function ServiceForm({ form, isEdit = false, inventoryProducts = 
                   if (checked) {
                     const currentSizes = form.getValues("sizes") || [];
                     if (currentSizes.length === 0) {
-                      const currentPrice = form.getValues("price") || 0;
+                      const currentPrice = form.getValues("price") || "";
                       form.setValue("sizes", [{ size: "A4", price: currentPrice }]);
                     }
                   }
@@ -86,7 +94,7 @@ export default function ServiceForm({ form, isEdit = false, inventoryProducts = 
         )}
       />
 
-      {!hasMultipleSizes ? (
+      {!hasMultipleSizes && !isCustomSize && (
         <FormField
           control={form.control}
           name="price"
@@ -94,19 +102,37 @@ export default function ServiceForm({ form, isEdit = false, inventoryProducts = 
             <FormItem>
               <FormLabel>Price (₹)</FormLabel>
               <FormControl>
-                <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="Enter price"
-                  {...field}
-                />
+                <div className="relative">
+                  <span className="absolute left-2.5 top-2.5 text-xs text-muted-foreground">₹</span>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="0"
+                    className="pl-6 bg-background"
+                    value={
+                      field.value === 0 ||
+                      field.value === "0" ||
+                      field.value === "" ||
+                      field.value === undefined
+                        ? ""
+                        : field.value
+                    }
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      field.onChange(val === "" ? "" : Number(val));
+                    }}
+                  />
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-      ) : (
+      )}
+
+      {hasMultipleSizes && (
         <div className="space-y-3 rounded-lg border p-3 bg-muted/10">
           <div className="flex items-center justify-between">
             <div>
@@ -121,7 +147,7 @@ export default function ServiceForm({ form, isEdit = false, inventoryProducts = 
               size="sm"
               onClick={() => {
                 const current = form.getValues("sizes") || [];
-                form.setValue("sizes", [...current, { size: "", price: 0 }]);
+                form.setValue("sizes", [...current, { size: "", price: "" }]);
               }}
             >
               + Add Size
@@ -143,7 +169,7 @@ export default function ServiceForm({ form, isEdit = false, inventoryProducts = 
                           value={typeof s === "object" ? s.size : s}
                           onChange={(e) => {
                             const newSizes = [...currentSizes];
-                            const currPrice = typeof s === "object" ? s.price : 0;
+                            const currPrice = typeof s === "object" ? s.price : "";
                             newSizes[idx] = { size: e.target.value, price: currPrice };
                             field.onChange(newSizes);
                           }}
@@ -155,13 +181,21 @@ export default function ServiceForm({ form, isEdit = false, inventoryProducts = 
                           type="number"
                           step="0.01"
                           min="0"
-                          placeholder="Price"
-                          className="pl-6"
-                          value={typeof s === "object" ? s.price : 0}
+                          placeholder="0"
+                          className="pl-6 bg-background"
+                          value={
+                            typeof s === "object"
+                              ? (s.price === 0 || s.price === "0" || s.price === "" || s.price === undefined
+                                  ? ""
+                                  : s.price)
+                              : ""
+                          }
+                          onFocus={(e) => e.target.select()}
                           onChange={(e) => {
+                            const val = e.target.value;
                             const newSizes = [...currentSizes];
                             const currSize = typeof s === "object" ? s.size : s;
-                            newSizes[idx] = { size: currSize, price: Number(e.target.value) || 0 };
+                            newSizes[idx] = { size: currSize, price: val === "" ? "" : Number(val) };
                             field.onChange(newSizes);
                           }}
                         />
@@ -228,12 +262,102 @@ export default function ServiceForm({ form, isEdit = false, inventoryProducts = 
             <FormControl>
               <Checkbox
                 checked={field.value ?? false}
-                onCheckedChange={field.onChange}
+                onCheckedChange={(checked) => {
+                  field.onChange(checked);
+                  if (checked) {
+                    const currUnit = form.getValues("unit");
+                    if (!currUnit || (currUnit !== "inch" && currUnit !== "ft")) {
+                      form.setValue("unit", "ft");
+                    }
+                  }
+                }}
               />
             </FormControl>
           </FormItem>
         )}
       />
+
+      {isCustomSize && (
+        <div className="space-y-3 rounded-lg border p-3.5 bg-muted/10 border-primary/20">
+          <div className="space-y-0.5">
+            <FormLabel className="text-sm font-medium text-foreground">
+              Custom Size Configuration
+            </FormLabel>
+            <p className="text-xs text-muted-foreground">
+              Configure the dimension unit and price per unit for custom calculations
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <FormField
+              control={form.control}
+              name="unit"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs font-semibold">
+                    Measurement Unit
+                  </FormLabel>
+                  <FormControl>
+                    <Select
+                      value={field.value === "inch" ? "inch" : "ft"}
+                      onValueChange={field.onChange}
+                    >
+                      <SelectTrigger className="bg-background">
+                        <SelectValue placeholder="Select unit (ft or inch)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ft">Feet (ft)</SelectItem>
+                        <SelectItem value="inch">Inches (inch)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="price"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs font-semibold">
+                    Rate / {form.watch("unit") === "inch" ? "sq in" : "sq ft"} (₹)
+                  </FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <span className="absolute left-2.5 top-2.5 text-xs text-muted-foreground">
+                        ₹
+                      </span>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="0"
+                        className="pl-6 bg-background"
+                        value={
+                          field.value === 0 ||
+                          field.value === "0" ||
+                          field.value === "" ||
+                          field.value === undefined
+                            ? ""
+                            : field.value
+                        }
+                        onFocus={(e) => e.target.select()}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          field.onChange(val === "" ? "" : Number(val));
+                        }}
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+      )}
 
       <div className="space-y-2">
         <FormLabel>Materials</FormLabel>

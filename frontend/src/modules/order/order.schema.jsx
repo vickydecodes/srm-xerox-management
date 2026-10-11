@@ -8,8 +8,13 @@ const orderItemSchema = z.object({
   price: z.coerce.number().min(0, { error: 'Price cannot be negative' }),
   size: z.string().optional(),
   customSize: z.string().optional(),
-  sizes: z.array(z.string()).optional(),
+  sizes: z.array(z.union([z.string(), z.object({ size: z.string(), price: z.coerce.number().optional() })])).optional(),
   isCustomSize: z.boolean().optional(),
+  customPriceAdded: z.boolean().optional(),
+  customWidth: z.coerce.number().optional(),
+  customHeight: z.coerce.number().optional(),
+  customUnit: z.string().optional(),
+  customRate: z.coerce.number().optional(),
 });
 
 const sponsorSchema = z.object({

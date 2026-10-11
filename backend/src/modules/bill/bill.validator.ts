@@ -12,6 +12,8 @@ const billItemSchema = z.object({
   name: z.string().trim().min(1, 'name is required'),
   quantity: z.number().min(0, 'quantity cannot be negative'),
   price: z.number().min(0, 'price cannot be negative'),
+  size: z.string().optional(),
+  customSize: z.string().optional(),
 });
 
 export const createBillSchema = z.object({

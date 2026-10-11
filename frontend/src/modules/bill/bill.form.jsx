@@ -273,7 +273,11 @@ export function BillForm({
                                 `• ${formatVariant(currentVariant)}`}
                             </>
                           ) : (
-                            "Service"
+                            <>
+                              Service
+                              {watch(`items.${index}.size`) &&
+                                ` • ${watch(`items.${index}.size`) === "Custom" && watch(`items.${index}.customSize`) ? watch(`items.${index}.customSize`) : watch(`items.${index}.size`)}`}
+                            </>
                           )}
                         </span>
                       </div>
@@ -324,6 +328,7 @@ export function BillForm({
                                   min={0}
                                   step="0.01"
                                   {...priceField}
+                                  disabled={!!orderContext}
                                   onChange={(e) =>
                                     priceField.onChange(Number(e.target.value))
                                   }

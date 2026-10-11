@@ -161,6 +161,7 @@ export const createBill = async (data: CreateBillPayload, createdBy: string) => 
       }
       order.bill = bill._id as any;
       order.status = 'ready_for_pickup';
+
       await order.save();
     }
   }

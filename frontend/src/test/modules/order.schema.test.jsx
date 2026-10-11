@@ -29,6 +29,68 @@ describe('orderCreateSchema', () => {
     expect(orderCreateSchema.safeParse(validOrder).success).toBe(true);
   });
 
+  it('accepts order items with multi-size pricing objects', () => {
+    const orderWithSizedItems = {
+      ...validOrder,
+      items: [
+        {
+          ...validItem,
+          size: 'A3',
+          price: 25,
+          sizes: [
+            { size: 'A4', price: 10 },
+            { size: 'A3', price: 25 },
+          ],
+        },
+      ],
+    };
+    expect(orderCreateSchema.safeParse(orderWithSizedItems).success).toBe(true);
+  });
+
+  it('accepts order items with custom size, customSize string, and customPriceAdded flag', () => {
+    const orderWithCustomSize = {
+      ...validOrder,
+      items: [
+        {
+          ...validItem,
+          size: 'Custom',
+          customSize: '12x4 ft Banner',
+          price: 0,
+          customPriceAdded: false,
+        },
+      ],
+    };
+    expect(orderCreateSchema.safeParse(orderWithCustomSize).success).toBe(true);
+  });
+
+  it('accepts order items with custom dimension attributes (width, height, unit, rate)', () => {
+    const orderWithDimensions = {
+      ...validOrder,
+      items: [
+        {
+          ...validItem,
+          size: 'Custom',
+          customWidth: 10,
+          customHeight: 4,
+          customUnit: 'ft',
+          customRate: 15,
+          customSize: '10x4 ft (40 sq ft @ ₹15/sq ft)',
+          price: 600,
+          customPriceAdded: true,
+        },
+      ],
+    };
+    const parsed = orderCreateSchema.safeParse(orderWithDimensions);
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.items[0].customWidth).toBe(10);
+      expect(parsed.data.items[0].customHeight).toBe(4);
+      expect(parsed.data.items[0].customUnit).toBe('ft');
+      expect(parsed.data.items[0].customRate).toBe(15);
+      expect(parsed.data.items[0].price).toBe(600);
+    }
+  });
+
   it('requires shop', () => {
     const r = orderCreateSchema.safeParse({ ...validOrder, shop: '' });
     expect(r.success).toBe(false);

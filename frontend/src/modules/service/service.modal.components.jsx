@@ -62,9 +62,11 @@ export const Create = ({ submitFn = () => { }, closeModal = () => { }, exported 
           };
         });
       payload.sizes = validSizes;
-      if (validSizes.length > 0) {
+      if (validSizes.length > 0 && !payload.isCustomSize) {
         payload.price = validSizes[0].price;
       }
+    } else if (payload.isCustomSize) {
+      payload.sizes = [];
     } else {
       // Single size — store as "Standard" internally, only price matters
       payload.sizes = [{ size: "Standard", price: Number(payload.price) || 0 }];
@@ -180,9 +182,11 @@ export const Edit = ({
           };
         });
       payload.sizes = validSizes;
-      if (validSizes.length > 0) {
+      if (validSizes.length > 0 && !payload.isCustomSize) {
         payload.price = validSizes[0].price;
       }
+    } else if (payload.isCustomSize) {
+      payload.sizes = [];
     } else {
       // Single size — store as "Standard" internally, only price matters
       payload.sizes = [{ size: "Standard", price: Number(payload.price) || 0 }];

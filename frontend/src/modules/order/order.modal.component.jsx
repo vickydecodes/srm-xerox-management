@@ -33,6 +33,7 @@ import OrderForm from "./order.form";
 import { useLoader } from "@/core/hooks/useLoader";
 import { useEffect } from "react";
 import { Mail } from "lucide-react";
+import { toast } from "sonner";
 
 const statusStyles = {
   draft:
@@ -148,25 +149,34 @@ export const View = ({ order, exported, closeModal } = {}) => {
         <div className="rounded-md border p-3">
           <span className="text-muted-foreground block mb-2">Items</span>
           {order?.items?.length ? (
-            order.items.map((item, i) => (
-              <div
-                key={i}
-                className="flex justify-between border-b py-1 last:border-b-0"
-              >
-                <span>
-                  {item.name}{" "}
-                  {item.size && (
-                    <span className="text-xs text-muted-foreground font-medium">
-                      ({item.size === "Custom" && item.customSize ? item.customSize : item.size})
+            order.items.map((item, i) => {
+              const isCustom = item.type === "Service" && item.size === "Custom";
+              return (
+                <div
+                  key={i}
+                  className="flex justify-between items-center border-b py-2 last:border-b-0"
+                >
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-medium text-sm">
+                      {item.name}
                     </span>
-                  )}{" "}
-                  <span className="text-muted-foreground">
-                    x{item.quantity}
-                  </span>
-                </span>
-                <span>{item.total?.toFixed(2)}</span>
-              </div>
-            ))
+                    {item.size && (
+                      <span className="text-xs text-muted-foreground font-medium">
+                        ({isCustom && item.customSize ? item.customSize : item.size})
+                      </span>
+                    )}
+                    <span className="text-xs text-muted-foreground">
+                      x{item.quantity}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-sm font-semibold">
+                      ₹{Number(item.total || (item.quantity * item.price) || 0).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              );
+            })
           ) : (
             <span>No items</span>
           )}
@@ -180,11 +190,11 @@ export const View = ({ order, exported, closeModal } = {}) => {
             <span>{Number(order?.managementAmount || 0).toFixed(2)}</span>
           </div>
           <div className="rounded-md border p-3">
-            <span className="text-muted-foreground block">Sponsors</span>
+            <span className="text-muted-foreground block">Self Support</span>
             <span>
               {order?.sponsors?.length
                 ? order.sponsors
-                    .map((s) => `${s.name} (${s.amount})`)
+                    .map((s) => `${s.name || "Self Support"} (₹${Number(s.amount || 0).toFixed(2)})`)
                     .join(", ")
                 : "-"}
             </span>
@@ -527,6 +537,32 @@ export const Create = ({
   const collegeEmail =
     exported?.settings?.config?.srmCollegeEmail || "srmxerox@srmist.edu.in";
 
+  const handleOrderFormInvalid = (errors) => {
+    console.error("Order form validation errors:", errors);
+    const messages = [];
+    if (errors.shop) messages.push("Please select an attending shop");
+    if (errors.orderType) messages.push("Please select type of order");
+    if (errors.attachmentEmail) messages.push(errors.attachmentEmail.message || "Please enter a valid email address");
+    if (errors.items) {
+      if (errors.items.message || errors.items.root?.message) {
+        messages.push(errors.items.message || errors.items.root?.message);
+      } else if (Array.isArray(errors.items)) {
+        errors.items.forEach((itemErr, idx) => {
+          if (itemErr) {
+            if (itemErr.price) messages.push(`Item #${idx + 1}: ${itemErr.price.message}`);
+            if (itemErr.quantity) messages.push(`Item #${idx + 1}: ${itemErr.quantity.message}`);
+            if (itemErr.item) messages.push(`Item #${idx + 1}: ${itemErr.item.message}`);
+          }
+        });
+      }
+    }
+    if (errors.proofFiles) messages.push(errors.proofFiles.message || "At least one proof document (Image or PDF) is required");
+    if (errors.sponsors) messages.push("Please check self-support entries");
+
+    const firstMsg = messages[0] || "Please fill in all required fields before saving";
+    toast.error(firstMsg);
+  };
+
   return (
     <DialogContent className="w-2xl max-h-[85vh] overflow-y-auto">
       <DialogHeader>
@@ -554,7 +590,7 @@ export const Create = ({
       <Form {...form}>
         <form
           className="grid gap-4 py-2"
-          onSubmit={form.handleSubmit(onSubmit)}
+          onSubmit={form.handleSubmit(onSubmit, handleOrderFormInvalid)}
         >
           <OrderForm
             form={form}
@@ -567,6 +603,24 @@ export const Create = ({
             searchProducts={exported?.search?.searchProducts}
             lockBranchDept={!isSuperAdmin} // optional: lock for non-super-admin
           />
+          {Object.keys(form.formState.errors).length > 0 && (
+            <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-xs text-destructive space-y-1">
+              <p className="font-semibold">Please correct the following before saving:</p>
+              <ul className="list-disc list-inside space-y-0.5">
+                {form.formState.errors.shop && <li>Please select an Attending Shop</li>}
+                {form.formState.errors.orderType && <li>Please select Type of Order</li>}
+                {form.formState.errors.attachmentEmail && (
+                  <li>{form.formState.errors.attachmentEmail.message || "Valid Attachment Sender Email is required"}</li>
+                )}
+                {form.formState.errors.items && (
+                  <li>{form.formState.errors.items.message || form.formState.errors.items.root?.message || "Please add at least one item"}</li>
+                )}
+                {form.formState.errors.proofFiles && (
+                  <li>{form.formState.errors.proofFiles.message || "At least one proof document (Image or PDF) is required"}</li>
+                )}
+              </ul>
+            </div>
+          )}
           {ErrorAlert}
           <DialogFooter>
             <DialogClose asChild>
@@ -613,6 +667,15 @@ export const Edit = ({
           quantity: i.quantity,
           price: i.price,
           variant: i.variant,
+          size: i.size || "",
+          customSize: i.customSize || "",
+          customPriceAdded: i.customPriceAdded ?? false,
+          customWidth: i.customWidth ?? "",
+          customHeight: i.customHeight ?? "",
+          customUnit: i.customUnit || "ft",
+          customRate: i.customRate ?? "",
+          sizes: i.item?.sizes || i.sizes || [],
+          isCustomSize: i.size === "Custom" || i.item?.isCustomSize || i.isCustomSize || false,
         })) || [],
     },
   });
@@ -687,7 +750,10 @@ export const Edit = ({
       <Form {...form}>
         <form
           className="grid gap-4 py-2"
-          onSubmit={form.handleSubmit(onSubmit)}
+          onSubmit={form.handleSubmit(onSubmit, (errors) => {
+            console.error("Order edit validation errors:", errors);
+            toast.error("Please fill in all required fields before saving");
+          })}
         >
           <OrderForm
             form={form}
@@ -699,6 +765,21 @@ export const Edit = ({
             }
             searchProducts={exported?.search?.searchProducts}
           />
+          {Object.keys(form.formState.errors).length > 0 && (
+            <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-xs text-destructive space-y-1">
+              <p className="font-semibold">Please correct the following before saving:</p>
+              <ul className="list-disc list-inside space-y-0.5">
+                {form.formState.errors.shop && <li>Please select an Attending Shop</li>}
+                {form.formState.errors.orderType && <li>Please select Type of Order</li>}
+                {form.formState.errors.attachmentEmail && (
+                  <li>{form.formState.errors.attachmentEmail.message || "Valid Attachment Sender Email is required"}</li>
+                )}
+                {form.formState.errors.items && (
+                  <li>{form.formState.errors.items.message || form.formState.errors.items.root?.message || "Please add at least one item"}</li>
+                )}
+              </ul>
+            </div>
+          )}
           {ErrorAlert}
           <DialogFooter>
             <DialogClose asChild>

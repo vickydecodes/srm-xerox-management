@@ -20,6 +20,13 @@ export interface IOrderItem {
   quantity: number;
   price: number;
   total: number;
+  size?: string;
+  customSize?: string;
+  customPriceAdded?: boolean;
+  customWidth?: number;
+  customHeight?: number;
+  customUnit?: string;
+  customRate?: number;
 }
 
 export interface IApproval {
@@ -136,10 +143,16 @@ export class OrderDocument {
       }
     }
 
-    // 3. Validation for funds
-    if (this.status !== 'draft' && this.items && this.items.length > 0) {
+    // 3. Validation for funds (only applies to WORK_ORDER before billing)
+    if (
+      this.orderType === OrderType.WORK_ORDER &&
+      this.status !== 'draft' &&
+      !this.bill &&
+      this.items &&
+      this.items.length > 0
+    ) {
       const totalCost = this.items.reduce((sum, i) => sum + i.total, 0);
-      const totalSponsorship = this.sponsors.reduce((sum, s) => sum + s.amount, 0);
+      const totalSponsorship = (this.sponsors || []).reduce((sum, s) => sum + s.amount, 0);
       const totalAvailable = (this.managementAmount ?? 0) + totalSponsorship;
     
       if (totalCost > totalAvailable) {
