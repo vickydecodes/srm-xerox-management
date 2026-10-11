@@ -35,6 +35,24 @@ describe('serviceCreateSchema', () => {
     expect(res.data.sizes).toEqual(['4x2 ft', '6x3 ft']);
   });
 
+  it('accepts sizes with individual prices and hasMultipleSizes flag', () => {
+    const res = serviceCreateSchema.safeParse({
+      name: 'Flex Printing',
+      unit: 'per piece',
+      hasMultipleSizes: true,
+      sizes: [
+        { size: '4x2 ft', price: 150 },
+        { size: '6x3 ft', price: 300 },
+      ],
+    });
+    expect(res.success).toBe(true);
+    expect(res.data.hasMultipleSizes).toBe(true);
+    expect(res.data.sizes).toEqual([
+      { size: '4x2 ft', price: 150 },
+      { size: '6x3 ft', price: 300 },
+    ]);
+  });
+
   it('requires name min length 2', () => {
     expect(
       serviceCreateSchema.safeParse({

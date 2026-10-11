@@ -20,7 +20,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 
 export default function ServiceForm({ form, isEdit = false, inventoryProducts = [] }) {
-  const fields = ["name", "description", "unit", "price"];
+  const fields = ["name", "description", "unit"];
+  const hasMultipleSizes = form.watch("hasMultipleSizes");
 
   const { fields: materialFields, append, remove } = useFieldArray({
     control: form.control,
@@ -54,6 +55,143 @@ export default function ServiceForm({ form, isEdit = false, inventoryProducts = 
           )}
         />
       ))}
+
+      <FormField
+        control={form.control}
+        name="hasMultipleSizes"
+        render={({ field }) => (
+          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs bg-muted/10">
+            <div className="space-y-0.5">
+              <FormLabel className="text-sm font-medium">Multiple Sizes & Prices</FormLabel>
+              <p className="text-xs text-muted-foreground">
+                Enable if this service has multiple sizes with different prices (e.g. A4, A3, 6x3 ft)
+              </p>
+            </div>
+            <FormControl>
+              <Checkbox
+                checked={field.value ?? false}
+                onCheckedChange={(checked) => {
+                  field.onChange(checked);
+                  if (checked) {
+                    const currentSizes = form.getValues("sizes") || [];
+                    if (currentSizes.length === 0) {
+                      const currentPrice = form.getValues("price") || 0;
+                      form.setValue("sizes", [{ size: "A4", price: currentPrice }]);
+                    }
+                  }
+                }}
+              />
+            </FormControl>
+          </FormItem>
+        )}
+      />
+
+      {!hasMultipleSizes ? (
+        <FormField
+          control={form.control}
+          name="price"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Price (₹)</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="Enter price"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      ) : (
+        <div className="space-y-3 rounded-lg border p-3 bg-muted/10">
+          <div className="flex items-center justify-between">
+            <div>
+              <FormLabel className="text-sm font-medium">Sizes & Pricing</FormLabel>
+              <p className="text-xs text-muted-foreground">
+                Specify each size with its individual price
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const current = form.getValues("sizes") || [];
+                form.setValue("sizes", [...current, { size: "", price: 0 }]);
+              }}
+            >
+              + Add Size
+            </Button>
+          </div>
+
+          <FormField
+            control={form.control}
+            name="sizes"
+            render={({ field }) => {
+              const currentSizes = Array.isArray(field.value) ? field.value : [];
+              return (
+                <div className="space-y-2">
+                  {currentSizes.map((s, idx) => (
+                    <div key={idx} className="flex gap-2 items-start">
+                      <div className="flex-1">
+                        <Input
+                          placeholder="Size (e.g. A4, A3, 6x3 ft)"
+                          value={typeof s === "object" ? s.size : s}
+                          onChange={(e) => {
+                            const newSizes = [...currentSizes];
+                            const currPrice = typeof s === "object" ? s.price : 0;
+                            newSizes[idx] = { size: e.target.value, price: currPrice };
+                            field.onChange(newSizes);
+                          }}
+                        />
+                      </div>
+                      <div className="w-32 relative">
+                        <span className="absolute left-2.5 top-2.5 text-xs text-muted-foreground">₹</span>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="Price"
+                          className="pl-6"
+                          value={typeof s === "object" ? s.price : 0}
+                          onChange={(e) => {
+                            const newSizes = [...currentSizes];
+                            const currSize = typeof s === "object" ? s.size : s;
+                            newSizes[idx] = { size: currSize, price: Number(e.target.value) || 0 };
+                            field.onChange(newSizes);
+                          }}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-destructive h-9 w-9"
+                        onClick={() => {
+                          const newSizes = currentSizes.filter((_, i) => i !== idx);
+                          field.onChange(newSizes);
+                        }}
+                      >
+                        ✕
+                      </Button>
+                    </div>
+                  ))}
+                  {currentSizes.length === 0 && (
+                    <p className="text-xs text-muted-foreground py-2 text-center">
+                      No sizes added yet. Click "+ Add Size" to add one.
+                    </p>
+                  )}
+                  <FormMessage />
+                </div>
+              );
+            }}
+          />
+        </div>
+      )}
 
       <FormField
         control={form.control}
@@ -95,74 +233,6 @@ export default function ServiceForm({ form, isEdit = false, inventoryProducts = 
             </FormControl>
           </FormItem>
         )}
-      />
-
-      <FormField
-        control={form.control}
-        name="sizes"
-        render={({ field }) => {
-          const currentSizes = Array.isArray(field.value) ? field.value : [];
-          return (
-            <FormItem className="space-y-2 rounded-lg border p-3 bg-muted/10">
-              <div className="flex items-center justify-between">
-                <FormLabel className="text-sm font-medium">Fixed Sizes</FormLabel>
-                <span className="text-xs text-muted-foreground">e.g. 6x3 ft, A4, 8x4 ft</span>
-              </div>
-              <div className="flex gap-2">
-                <Input
-                  id="new-size-input"
-                  placeholder="Enter a size and click Add"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      const val = e.currentTarget.value.trim();
-                      if (val && !currentSizes.includes(val)) {
-                        field.onChange([...currentSizes, val]);
-                        e.currentTarget.value = "";
-                      }
-                    }
-                  }}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    const input = document.getElementById("new-size-input");
-                    const val = input?.value?.trim();
-                    if (val && !currentSizes.includes(val)) {
-                      field.onChange([...currentSizes, val]);
-                      if (input) input.value = "";
-                    }
-                  }}
-                >
-                  Add Size
-                </Button>
-              </div>
-              {currentSizes.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {currentSizes.map((s, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center gap-1 bg-background border px-2.5 py-1 rounded text-xs"
-                    >
-                      <span>{s}</span>
-                      <button
-                        type="button"
-                        className="text-muted-foreground hover:text-destructive ml-1"
-                        onClick={() => {
-                          field.onChange(currentSizes.filter((_, i) => i !== idx));
-                        }}
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <FormMessage />
-            </FormItem>
-          );
-        }}
       />
 
       <div className="space-y-2">

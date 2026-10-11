@@ -6,6 +6,11 @@ export interface IServiceMaterial {
   quantity: number;
 }
 
+export interface IServiceSize {
+  size: string;
+  price: number;
+}
+
 export interface IService {
   code: string;
   name: string;
@@ -15,7 +20,7 @@ export interface IService {
   materials: IServiceMaterial[];
   isWorkOrder: boolean;
   isCustomSize: boolean;
-  sizes: string[];
+  sizes: (IServiceSize | string)[];
   active: boolean;
   deleted: boolean;
   deletedAt?: Date;
@@ -33,7 +38,7 @@ export class ServiceDocument {
   materials!: IServiceMaterial[];
   isWorkOrder: boolean = false;
   isCustomSize: boolean = false;
-  sizes: string[] = [];
+  sizes: IServiceSize[] = [];
   active!: boolean;
   deleted!: boolean;
   deletedAt?: Date;
@@ -51,7 +56,19 @@ export class ServiceDocument {
     
     if (this.isWorkOrder === undefined) this.isWorkOrder = false;
     if (this.isCustomSize === undefined) this.isCustomSize = false;
-    if (!this.sizes) this.sizes = [];
+    if (!this.sizes) {
+      this.sizes = [];
+    } else if (Array.isArray(this.sizes)) {
+      this.sizes = this.sizes.map((s: any) => {
+        if (typeof s === 'string') {
+          return { size: s, price: Number(this.price) || 0 };
+        }
+        return {
+          size: String(s?.size || ''),
+          price: Number(s?.price) || 0,
+        };
+      });
+    }
     if (this.active === undefined) this.active = true;
     if (this.deleted === undefined) this.deleted = false;
     if (!this.materials) this.materials = [];
@@ -71,16 +88,30 @@ export class ServiceDocument {
   async save() {
     await this.runPreSaveHooks();
 
+    const normalizedSizes = (this.sizes || []).map((s: any) => {
+      if (typeof s === 'string') {
+        return { size: s, price: Number(this.price) || 0 };
+      }
+      return {
+        size: String(s?.size || ''),
+        price: Number(s?.price) || 0,
+      };
+    });
+
+    if (normalizedSizes.length > 0 && (!this.price || this.price === 0)) {
+      this.price = normalizedSizes[0].price;
+    }
+
     const payload = {
       code: this.code,
       name: this.name,
       description: this.description,
       unit: this.unit,
-      price: this.price,
+      price: Number(this.price) || 0,
       materials: this.materials as any,
       isWorkOrder: this.isWorkOrder ?? false,
       isCustomSize: this.isCustomSize ?? false,
-      sizes: this.sizes || [],
+      sizes: normalizedSizes as any,
       active: this.active,
       deleted: this.deleted,
       deletedAt: this.deletedAt,
@@ -115,6 +146,22 @@ export class ServiceModel {
 
   static async findByIdAndUpdate(id: string, data: any, options: any = {}) {
     let updateData: any = data.$set ? { ...data.$set } : { ...data };
+    delete updateData.hasMultipleSizes;
+    delete updateData._id;
+    if (updateData.sizes && Array.isArray(updateData.sizes)) {
+      updateData.sizes = updateData.sizes.map((s: any) => {
+        if (typeof s === 'string') {
+          return { size: s, price: Number(updateData.price) || 0 };
+        }
+        return {
+          size: String(s?.size || ''),
+          price: Number(s?.price) || 0,
+        };
+      });
+      if (updateData.sizes.length > 0 && (!updateData.price || updateData.price === 0)) {
+        updateData.price = updateData.sizes[0].price;
+      }
+    }
     if (data.$inc) {
       for (const [key, val] of Object.entries(data.$inc)) {
         updateData[key] = { increment: val };
@@ -159,6 +206,22 @@ export class ServiceModel {
   }
   static async findOneAndUpdate(query: any, data: any, options: any = {}) {
     let updateData: any = data.$set ? { ...data.$set } : { ...data };
+    delete updateData.hasMultipleSizes;
+    delete updateData._id;
+    if (updateData.sizes && Array.isArray(updateData.sizes)) {
+      updateData.sizes = updateData.sizes.map((s: any) => {
+        if (typeof s === 'string') {
+          return { size: s, price: Number(updateData.price) || 0 };
+        }
+        return {
+          size: String(s?.size || ''),
+          price: Number(s?.price) || 0,
+        };
+      });
+      if (updateData.sizes.length > 0 && (!updateData.price || updateData.price === 0)) {
+        updateData.price = updateData.sizes[0].price;
+      }
+    }
     if (data.$inc) {
       for (const [key, val] of Object.entries(data.$inc)) {
         updateData[key] = { increment: val };

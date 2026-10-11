@@ -89,20 +89,32 @@ export const searchProducts = async (
       model: Service,
       config: strictServiceFilterConfig,
       type: 'Service',
-      mapFn: (s: any) => ({
-        _id: s.id || s._id,
-        type: 'Service',
-        name: s.name,
-        price: s.price,
-        variant: null,
-        quantity: null,
-        inventory: null,
-        code: s.code || '',
-        isWorkOrder: s.isWorkOrder ?? false,
-        isCustomSize: s.isCustomSize ?? false,
-        sizes: s.sizes || [],
-        details: s,
-      }),
+      mapFn: (s: any) => {
+        const rawSizes: any[] = Array.isArray(s.sizes) ? s.sizes : [];
+        const normalizedSizes = rawSizes.map((sz: any) => {
+          if (typeof sz === 'string') {
+            return { size: sz, price: Number(s.price) || 0 };
+          }
+          return {
+            size: String(sz?.size || ''),
+            price: Number(sz?.price) || 0,
+          };
+        });
+        return {
+          _id: s.id || s._id,
+          type: 'Service',
+          name: s.name,
+          price: s.price,
+          variant: null,
+          quantity: null,
+          inventory: null,
+          code: s.code || '',
+          isWorkOrder: s.isWorkOrder ?? false,
+          isCustomSize: s.isCustomSize ?? false,
+          sizes: normalizedSizes,
+          details: s,
+        };
+      },
     });
   }
 

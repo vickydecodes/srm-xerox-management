@@ -124,6 +124,31 @@ describe('Service API Endpoint Suite', () => {
     });
   });
 
+  it('should successfully create a service with multiple sizes having different prices', async () => {
+    const res = await tester.post(
+      baseRoute,
+      {
+        name: `Test Multi Size Poster ${Date.now()}`,
+        unit: 'per print',
+        sizes: [
+          { size: 'A4', price: 10 },
+          { size: 'A3', price: 25 },
+          { size: 'A2', price: 60 },
+        ],
+        hasMultipleSizes: true,
+      },
+      token
+    );
+
+    tester.assertCreated(res, 'Service', (data) => {
+      expect(data.sizes).to.have.lengthOf(3);
+      expect(data.sizes[0]).to.deep.equal({ size: 'A4', price: 10 });
+      expect(data.sizes[1]).to.deep.equal({ size: 'A3', price: 25 });
+      expect(data.sizes[2]).to.deep.equal({ size: 'A2', price: 60 });
+      expect(data.price).to.equal(10);
+    });
+  });
+
   it('should return validation error on service creation with invalid payload', async () => {
     const res = await tester.post(
       baseRoute,

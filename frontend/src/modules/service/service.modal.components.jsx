@@ -32,6 +32,7 @@ export const Create = ({ submitFn = () => { }, closeModal = () => { }, exported 
       price: 0,
       isWorkOrder: false,
       isCustomSize: false,
+      hasMultipleSizes: false,
       sizes: [],
       active: true,
       materials: [],
@@ -40,16 +41,42 @@ export const Create = ({ submitFn = () => { }, closeModal = () => { }, exported 
 
   const { run, loading, ErrorAlert, clearError } = useAsync(submitFn);
 
-
   const { createPreset } = useLoader();
 
   const serviceModal = createPreset(exported.inventoryProducts)
 
   useClearError(form, clearError);
 
+  const transform = (data) => {
+    const payload = { ...data };
+    if (payload.hasMultipleSizes) {
+      const validSizes = (payload.sizes || [])
+        .filter((s) => s && (typeof s === "string" ? s.trim() !== "" : s.size && String(s.size).trim() !== ""))
+        .map((s) => {
+          if (typeof s === "string") {
+            return { size: s.trim(), price: Number(payload.price) || 0 };
+          }
+          return {
+            size: String(s.size).trim(),
+            price: Number(s.price) || 0,
+          };
+        });
+      payload.sizes = validSizes;
+      if (validSizes.length > 0) {
+        payload.price = validSizes[0].price;
+      }
+    } else {
+      // Single size — store as "Standard" internally, only price matters
+      payload.sizes = [{ size: "Standard", price: Number(payload.price) || 0 }];
+    }
+    delete payload.singleSizeName;
+    return payload;
+  };
+
   const onSubmit = useSubmit({
     run,
     form,
+    transform,
     onSuccess: closeModal,
   });
 
@@ -94,6 +121,20 @@ export const Edit = ({
   closeModal = () => {},
   exported,
 } = {}) => {
+  const rawSizes = service?.sizes || [];
+  const normalizedSizes = rawSizes.map((s) => {
+    if (typeof s === "object" && s !== null) {
+      return { size: s.size || "", price: Number(s.price) || 0 };
+    }
+    return { size: String(s || ""), price: Number(service?.price) || 0 };
+  });
+
+  const hasMultiple =
+    normalizedSizes.length > 1 ||
+    (normalizedSizes.length === 1 &&
+      normalizedSizes[0].size !== "Standard" &&
+      normalizedSizes[0].size !== "");
+
   const form = useForm({
     resolver: zodResolver(serviceEditSchema),
     defaultValues: {
@@ -103,7 +144,8 @@ export const Edit = ({
       price: service?.price || 0,
       isWorkOrder: service?.isWorkOrder ?? false,
       isCustomSize: service?.isCustomSize ?? false,
-      sizes: service?.sizes || [],
+      hasMultipleSizes: hasMultiple,
+      sizes: normalizedSizes,
       active: service?.active ?? true,
       materials: service?.materials?.map((m) => {
         const prodId = m.product && typeof m.product === 'object' ? (m.product._id ? String(m.product._id) : String(m.product)) : (m.product ? String(m.product) : "");
@@ -123,9 +165,36 @@ export const Edit = ({
 
   useClearError(form, clearError);
 
+  const transform = (data) => {
+    const payload = { ...data };
+    if (payload.hasMultipleSizes) {
+      const validSizes = (payload.sizes || [])
+        .filter((s) => s && (typeof s === "string" ? s.trim() !== "" : s.size && String(s.size).trim() !== ""))
+        .map((s) => {
+          if (typeof s === "string") {
+            return { size: s.trim(), price: Number(payload.price) || 0 };
+          }
+          return {
+            size: String(s.size).trim(),
+            price: Number(s.price) || 0,
+          };
+        });
+      payload.sizes = validSizes;
+      if (validSizes.length > 0) {
+        payload.price = validSizes[0].price;
+      }
+    } else {
+      // Single size — store as "Standard" internally, only price matters
+      payload.sizes = [{ size: "Standard", price: Number(payload.price) || 0 }];
+    }
+    delete payload.singleSizeName;
+    return payload;
+  };
+
   const onSubmit = useSubmit({
     run,
     form,
+    transform,
     onSuccess: closeModal,
   });
 
@@ -264,7 +333,9 @@ export const View = ({ service } = {}) => {
             <p className="text-sm font-medium text-muted-foreground">Fixed Sizes</p>
             <p className="text-sm">
               {service?.sizes && service.sizes.length > 0
-                ? service.sizes.join(", ")
+                ? service.sizes
+                    .map((s) => (typeof s === "object" && s !== null ? `${s.size} (₹${s.price})` : s))
+                    .join(", ")
                 : "None"}
             </p>
           </div>

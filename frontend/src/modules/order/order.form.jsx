@@ -99,14 +99,19 @@ export default function OrderForm({
     } else {
       const itemSizes = selectedItem.sizes || selectedItem.details?.sizes || [];
       const itemIsCustom = selectedItem.isCustomSize ?? selectedItem.details?.isCustomSize ?? false;
-      const initialSize = itemSizes.length > 0 ? itemSizes[0] : "";
+      const firstSize = itemSizes.length > 0 ? itemSizes[0] : null;
+      const initialSize = firstSize ? (typeof firstSize === 'object' ? firstSize.size : firstSize) : "";
+      let initialPrice = Number(selectedItem.price) || 0;
+      if (firstSize && typeof firstSize === 'object' && firstSize.price !== undefined) {
+        initialPrice = Number(firstSize.price) || 0;
+      }
 
       appendItem({
         type: selectedItem.type,
         item: selectedItem._id,
         name: selectedItem.name,
         quantity: 1,
-        price: selectedItem.price ?? 0,
+        price: initialPrice,
         variant: selectedItem.variant,
         size: initialSize,
         customSize: "",
@@ -334,6 +339,14 @@ export default function OrderForm({
                                   field.onChange(val);
                                   if (val !== "Custom") {
                                     form.setValue(`items.${index}.customSize`, "");
+                                    // Update price based on selected size
+                                    const allSizes = items[index]?.sizes || [];
+                                    const matchedSize = allSizes.find((sz) =>
+                                      typeof sz === "object" ? sz.size === val : sz === val
+                                    );
+                                    if (matchedSize && typeof matchedSize === "object" && matchedSize.price !== undefined) {
+                                      form.setValue(`items.${index}.price`, Number(matchedSize.price) || 0, { shouldValidate: true });
+                                    }
                                   }
                                 }}
                               >
@@ -341,11 +354,15 @@ export default function OrderForm({
                                   <SelectValue placeholder="Select size" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {items[index]?.sizes?.map((sz) => (
-                                    <SelectItem key={sz} value={sz} className="text-xs">
-                                      {sz}
-                                    </SelectItem>
-                                  ))}
+                                  {items[index]?.sizes?.map((sz) => {
+                                    const szLabel = typeof sz === "object" ? `${sz.size} (₹${sz.price})` : sz;
+                                    const szVal = typeof sz === "object" ? sz.size : sz;
+                                    return (
+                                      <SelectItem key={szVal} value={szVal} className="text-xs">
+                                        {szLabel}
+                                      </SelectItem>
+                                    );
+                                  })}
                                   {items[index]?.isCustomSize && (
                                     <SelectItem value="Custom" className="text-xs font-semibold text-primary">
                                       Custom
