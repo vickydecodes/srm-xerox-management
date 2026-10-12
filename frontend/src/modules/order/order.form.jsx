@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useFieldArray, useWatch } from "react-hook-form";
 import {
   FormControl,
@@ -36,12 +37,15 @@ const formatVariant = (variant) => {
 export default function OrderForm({
   form,
   shops = [],
-  BillingItemSearchCombobox,
   searchProducts,
 }) {
   const { user } = useAuth();
   const isDeptAdmin =
     user?.role === "department_admin" || user?.role === "super_admin";
+  const [availableItems, setAvailableItems] = useState([]);
+  const [selectedItemId, setSelectedItemId] = useState("");
+  const [itemsLoading, setItemsLoading] = useState(false);
+  const [itemsError, setItemsError] = useState("");
 
   const {
     fields: itemFields,
@@ -52,16 +56,11 @@ export default function OrderForm({
     name: "items",
   });
 
-  const {
-    fields: sponsorFields,
-    append: appendSponsor,
-    remove: removeSponsor,
-  } = useFieldArray({
-    control: form.control,
-    name: "sponsors",
-  });
-
   const orderType = useWatch({ control: form.control, name: "orderType" });
+  const fundingMethod = useWatch({
+    control: form.control,
+    name: "fundingMethod",
+  });
   const items = useWatch({ control: form.control, name: "items" }) || [];
   const sponsors = useWatch({ control: form.control, name: "sponsors" }) || [];
   const managementAmount =
@@ -75,8 +74,56 @@ export default function OrderForm({
     (sum, s) => sum + (Number(s?.amount) || 0),
     0
   );
-  const totalAvailable = Number(managementAmount || 0) + totalSponsorship;
+  const totalAvailable =
+    fundingMethod === "management"
+      ? Number(managementAmount || 0)
+      : fundingMethod === "self_support"
+        ? totalSponsorship
+        : 0;
   const overBudget = totalCost > totalAvailable;
+
+  useEffect(() => {
+    let active = true;
+    setSelectedItemId("");
+    setAvailableItems([]);
+    setItemsError("");
+
+    if (!searchProducts) {
+      setItemsError("Product and service list is unavailable.");
+      setItemsLoading(false);
+      return () => {
+        active = false;
+      };
+    }
+
+    const loadItems = async () => {
+      setItemsLoading(true);
+      try {
+        const results = await searchProducts("", { orderType });
+        if (!Array.isArray(results)) {
+          throw new Error("Product and service search returned invalid results.");
+        }
+        const filteredItems = results.filter((item) => {
+          const isWorkOrder =
+            item.isWorkOrder === true || item.details?.isWorkOrder === true;
+          return orderType === "WORK_ORDER" ? isWorkOrder : !isWorkOrder;
+        });
+
+        if (active) setAvailableItems(filteredItems);
+      } catch {
+        if (active) {
+          setItemsError("Unable to load products and services. Please try again.");
+        }
+      } finally {
+        if (active) setItemsLoading(false);
+      }
+    };
+
+    loadItems();
+    return () => {
+      active = false;
+    };
+  }, [orderType, searchProducts]);
 
   const handleSelectItem = (selectedItem) => {
     // If orderType is WORK_ORDER, only allow items with isWorkOrder === true (whether product or service)
@@ -154,21 +201,6 @@ export default function OrderForm({
     }
   };
 
-  const handleSearchProducts = async (q, extraParams = {}) => {
-    if (!searchProducts) return [];
-    const results = await searchProducts(q, { ...extraParams, orderType });
-    if (orderType === "WORK_ORDER") {
-      return results.filter(
-        (item) => item.isWorkOrder === true || item.details?.isWorkOrder === true
-      );
-    } else if (orderType === "XEROX_ORDER") {
-      return results.filter(
-        (item) => !(item.isWorkOrder === true || item.details?.isWorkOrder === true)
-      );
-    }
-    return results;
-  };
-
   return (
     <>
       {/* Shop */}
@@ -177,7 +209,7 @@ export default function OrderForm({
         name="shop"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Attending Shop</FormLabel>
+            <FormLabel>Select Shop</FormLabel>
             <FormControl>
               <Select
                 value={field.value ? String(field.value) : undefined}
@@ -276,11 +308,11 @@ export default function OrderForm({
         name="attachmentEmail"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Attachment Sender Email</FormLabel>
+            <FormLabel>Enter your Email</FormLabel>
             <FormControl>
               <Input
                 type="email"
-                placeholder="Email address from which you sent the attachments"
+                placeholder="Email address from which you sent the Design File"
                 {...field}
               />
             </FormControl>
@@ -294,27 +326,62 @@ export default function OrderForm({
         <FormLabel>Items</FormLabel>
 
         <div className="space-y-2">
-          <Label className="text-sm font-medium">
-            Search and Add Products / Services
+          <Label htmlFor="order-item-select" className="text-sm font-medium">
+            Select a Product / Service
           </Label>
-
-          {BillingItemSearchCombobox ? (
-            <BillingItemSearchCombobox
-              key={orderType || "all"}
-              value=""
-              currentItemName=""
-              onSelect={handleSelectItem}
-              placeholder={
-                orderType === "WORK_ORDER"
-                  ? "Search products or work-order services..."
-                  : "Search by product or service name..."
-              }
-              searchProducts={handleSearchProducts}
-              queryParams={{ orderType }}
-            />
-          ) : (
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Select
+              value={selectedItemId}
+              onValueChange={setSelectedItemId}
+              disabled={itemsLoading || availableItems.length === 0}
+            >
+              <SelectTrigger id="order-item-select">
+                <SelectValue
+                  placeholder={
+                    itemsLoading
+                      ? "Loading products and services..."
+                      : "Select a product or service"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {availableItems.map((item) => (
+                  <SelectItem key={item._id} value={String(item._id)}>
+                    {item.name}
+                    {item.type === "InventoryProduct" && item.variant
+                      ? ` • ${formatVariant(item.variant)}`
+                      : ""}
+                    {` — ${item.type === "InventoryProduct" ? "Product" : "Service"} • ₹${item.price}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              type="button"
+              variant="outline"
+              className="shrink-0"
+              disabled={!selectedItemId || itemsLoading}
+              onClick={() => {
+                const selectedItem = availableItems.find(
+                  (item) => String(item._id) === selectedItemId
+                );
+                if (selectedItem) {
+                  handleSelectItem(selectedItem);
+                  setSelectedItemId("");
+                }
+              }}
+            >
+              Add product
+            </Button>
+          </div>
+          {itemsError && (
+            <p role="alert" className="text-sm text-destructive">
+              {itemsError}
+            </p>
+          )}
+          {!itemsLoading && !itemsError && availableItems.length === 0 && (
             <p className="text-sm text-muted-foreground">
-              Search component not available
+              No products or services available for this order type.
             </p>
           )}
         </div>
@@ -551,119 +618,6 @@ export default function OrderForm({
 
       <Separator className="my-2" />
 
-      {/* Management Amount */}
-      <FormField
-        control={form.control}
-        name="managementAmount"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Management Amount</FormLabel>
-            <FormControl>
-              <Input
-                type="number"
-                min={0}
-                max={Math.max(0, totalCost - totalSponsorship)}
-                step="0.01"
-                placeholder="0.00"
-                {...field}
-                onChange={(e) => {
-                  const raw = e.target.value;
-                  if (raw === "") {
-                    field.onChange("");
-                    return;
-                  }
-                  const val = parseFloat(raw) || 0;
-                  const maxVal = Math.max(0, totalCost - totalSponsorship);
-                  const cappedVal = Math.min(val, maxVal);
-                  field.onChange(cappedVal);
-                }}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <Separator className="my-2" />
-
-      {/* Sponsors */}
-      <div className="flex items-center justify-between">
-        <FormLabel>Self Support</FormLabel>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          onClick={() => appendSponsor({ name: "Self Support", amount: 0 })}
-          disabled={totalAvailable >= totalCost}
-        >
-          Add Self Support
-        </Button>
-      </div>
-
-      {sponsorFields.map((item, index) => (
-        <div key={item.id} className="flex gap-2 items-start">
-          <FormField
-            control={form.control}
-            name={`sponsors.${index}.name`}
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormControl>
-                  <Input placeholder="Self Support name" {...field} value={"Self Support"} disabled />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name={`sponsors.${index}.amount`}
-            render={({ field }) => {
-              const currentSponsorAmt = Number(sponsors[index]?.amount) || 0;
-              const maxSponsorAmt = Math.max(
-                0,
-                totalCost -
-                  Number(managementAmount || 0) -
-                  (totalSponsorship - currentSponsorAmt)
-              );
-              return (
-                <FormItem className="w-32">
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min={0}
-                      max={maxSponsorAmt}
-                      step="0.01"
-                      placeholder="Amount"
-                      {...field}
-                      onChange={(e) => {
-                        const raw = e.target.value;
-                        if (raw === "") {
-                          field.onChange("");
-                          return;
-                        }
-                        const val = parseFloat(raw) || 0;
-                        const cappedVal = Math.min(val, maxSponsorAmt);
-                        field.onChange(cappedVal);
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              );
-            }}
-          />
-          <Button
-            type="button"
-            variant="destructive"
-            onClick={() => removeSponsor(index)}
-          >
-            Remove
-          </Button>
-        </div>
-      ))}
-
-      <Separator className="my-2" />
-
       {/* Proof Documents Upload (Department Admin Only) */}
       {isDeptAdmin && (
         <FormField
@@ -673,7 +627,7 @@ export default function OrderForm({
             <FormItem className="space-y-2 rounded-lg border p-3 bg-muted/20">
               <div className="flex items-center justify-between">
                 <FormLabel className="text-xs font-semibold">
-                  Proof Documents & Signatures (Images or PDF)
+                  Approved Document Attachements
                   <span className="text-destructive ml-1">*</span>
                 </FormLabel>
                 <span className="text-[11px] text-muted-foreground">
@@ -719,6 +673,120 @@ export default function OrderForm({
           )}
         />
       )}
+
+      {/* Funding Method */}
+      <FormField
+        control={form.control}
+        name="fundingMethod"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Payment Method</FormLabel>
+            <FormControl>
+              <Select
+                value={field.value || undefined}
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  if (value === "management") {
+                    form.setValue("sponsors", [], { shouldValidate: true });
+                  } else {
+                    form.setValue("managementAmount", 0, {
+                      shouldValidate: true,
+                    });
+                    form.setValue(
+                      "sponsors",
+                      [
+                        {
+                          name: "Self Support",
+                          amount: totalSponsorship,
+                        },
+                      ],
+                      { shouldValidate: true }
+                    );
+                  }
+                }}
+              >
+                <SelectTrigger id="funding-method" aria-label="Payment Method">
+                  <SelectValue placeholder="Choose a payment method" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="management">Management Amount</SelectItem>
+                  <SelectItem value="self_support">Self Support Amount</SelectItem>
+                </SelectContent>
+              </Select>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      {fundingMethod === "management" && (
+        <FormField
+          control={form.control}
+          name="managementAmount"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Management Amount</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  min={0}
+                  max={totalCost}
+                  step="0.01"
+                  placeholder="0.00"
+                  {...field}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    if (raw === "") {
+                      field.onChange("");
+                      return;
+                    }
+                    field.onChange(
+                      Math.min(parseFloat(raw) || 0, totalCost)
+                    );
+                  }}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
+
+      {fundingMethod === "self_support" && (
+        <FormField
+          control={form.control}
+          name="sponsors.0.amount"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Self Support Amount</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  min={0}
+                  max={totalCost}
+                  step="0.01"
+                  placeholder="0.00"
+                  {...field}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    if (raw === "") {
+                      field.onChange("");
+                      return;
+                    }
+                    field.onChange(
+                      Math.min(parseFloat(raw) || 0, totalCost)
+                    );
+                  }}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
+
+      <Separator className="my-2" />
+
 
       {/* Summary */}
       <div className="flex flex-col items-end gap-1 text-sm">

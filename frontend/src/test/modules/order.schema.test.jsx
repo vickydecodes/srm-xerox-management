@@ -16,6 +16,7 @@ const validItem = {
 const validOrder = {
   shop: 'shop-1',
   orderType: 'XEROX_ORDER', // was 'Xerox order' — invalid enum
+  fundingMethod: 'management',
   department: 'dept-1',     // required
   branch: 'branch-1',       // required
   attachmentEmail: 'user@example.com',
@@ -104,6 +105,11 @@ describe('orderCreateSchema', () => {
     expect(r.success).toBe(false);
   });
 
+  it('requires a payment method', () => {
+    const { fundingMethod: _, ...withoutFundingMethod } = validOrder;
+    expect(orderCreateSchema.safeParse(withoutFundingMethod).success).toBe(false);
+  });
+
   it('requires at least one item', () => {
     const r = orderCreateSchema.safeParse({ ...validOrder, items: [] });
     expect(r.success).toBe(false);
@@ -120,6 +126,7 @@ describe('orderCreateSchema', () => {
   it('accepts sponsors with name and amount', () => {
     const r = orderCreateSchema.safeParse({
       ...validOrder,
+      fundingMethod: 'self_support',
       sponsors: [{ name: 'CSR', amount: 100 }],
     });
     expect(r.success).toBe(true);

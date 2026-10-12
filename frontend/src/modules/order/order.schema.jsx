@@ -27,6 +27,9 @@ export const orderCreateSchema = z.object({
   orderType: z.enum(['WORK_ORDER', 'XEROX_ORDER'], {
     error: 'Please select type of order',
   }),
+  fundingMethod: z.enum(['management', 'self_support'], {
+    error: 'Please choose a payment method',
+  }),
   eventName: z.string().optional(),
   eventDate: z.string().optional(),
   purpose: z.string().optional(),

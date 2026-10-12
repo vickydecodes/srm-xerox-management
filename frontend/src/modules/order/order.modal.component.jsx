@@ -487,6 +487,7 @@ export const Create = ({
       eventDate: "",
       purpose: "",
       attachmentEmail: "",
+      fundingMethod: "",
       managementAmount: 0,
       sponsors: [],
       items: [],
@@ -507,6 +508,7 @@ export const Create = ({
   const onSubmit = useSubmit({
     run: (data) => {
       const { proofFiles, ...rest } = data;
+      delete rest.fundingMethod;
       if (proofFiles && proofFiles.length > 0) {
         const formData = new FormData();
         Object.entries(rest).forEach(([key, val]) => {
@@ -597,9 +599,6 @@ export const Create = ({
             branches={exported?.branches?.state || []}
             departments={exported?.departments?.state || []}
             shops={shops || []}
-            BillingItemSearchCombobox={
-              exported?.search?.BillingItemSearchCombobox
-            }
             searchProducts={exported?.search?.searchProducts}
             lockBranchDept={!isSuperAdmin} // optional: lock for non-super-admin
           />
@@ -656,6 +655,7 @@ export const Edit = ({
         : "",
       purpose: order?.purpose || "",
       attachmentEmail: order?.attachmentEmail || "",
+      fundingMethod: "",
       managementAmount: order?.managementAmount || 0,
       sponsors: order?.sponsors || [],
       proofFiles: [],
@@ -693,6 +693,7 @@ export const Edit = ({
   const onSubmit = useSubmit({
     run: (data) => {
       const { proofFiles, ...rest } = data;
+      delete rest.fundingMethod;
       if (proofFiles && proofFiles.length > 0) {
         const formData = new FormData();
         Object.entries(rest).forEach(([key, val]) => {
@@ -760,9 +761,6 @@ export const Edit = ({
             branches={exported?.branches?.state || []}
             departments={exported?.departments?.state || []}
             shops={shops || []}
-            BillingItemSearchCombobox={
-              exported?.search?.BillingItemSearchCombobox
-            }
             searchProducts={exported?.search?.searchProducts}
           />
           {Object.keys(form.formState.errors).length > 0 && (
