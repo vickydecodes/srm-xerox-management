@@ -7,6 +7,7 @@ import Department from '@db/models/department.model.ts';
 import Inventory from '@db/models/inventory.model.ts';
 import Product from '@db/models/product.model.ts';
 import InventoryProduct from '@db/models/inventory-product.model.ts';
+import Service from '@db/models/service.model.ts';
 import { tester } from '@core/constants/tester.constant.ts';
 
 const baseRoute = '/api/v1/bills';
@@ -19,8 +20,10 @@ let testDepartmentId: string;
 let testInventoryId: string;
 let testProductId: string;
 let testInventoryProductId: string;
+let testServiceId: string;
 
 let createdBillId: string;
+let serviceBillId: string;
 let creditBillId: string;
 let rejectCreditBillId: string;
 
@@ -72,6 +75,14 @@ beforeAll(async () => {
   });
   await inventoryProduct.save();
   testInventoryProductId = inventoryProduct._id.toString();
+
+  const service = await Service.create({
+    name: `Test Bill Service ${timestamp}`,
+    unit: 'per page',
+    price: 2,
+    active: true,
+  });
+  testServiceId = service._id.toString();
 });
 
 afterAll(async () => {
@@ -79,6 +90,9 @@ afterAll(async () => {
     await cleanupAdmin();
   }
 
+  if (serviceBillId) {
+    await Bill.findByIdAndDelete(serviceBillId);
+  }
   await Bill.deleteMany({
     OR: [
       { branch: testBranchId },
@@ -89,6 +103,9 @@ afterAll(async () => {
 
   if (testInventoryProductId) {
     await InventoryProduct.findByIdAndDelete(testInventoryProductId);
+  }
+  if (testServiceId) {
+    await Service.findByIdAndDelete(testServiceId);
   }
   if (testProductId) {
     await Product.findByIdAndDelete(testProductId);
@@ -139,6 +156,32 @@ describe('Bill API Endpoint Suite', () => {
       expect(data.status).to.equal('PAID');
       expect(data.approvalStatus).to.equal('approved');
       expect(data.total).to.equal(95);
+    });
+  });
+
+  it('should successfully create a bill containing a service', async () => {
+    const res = await tester.post(
+      baseRoute,
+      {
+        paymentMethod: 'CASH',
+        items: [
+          {
+            type: 'Service',
+            item: testServiceId,
+            name: 'Test Bill Service',
+            quantity: 2,
+            price: 2,
+          },
+        ],
+      },
+      token
+    );
+
+    tester.assertCreated(res, 'Bill', (data) => {
+      serviceBillId = data._id;
+      expect(data.items).toHaveLength(1);
+      expect(data.items[0].type).to.equal('Service');
+      expect(data.items[0].item._id).to.equal(testServiceId);
     });
   });
 

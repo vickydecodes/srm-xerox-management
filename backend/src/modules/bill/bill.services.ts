@@ -26,7 +26,7 @@ export const adjustStockForBill = async (
 
   const serviceMap = new Map<string, any>();
   if (serviceIds.size > 0) {
-    const services = await Service.find({ _id: { $in: Array.from(serviceIds) } });
+    const services = await Service.find({ id: { in: Array.from(serviceIds) } });
     for (const s of services) {
       serviceMap.set(s._id.toString(), s);
     }
