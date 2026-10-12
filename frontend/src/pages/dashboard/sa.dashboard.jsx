@@ -284,17 +284,20 @@ export default function SaDashboard({ data, refreshData }) {
               <h3 className="text-sm font-medium text-foreground">Top Items</h3>
               <p className="text-xs text-muted-foreground">By quantity sold.</p>
             </div>
-            <div className="h-[220px] w-full">
+            <div
+              className="w-full"
+              style={{ height: Math.max(220, topItemsData.length * 48 + 16) }}
+            >
               {topItemsData.length === 0 ? (
                 <div className="h-full flex items-center justify-center text-xs text-muted-foreground">No items sold.</div>
               ) : (
                 <ChartContainer config={chartConfig} className="h-full w-full">
-                  <BarChart data={topItemsData} layout="vertical" margin={{ top: 0, right: 0, left: 10, bottom: 0 }}>
+                  <BarChart data={topItemsData} layout="vertical" margin={{ top: 8, right: 0, left: 10, bottom: 8 }} barCategoryGap="35%">
                     <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="var(--border)" opacity={0.3} />
                     <XAxis type="number" hide />
                     <YAxis dataKey="name" type="category" tickLine={false} axisLine={false} width={80} tick={{fontSize: 11, fill: "var(--muted-foreground)"}} />
                     <ChartTooltip content={<ChartTooltipContent />} />
-                    <Bar dataKey="Count" fill="var(--color-Count)" radius={[0, 2, 2, 0]} maxBarSize={16} />
+                    <Bar dataKey="Count" fill="var(--color-Count)" radius={[0, 2, 2, 0]} maxBarSize={20} />
                   </BarChart>
                 </ChartContainer>
               )}

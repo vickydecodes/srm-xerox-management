@@ -244,7 +244,10 @@ export default function StaffDashboard({ data, refreshData }) {
               <h3 className="text-sm font-medium text-foreground">Top Items</h3>
               <p className="text-xs text-muted-foreground">Your best-selling items by quantity.</p>
             </div>
-            <div className="h-[240px] w-full">
+            <div
+              className="w-full"
+              style={{ height: Math.max(240, topItemsData.length * 48 + 16) }}
+            >
               {topItemsData.length === 0 ? (
                 <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
                   No items sold.
@@ -254,7 +257,8 @@ export default function StaffDashboard({ data, refreshData }) {
                   <BarChart
                     data={topItemsData}
                     layout="vertical"
-                    margin={{ top: 0, right: 8, left: 12, bottom: 0 }}
+                    margin={{ top: 8, right: 8, left: 12, bottom: 8 }}
+                    barCategoryGap="35%"
                   >
                     <CartesianGrid
                       strokeDasharray="3 3"
@@ -273,7 +277,7 @@ export default function StaffDashboard({ data, refreshData }) {
                       tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
                     />
                     <ChartTooltip content={<ChartTooltipContent />} />
-                    <Bar dataKey="Count" fill="var(--color-Count)" radius={[0, 3, 3, 0]} maxBarSize={18} />
+                    <Bar dataKey="Count" fill="var(--color-Count)" radius={[0, 3, 3, 0]} maxBarSize={20} />
                   </BarChart>
                 </ChartContainer>
               )}

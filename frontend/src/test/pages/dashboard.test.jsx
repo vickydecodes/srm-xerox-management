@@ -276,6 +276,24 @@ describe('Dashboard page', () => {
         state: { editInventoryProduct: lowStockProduct },
       });
     });
+
+    it('shows an empty message when no products are under stock', async () => {
+      authState.user = { role: 'staff', name: 'Steve' };
+      inventoryProductsState.crud.getAll.mockResolvedValue([
+        {
+          _id: 'inventory-product-2',
+          product: { name: 'Staples' },
+          quantity: 100,
+          active: true,
+        },
+      ]);
+
+      renderDashboard();
+
+      const emptyMessage = await screen.findByText('No product is under stock.');
+      expect(emptyMessage).toBeInTheDocument();
+      expect(emptyMessage.closest('section').querySelector('table')).toBeNull();
+    });
   });
 
 });

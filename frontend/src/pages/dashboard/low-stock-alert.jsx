@@ -66,8 +66,6 @@ export default function LowStockAlert({ inventoryPath }) {
     );
   }
 
-  if (products.length === 0) return null;
-
   return (
     <section
       aria-labelledby="low-stock-title"
@@ -84,13 +82,15 @@ export default function LowStockAlert({ inventoryPath }) {
               Low inventory stock
             </h2>
             <p className="text-xs text-muted-foreground">
-              {products.length} {products.length === 1 ? "product is" : "products are"} below 100 units.
+              {products.length === 0
+                ? "No product is under stock."
+                : `${products.length} ${products.length === 1 ? "product is" : "products are"} below 100 units.`}
             </p>
           </div>
         </div>
       </header>
 
-      <div className="max-h-72 w-full min-w-0 overflow-auto">
+      {products.length > 0 && <div className="max-h-72 w-full min-w-0 overflow-auto">
         <Table className="w-full text-left text-sm">
           <TableHeader className="sticky top-0 z-10 bg-card">
             <TableRow className="hover:bg-transparent">
@@ -137,7 +137,7 @@ export default function LowStockAlert({ inventoryPath }) {
           })}
           </TableBody>
         </Table>
-      </div>
+      </div>}
     </section>
   );
 }
