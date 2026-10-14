@@ -566,7 +566,7 @@ export const Create = ({
   };
 
   return (
-    <DialogContent className="w-2xl max-h-[85vh] overflow-y-auto">
+    <DialogContent className="w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle>Create Order</DialogTitle>
         <DialogDescription>Raise a new order</DialogDescription>

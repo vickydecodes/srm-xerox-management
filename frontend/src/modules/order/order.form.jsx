@@ -34,11 +34,60 @@ const formatVariant = (variant) => {
   return entries.map(([k, v]) => `${k}: ${v}`).join(", ");
 };
 
-export default function OrderForm({
-  form,
-  shops = [],
-  searchProducts,
-}) {
+// Builds a fresh line-item object from a product/service record
+const buildItemRow = (selectedItem) => {
+  const rawSizes = selectedItem.sizes || selectedItem.details?.sizes || [];
+  const itemIsCustom =
+    selectedItem.isCustomSize ?? selectedItem.details?.isCustomSize ?? false;
+  const itemSizes = itemIsCustom
+    ? rawSizes.filter((s) =>
+        typeof s === "object" ? s.size !== "Standard" : s !== "Standard",
+      )
+    : rawSizes;
+  const firstSize = itemSizes.length > 0 ? itemSizes[0] : null;
+  const initialSize = firstSize
+    ? typeof firstSize === "object"
+      ? firstSize.size
+      : firstSize
+    : itemIsCustom
+      ? "Custom"
+      : "";
+  let initialPrice = Number(selectedItem.price) || 0;
+  if (
+    firstSize &&
+    typeof firstSize === "object" &&
+    firstSize.price !== undefined
+  ) {
+    initialPrice = Number(firstSize.price) || 0;
+  } else if (initialSize === "Custom") {
+    initialPrice = 0;
+  }
+
+  return {
+    type: selectedItem.type,
+    item: selectedItem._id,
+    name: selectedItem.name,
+    quantity: 1,
+    price: initialPrice,
+    variant: selectedItem.variant,
+    size: initialSize,
+    customWidth: "",
+    customHeight: "",
+    customUnit:
+      selectedItem.unit === "inch" || selectedItem.details?.unit === "inch"
+        ? "inch"
+        : "ft",
+    customRate:
+      Number(selectedItem.price) ||
+      (firstSize && typeof firstSize === "object" && Number(firstSize.price)) ||
+      0,
+    sizes: itemSizes,
+    isCustomSize: itemIsCustom,
+    customPriceAdded: false,
+  };
+};
+
+export default function OrderForm({ form, shops = [], searchProducts }) {
   const { user } = useAuth();
   const isDeptAdmin =
     user?.role === "department_admin" || user?.role === "super_admin";
@@ -68,11 +117,11 @@ export default function OrderForm({
 
   const totalCost = items.reduce(
     (sum, i) => sum + (Number(i?.quantity) || 0) * (Number(i?.price) || 0),
-    0
+    0,
   );
   const totalSponsorship = sponsors.reduce(
     (sum, s) => sum + (Number(s?.amount) || 0),
-    0
+    0,
   );
   const totalAvailable =
     fundingMethod === "management"
@@ -101,7 +150,9 @@ export default function OrderForm({
       try {
         const results = await searchProducts("", { orderType });
         if (!Array.isArray(results)) {
-          throw new Error("Product and service search returned invalid results.");
+          throw new Error(
+            "Product and service search returned invalid results.",
+          );
         }
         const filteredItems = results.filter((item) => {
           const isWorkOrder =
@@ -112,7 +163,9 @@ export default function OrderForm({
         if (active) setAvailableItems(filteredItems);
       } catch {
         if (active) {
-          setItemsError("Unable to load products and services. Please try again.");
+          setItemsError(
+            "Unable to load products and services. Please try again.",
+          );
         }
       } finally {
         if (active) setItemsLoading(false);
@@ -135,49 +188,35 @@ export default function OrderForm({
       return;
     }
 
-    const existingIndex = items.findIndex(
-      (i) => String(i.item) === String(selectedItem._id)
+    // Always add as a NEW line item (no merging with existing rows)
+    appendItem(buildItemRow(selectedItem));
+  };
+
+  // Adds another row of the same product as the row at `index`
+  const handleAddAnother = (index) => {
+    const row = form.getValues(`items.${index}`);
+    if (!row) return;
+
+    const source = availableItems.find(
+      (a) => String(a._id) === String(row.item),
     );
 
-    if (existingIndex > -1) {
-      const currentQty = form.getValues(`items.${existingIndex}.quantity`) || 1;
-      form.setValue(`items.${existingIndex}.quantity`, currentQty + 1, {
-        shouldValidate: true,
-      });
-    } else {
-      const rawSizes = selectedItem.sizes || selectedItem.details?.sizes || [];
-      const itemIsCustom = selectedItem.isCustomSize ?? selectedItem.details?.isCustomSize ?? false;
-      const itemSizes = itemIsCustom
-        ? rawSizes.filter((s) => (typeof s === "object" ? s.size !== "Standard" : s !== "Standard"))
-        : rawSizes;
-      const firstSize = itemSizes.length > 0 ? itemSizes[0] : null;
-      const initialSize = firstSize
-        ? (typeof firstSize === 'object' ? firstSize.size : firstSize)
-        : (itemIsCustom ? "Custom" : "");
-      let initialPrice = Number(selectedItem.price) || 0;
-      if (firstSize && typeof firstSize === 'object' && firstSize.price !== undefined) {
-        initialPrice = Number(firstSize.price) || 0;
-      } else if (initialSize === "Custom") {
-        initialPrice = 0;
-      }
-
-      appendItem({
-        type: selectedItem.type,
-        item: selectedItem._id,
-        name: selectedItem.name,
-        quantity: 1,
-        price: initialPrice,
-        variant: selectedItem.variant,
-        size: initialSize,
-        customWidth: "",
-        customHeight: "",
-        customUnit: (selectedItem.unit === "inch" || selectedItem.details?.unit === "inch") ? "inch" : "ft",
-        customRate: Number(selectedItem.price) || (firstSize && typeof firstSize === 'object' && Number(firstSize.price)) || 0,
-        sizes: itemSizes,
-        isCustomSize: itemIsCustom,
-        customPriceAdded: false,
-      });
+    if (source) {
+      appendItem(buildItemRow(source));
+      return;
     }
+
+    // Fallback: product isn't in the loaded list, so clone the existing row
+    const isCustomRow = row.size === "Custom";
+    appendItem({
+      ...row,
+      quantity: 1,
+      price: isCustomRow ? 0 : row.price,
+      customSize: "",
+      customWidth: "",
+      customHeight: "",
+      customPriceAdded: false,
+    });
   };
 
   const recalcCustomPrice = (index, width, height, unit = "ft", rate) => {
@@ -191,19 +230,25 @@ export default function OrderForm({
       const label = `${h}x${w}`;
 
       if (calculatedPrice > 0) {
-        form.setValue(`items.${index}.price`, calculatedPrice, { shouldValidate: true });
+        form.setValue(`items.${index}.price`, calculatedPrice, {
+          shouldValidate: true,
+        });
       }
-      form.setValue(`items.${index}.customSize`, label, { shouldValidate: true });
-      form.setValue(`items.${index}.customPriceAdded`, true, { shouldValidate: true });
+      form.setValue(`items.${index}.customSize`, label, {
+        shouldValidate: true,
+      });
+      form.setValue(`items.${index}.customPriceAdded`, true, {
+        shouldValidate: true,
+      });
     } else {
-      const label = (w > 0 && h > 0) ? `${h}x${w}` : "";
+      const label = w > 0 && h > 0 ? `${h}x${w}` : "";
       form.setValue(`items.${index}.customSize`, label);
     }
   };
 
   return (
-    <>
-      {/* Shop */}
+    <div className="space-y-4">
+      {/* 1. Select Shop */}
       <FormField
         control={form.control}
         name="shop"
@@ -232,7 +277,7 @@ export default function OrderForm({
         )}
       />
 
-      {/* Type of Order */}
+      {/* 2. Type of Order */}
       <FormField
         control={form.control}
         name="orderType"
@@ -258,7 +303,7 @@ export default function OrderForm({
         )}
       />
 
-      {/* Purpose */}
+      {/* 3. Event Name */}
       <FormField
         control={form.control}
         name="eventName"
@@ -273,6 +318,7 @@ export default function OrderForm({
         )}
       />
 
+      {/* 4. Event Date */}
       <FormField
         control={form.control}
         name="eventDate"
@@ -287,7 +333,7 @@ export default function OrderForm({
         )}
       />
 
-      {/* Purpose */}
+      {/* 5. Purpose */}
       <FormField
         control={form.control}
         name="purpose"
@@ -302,7 +348,7 @@ export default function OrderForm({
         )}
       />
 
-      {/* Attachment Email */}
+      {/* 6. Enter your email */}
       <FormField
         control={form.control}
         name="attachmentEmail"
@@ -321,70 +367,16 @@ export default function OrderForm({
         )}
       />
 
-      {/* Items */}
-      <div className="space-y-3">
-        <FormLabel>Items</FormLabel>
+      {/* 7. Select Product / Service + added items */}
+      <div className="space-y-3 min-w-0 rounded-lg border p-4">
+        <FormLabel className="text-base">Items</FormLabel>
 
-        <div className="space-y-2">
-          <Label htmlFor="order-item-select" className="text-sm font-medium">
-            Select a Product / Service
-          </Label>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Select
-              value={selectedItemId}
-              onValueChange={setSelectedItemId}
-              disabled={itemsLoading || availableItems.length === 0}
-            >
-              <SelectTrigger id="order-item-select">
-                <SelectValue
-                  placeholder={
-                    itemsLoading
-                      ? "Loading products and services..."
-                      : "Select a product or service"
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {availableItems.map((item) => (
-                  <SelectItem key={item._id} value={String(item._id)}>
-                    {item.name}
-                    {item.type === "InventoryProduct" && item.variant
-                      ? ` • ${formatVariant(item.variant)}`
-                      : ""}
-                    {` — ${item.type === "InventoryProduct" ? "Product" : "Service"} • ₹${item.price}`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              type="button"
-              variant="outline"
-              className="shrink-0"
-              disabled={!selectedItemId || itemsLoading}
-              onClick={() => {
-                const selectedItem = availableItems.find(
-                  (item) => String(item._id) === selectedItemId
-                );
-                if (selectedItem) {
-                  handleSelectItem(selectedItem);
-                  setSelectedItemId("");
-                }
-              }}
-            >
-              Add product
-            </Button>
-          </div>
-          {itemsError && (
-            <p role="alert" className="text-sm text-destructive">
-              {itemsError}
-            </p>
-          )}
-          {!itemsLoading && !itemsError && availableItems.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              No products or services available for this order type.
-            </p>
-          )}
-        </div>
+        {itemFields.length === 0 && (
+          <p className="text-sm text-muted-foreground border border-dashed rounded-md p-4 text-center">
+            No items added yet. Select a product or service below and click "Add
+            product".
+          </p>
+        )}
 
         {itemFields.length > 0 && (
           <>
@@ -423,7 +415,8 @@ export default function OrderForm({
                     </span>
 
                     {/* Size Selector for services with fixed sizes or isCustomSize */}
-                    {((items[index]?.sizes && items[index]?.sizes.length > 0) || items[index]?.isCustomSize) && (
+                    {((items[index]?.sizes && items[index]?.sizes.length > 0) ||
+                      items[index]?.isCustomSize) && (
                       <div className="mt-1.5 space-y-1.5 w-full max-w-[240px]">
                         <FormField
                           control={form.control}
@@ -434,31 +427,66 @@ export default function OrderForm({
                                 Size
                               </FormLabel>
                               <Select
-                                value={field.value ? String(field.value) : undefined}
+                                value={
+                                  field.value ? String(field.value) : undefined
+                                }
                                 onValueChange={(val) => {
                                   field.onChange(val);
                                   if (val !== "Custom") {
-                                    form.setValue(`items.${index}.customSize`, "");
-                                    form.setValue(`items.${index}.customWidth`, "");
-                                    form.setValue(`items.${index}.customHeight`, "");
-                                    form.setValue(`items.${index}.customPriceAdded`, false);
+                                    form.setValue(
+                                      `items.${index}.customSize`,
+                                      "",
+                                    );
+                                    form.setValue(
+                                      `items.${index}.customWidth`,
+                                      "",
+                                    );
+                                    form.setValue(
+                                      `items.${index}.customHeight`,
+                                      "",
+                                    );
+                                    form.setValue(
+                                      `items.${index}.customPriceAdded`,
+                                      false,
+                                    );
                                     // Update price based on selected size
                                     const allSizes = items[index]?.sizes || [];
                                     const matchedSize = allSizes.find((sz) =>
-                                      typeof sz === "object" ? sz.size === val : sz === val
+                                      typeof sz === "object"
+                                        ? sz.size === val
+                                        : sz === val,
                                     );
-                                    if (matchedSize && typeof matchedSize === "object" && matchedSize.price !== undefined) {
-                                      form.setValue(`items.${index}.price`, Number(matchedSize.price) || 0, { shouldValidate: true });
+                                    if (
+                                      matchedSize &&
+                                      typeof matchedSize === "object" &&
+                                      matchedSize.price !== undefined
+                                    ) {
+                                      form.setValue(
+                                        `items.${index}.price`,
+                                        Number(matchedSize.price) || 0,
+                                        { shouldValidate: true },
+                                      );
                                     }
                                   } else {
                                     // Custom size selected: calculate from dimensions if already set
                                     const w = items[index]?.customWidth;
                                     const h = items[index]?.customHeight;
                                     const u = items[index]?.customUnit || "ft";
-                                    const currentRate = items[index]?.customRate;
-                                    const r = (currentRate !== undefined && currentRate !== "") ? Number(currentRate) : (Number(items[index]?.price) || 0);
-                                    if (currentRate === undefined || currentRate === "") {
-                                      form.setValue(`items.${index}.customRate`, r);
+                                    const currentRate =
+                                      items[index]?.customRate;
+                                    const r =
+                                      currentRate !== undefined &&
+                                      currentRate !== ""
+                                        ? Number(currentRate)
+                                        : Number(items[index]?.price) || 0;
+                                    if (
+                                      currentRate === undefined ||
+                                      currentRate === ""
+                                    ) {
+                                      form.setValue(
+                                        `items.${index}.customRate`,
+                                        r,
+                                      );
                                     }
                                     recalcCustomPrice(index, w, h, u, r);
                                   }
@@ -469,16 +497,27 @@ export default function OrderForm({
                                 </SelectTrigger>
                                 <SelectContent>
                                   {items[index]?.sizes?.map((sz) => {
-                                    const szLabel = typeof sz === "object" ? `${sz.size} (₹${sz.price})` : sz;
-                                    const szVal = typeof sz === "object" ? sz.size : sz;
+                                    const szLabel =
+                                      typeof sz === "object"
+                                        ? `${sz.size} (₹${sz.price})`
+                                        : sz;
+                                    const szVal =
+                                      typeof sz === "object" ? sz.size : sz;
                                     return (
-                                      <SelectItem key={szVal} value={szVal} className="text-xs">
+                                      <SelectItem
+                                        key={szVal}
+                                        value={szVal}
+                                        className="text-xs"
+                                      >
                                         {szLabel}
                                       </SelectItem>
                                     );
                                   })}
                                   {items[index]?.isCustomSize && (
-                                    <SelectItem value="Custom" className="text-xs font-semibold text-primary">
+                                    <SelectItem
+                                      value="Custom"
+                                      className="text-xs font-semibold text-primary"
+                                    >
                                       Custom
                                     </SelectItem>
                                   )}
@@ -489,49 +528,85 @@ export default function OrderForm({
                         />
 
                         {/* Dimension inputs when Custom is selected */}
-                        {items[index]?.isCustomSize && items[index]?.size === "Custom" && (
-                          <div className="rounded-md border p-2 bg-muted/20 space-y-1.5 mt-1.5 w-full min-w-[200px]">
-                            <div className="flex items-center justify-between text-[11px] font-semibold text-muted-foreground">
-                              <span>Dimensions</span>
-                              <span className="text-[10px] text-primary">Length × Width</span>
-                            </div>
+                        {items[index]?.isCustomSize &&
+                          items[index]?.size === "Custom" && (
+                            <div className="rounded-md border p-2 bg-muted/20 space-y-1.5 mt-1.5 w-full min-w-[200px]">
+                              <div className="flex items-center justify-between text-[11px] font-semibold text-muted-foreground">
+                                <span>Dimensions</span>
+                                <span className="text-[10px] text-primary">
+                                  Length × Width
+                                </span>
+                              </div>
 
-                            {/* Length x Width */}
-                            <div className="flex items-center gap-1.5">
-                              <Input
-                                type="number"
-                                min="0.1"
-                                step="0.1"
-                                placeholder="Length"
-                                className="h-7 text-xs bg-background flex-1"
-                                value={items[index]?.customHeight ?? ""}
-                                onFocus={(e) => e.target.select()}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  form.setValue(`items.${index}.customHeight`, val);
-                                  recalcCustomPrice(index, items[index]?.customWidth, val, items[index]?.customUnit, items[index]?.customRate);
-                                }}
-                              />
-                              <span className="text-xs text-muted-foreground font-bold">×</span>
-                              <Input
-                                type="number"
-                                min="0.1"
-                                step="0.1"
-                                placeholder="Width"
-                                className="h-7 text-xs bg-background flex-1"
-                                value={items[index]?.customWidth ?? ""}
-                                onFocus={(e) => e.target.select()}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  form.setValue(`items.${index}.customWidth`, val);
-                                  recalcCustomPrice(index, val, items[index]?.customHeight, items[index]?.customUnit, items[index]?.customRate);
-                                }}
-                              />
+                              {/* Length x Width */}
+                              <div className="flex items-center gap-1.5">
+                                <Input
+                                  type="number"
+                                  min="0.1"
+                                  step="0.1"
+                                  placeholder="Length"
+                                  className="h-7 text-xs bg-background flex-1"
+                                  value={items[index]?.customHeight ?? ""}
+                                  onFocus={(e) => e.target.select()}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    form.setValue(
+                                      `items.${index}.customHeight`,
+                                      val,
+                                    );
+                                    recalcCustomPrice(
+                                      index,
+                                      items[index]?.customWidth,
+                                      val,
+                                      items[index]?.customUnit,
+                                      items[index]?.customRate,
+                                    );
+                                  }}
+                                />
+                                <span className="text-xs text-muted-foreground font-bold">
+                                  ×
+                                </span>
+                                <Input
+                                  type="number"
+                                  min="0.1"
+                                  step="0.1"
+                                  placeholder="Width"
+                                  className="h-7 text-xs bg-background flex-1"
+                                  value={items[index]?.customWidth ?? ""}
+                                  onFocus={(e) => e.target.select()}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    form.setValue(
+                                      `items.${index}.customWidth`,
+                                      val,
+                                    );
+                                    recalcCustomPrice(
+                                      index,
+                                      val,
+                                      items[index]?.customHeight,
+                                      items[index]?.customUnit,
+                                      items[index]?.customRate,
+                                    );
+                                  }}
+                                />
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          )}
                       </div>
                     )}
+
+                    {/* Add another of this product */}
+                    <Button
+                      type="button"
+                      variant="link"
+                      size="sm"
+                      className="h-auto self-start p-0 mt-1.5 text-xs max-w-full justify-start"
+                      onClick={() => handleAddAnother(index)}
+                    >
+                      <span className="truncate">
+                        + Add another {items[index]?.name}
+                      </span>
+                    </Button>
                   </div>
 
                   <FormField
@@ -591,7 +666,9 @@ export default function OrderForm({
                   />
 
                   <div className="flex items-center gap-2 pt-2">
-                    {items[index]?.type === "Service" && items[index]?.size === "Custom" && (!price || price === 0) ? (
+                    {items[index]?.type === "Service" &&
+                    items[index]?.size === "Custom" &&
+                    (!price || price === 0) ? (
                       <span className="text-xs text-amber-600 dark:text-amber-400 font-medium whitespace-nowrap">
                         — (Enter dimensions)
                       </span>
@@ -614,11 +691,71 @@ export default function OrderForm({
             })}
           </>
         )}
+
+        {/* Select Product / Service (now below the added items) */}
+        <div className="space-y-2 pt-1">
+          <Label htmlFor="order-item-select" className="text-sm font-medium">
+            Select a Product / Service
+          </Label>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Select
+              value={selectedItemId}
+              onValueChange={setSelectedItemId}
+              disabled={itemsLoading || availableItems.length === 0}
+            >
+              <SelectTrigger id="order-item-select" className="w-full min-w-0">
+                <SelectValue
+                  placeholder={
+                    itemsLoading
+                      ? "Loading products and services..."
+                      : "Select a product or service"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {availableItems.map((item) => (
+                  <SelectItem key={item._id} value={String(item._id)}>
+                    {item.name}
+                    {item.type === "InventoryProduct" && item.variant
+                      ? ` • ${formatVariant(item.variant)}`
+                      : ""}
+                    {` — ${item.type === "InventoryProduct" ? "Product" : "Service"} • ₹${item.price}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              type="button"
+              variant="outline"
+              className="shrink-0"
+              disabled={!selectedItemId || itemsLoading}
+              onClick={() => {
+                const selectedItem = availableItems.find(
+                  (item) => String(item._id) === selectedItemId,
+                );
+                if (selectedItem) {
+                  handleSelectItem(selectedItem);
+                  setSelectedItemId("");
+                }
+              }}
+            >
+              Add product
+            </Button>
+          </div>
+          {itemsError && (
+            <p role="alert" className="text-sm text-destructive">
+              {itemsError}
+            </p>
+          )}
+          {!itemsLoading && !itemsError && availableItems.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              No products or services available for this order type.
+            </p>
+          )}
+        </div>
       </div>
 
-      <Separator className="my-2" />
-
-      {/* Proof Documents Upload (Department Admin Only) */}
+      {/* 8. Attachment (Department Admin Only) */}
       {isDeptAdmin && (
         <FormField
           control={form.control}
@@ -654,12 +791,16 @@ export default function OrderForm({
                       key={i}
                       className="flex items-center gap-1.5 bg-background border px-2.5 py-1 rounded text-xs"
                     >
-                      <span className="truncate max-w-[180px]">📄 {f.name}</span>
+                      <span className="truncate max-w-[180px]">
+                        📄 {f.name}
+                      </span>
                       <button
                         type="button"
                         className="text-red-500 font-bold ml-1 hover:text-red-700"
                         onClick={() => {
-                          const updated = field.value.filter((_, idx) => idx !== i);
+                          const updated = field.value.filter(
+                            (_, idx) => idx !== i,
+                          );
                           field.onChange(updated);
                         }}
                       >
@@ -674,7 +815,7 @@ export default function OrderForm({
         />
       )}
 
-      {/* Funding Method */}
+      {/* 9. Payment method */}
       <FormField
         control={form.control}
         name="fundingMethod"
@@ -700,7 +841,7 @@ export default function OrderForm({
                           amount: totalSponsorship,
                         },
                       ],
-                      { shouldValidate: true }
+                      { shouldValidate: true },
                     );
                   }
                 }}
@@ -710,7 +851,9 @@ export default function OrderForm({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="management">Management Amount</SelectItem>
-                  <SelectItem value="self_support">Self Support Amount</SelectItem>
+                  <SelectItem value="self_support">
+                    Self Support Amount
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </FormControl>
@@ -740,9 +883,7 @@ export default function OrderForm({
                       field.onChange("");
                       return;
                     }
-                    field.onChange(
-                      Math.min(parseFloat(raw) || 0, totalCost)
-                    );
+                    field.onChange(Math.min(parseFloat(raw) || 0, totalCost));
                   }}
                 />
               </FormControl>
@@ -773,9 +914,7 @@ export default function OrderForm({
                       field.onChange("");
                       return;
                     }
-                    field.onChange(
-                      Math.min(parseFloat(raw) || 0, totalCost)
-                    );
+                    field.onChange(Math.min(parseFloat(raw) || 0, totalCost));
                   }}
                 />
               </FormControl>
@@ -786,7 +925,6 @@ export default function OrderForm({
       )}
 
       <Separator className="my-2" />
-
 
       {/* Summary */}
       <div className="flex flex-col items-end gap-1 text-sm">
@@ -799,11 +937,11 @@ export default function OrderForm({
           <span>₹{totalAvailable.toFixed(2)}</span>
         </div>
         {overBudget && (
-          <span className="text-destructive text-xs">
+          <span className="text-destructive text-xs text-right">
             Order total exceeds available funds (management + self support)
           </span>
         )}
       </div>
-    </>
+    </div>
   );
 }
