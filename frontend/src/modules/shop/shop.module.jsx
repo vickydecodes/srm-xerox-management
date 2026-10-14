@@ -1,3 +1,5 @@
+import { allow } from "@/core/utils/allow.util";
+import { useAuth } from "@/core/contexts/auth.context";
 import { createCrud } from "@/core/factory/entity.crud";
 import { useShopColumns } from "./shop.columns";
 import { modals } from "./shop.modals";
@@ -8,6 +10,7 @@ import { createEntityQueryActions } from "@/core/utils/entity.util";
 
 export const useShopModule = (exported) => {
   const { openModal } = useUI();
+  const { user } = useAuth();
 
   const list = useShopStore((s) => s.list);
   const loading = useShopStore((s) => s.loading);
@@ -23,7 +26,7 @@ export const useShopModule = (exported) => {
     entity: "Shop",
     urls: shops,
     store: store,
-    getRole: () => "super_admin",
+    getRole: () => user?.role || null,
   });
 
   const openView = (shop) => {
@@ -87,6 +90,11 @@ export const useShopModule = (exported) => {
   });
 
   return {
+    allow: {
+      create: allow(undefined, user?.role),
+      update: allow(undefined, user?.role),
+      delete: allow(undefined, user?.role),
+    },
     get state() { return useShopStore.getState().list; },
     get loading() { return useShopStore.getState().loading; },
     get pagination() { return useShopStore.getState().pagination; },

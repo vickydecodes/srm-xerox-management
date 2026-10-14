@@ -1,3 +1,5 @@
+import { allow } from "@/core/utils/allow.util";
+import { useAuth } from "@/core/contexts/auth.context";
 import { createCrud } from "@/core/factory/entity.crud";
 import { useInventoryProductStore } from "./inventory-product.store";
 import { useUI } from "@/core/contexts/ui.context";
@@ -11,6 +13,7 @@ import { modals } from "./inventory-product.modals";
 
 export const useInventoryProductModule = (exported) => {
   const { openModal } = useUI();
+  const { user } = useAuth();
   const store = useInventoryProductStore();
   const { set, add, update, remove, setCurrent, setQuery } = store;
   const { inventoryProducts } = apiurls;
@@ -20,7 +23,7 @@ export const useInventoryProductModule = (exported) => {
     entity: 'Inventory Product',
     urls: inventoryProducts,
     store: store,
-    getRole: () => 'super_admin',
+    getRole: () => user?.role || null,
   });
 
 
@@ -77,6 +80,11 @@ export const useInventoryProductModule = (exported) => {
       setQuery,
     });
   return {
+    allow: {
+      create: allow(undefined, user?.role),
+      update: allow(undefined, user?.role),
+      delete: allow(undefined, user?.role),
+    },
     get state() {
       return useInventoryProductStore.getState().list;
     },

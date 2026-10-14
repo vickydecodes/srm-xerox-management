@@ -1,3 +1,4 @@
+import { allow } from "@/core/utils/allow.util";
 import { createCrud } from "@/core/factory/entity.crud";
 import { useOrderColumns } from "./order.columns";
 import { modals } from "./order.modals";
@@ -22,7 +23,7 @@ export const useOrderModule = (exported) => {
     entity: "Order",
     urls: orderUrls,
     store: store,
-    getRole: () => role || "super_admin",
+    getRole: () => user?.role || null,
   });
 
 
@@ -106,7 +107,7 @@ export const useOrderModule = (exported) => {
   const inProgress = (id) => crud.inProgress(id);
 
   const {
-    fetch: baseFetch,
+    fetch,
     reset,
     sortByColumn,
     presets,
@@ -120,13 +121,14 @@ export const useOrderModule = (exported) => {
     setQuery,
   });
 
-  // Always apply department scope for department_admin
-  const fetch = (params = {}) => {
-
-    return baseFetch({ ...params });
-  };
+  
 
   return {
+    allow: {
+      create: allow(undefined, user?.role),
+      update: allow(undefined, user?.role),
+      delete: allow(undefined, user?.role),
+    },
     get state() {
       return useOrderStore.getState().list;
     },

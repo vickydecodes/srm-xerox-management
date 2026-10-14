@@ -215,7 +215,7 @@ describe('Order API Endpoint Suite', () => {
       .field('attachmentEmail', 'conference@srmist.edu.in')
       .field('managementAmount', '500')
       .field(
-        'sponsors',
+        'self_supports',
         JSON.stringify([
           {
             name: 'Tech Sponsor',

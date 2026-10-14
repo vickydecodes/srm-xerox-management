@@ -1,3 +1,4 @@
+import { allow } from "@/core/utils/allow.util";
 import { createCrud } from "@/core/factory/entity.crud";
 import { useShopAdminColumns } from "./shop-admin.columns";
 import { modals } from "./shop-admin.modals";
@@ -19,7 +20,7 @@ export const useShopAdminModule = (exported) => {
 
   const store = useShopAdminStore();
   const { set, setCurrent, setQuery } = store;
-  const { adminResetPassword } = useAuth();
+  const { user, adminResetPassword } = useAuth();
 
   const { users } = apiurls;
 
@@ -27,7 +28,7 @@ export const useShopAdminModule = (exported) => {
     entity: 'Shop Admin',
     urls: users,
     store: store,
-    getRole: () => 'super_admin',
+    getRole: () => user?.role || null,
   });
 
   const openView = (admin) => {
@@ -94,16 +95,18 @@ export const useShopAdminModule = (exported) => {
     });
   };
 
-  const { fetch: baseFetch, reset: baseReset, sortByColumn, presets, csv, xlsx, pdf, getQuery } = createEntityQueryActions({
+  const { fetch, reset, sortByColumn, presets, csv, xlsx, pdf, getQuery } = createEntityQueryActions({
     crud,
     getQuery: () => useShopAdminStore.getState().query,
     setQuery,
   });
 
-  const fetch = (extras = {}) => baseFetch({ role: ROLE, ...extras });
-  const reset = (extras = {}) => baseReset({ role: ROLE, ...extras });
-
   return {
+    allow: {
+      create: allow(undefined, user?.role),
+      update: allow(undefined, user?.role),
+      delete: allow(undefined, user?.role),
+    },
     get state() { return useShopAdminStore.getState().list; },
     get loading() { return useShopAdminStore.getState().loading; },
     get pagination() { return useShopAdminStore.getState().pagination; },

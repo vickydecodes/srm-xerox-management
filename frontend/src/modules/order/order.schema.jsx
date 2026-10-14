@@ -17,8 +17,8 @@ const orderItemSchema = z.object({
   customRate: z.coerce.number().optional(),
 });
 
-const sponsorSchema = z.object({
-  name: z.string().min(1, { error: 'Sponsor name is required' }),
+const selfSupportSchema = z.object({
+  name: z.string().min(1, { error: 'Self support name is required' }),
   amount: z.coerce.number().min(0, { error: 'Amount cannot be negative' }),
 });
 
@@ -38,7 +38,7 @@ export const orderCreateSchema = z.object({
     .email({ message: 'Please enter a valid email address' })
     .min(1, { message: 'Email is required' }),
   managementAmount: z.coerce.number().min(0).optional(),
-  sponsors: z.array(sponsorSchema).default([]),
+  self_supports: z.array(selfSupportSchema).default([]),
   items: z.array(orderItemSchema).min(1, { error: 'Add at least one item' }),
   proofFiles: z
     .array(z.any())

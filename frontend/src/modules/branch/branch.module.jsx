@@ -1,3 +1,5 @@
+import { allow } from "@/core/utils/allow.util";
+import { useAuth } from "@/core/contexts/auth.context";
 import { createCrud } from "@/core/factory/entity.crud";
 import { useBranchColumns } from "./branch.coulmns";
 import { modals } from "./branch.modals";
@@ -8,6 +10,7 @@ import { createEntityQueryActions } from "@/core/utils/entity.util";
 
 export const useBranchModule = (exported) => {
   const { openModal } = useUI();
+  const { user } = useAuth();
   const store = useBranchStore();
   const { set, add, update, remove, setCurrent, setQuery } = store;
   const { branches } = apiurls;
@@ -16,7 +19,7 @@ export const useBranchModule = (exported) => {
     entity: 'Branch',
     urls: branches,
     store: store,
-    getRole: () => 'super_admin',
+    getRole: () => user?.role || null,
   });
 
   const openCreate = () => {
@@ -72,6 +75,11 @@ export const useBranchModule = (exported) => {
   });
 
   return {
+    allow: {
+      create: allow(undefined, user?.role),
+      update: allow(undefined, user?.role),
+      delete: allow(undefined, user?.role),
+    },
     get state() {
       return useBranchStore.getState().list;
     },

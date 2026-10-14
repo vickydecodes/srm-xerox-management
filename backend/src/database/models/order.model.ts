@@ -43,7 +43,7 @@ export interface IApprovalHistory {
   remarks?: string;
 }
 
-export interface ISponsor {
+export interface ISelfSupport {
   name: string;
   amount: number;
 }
@@ -69,7 +69,7 @@ export class OrderDocument {
   eventDate?: Date;
 
   managementAmount?: number;
-  sponsors!: ISponsor[];
+  self_supports!: ISelfSupport[];
 
   items!: IOrderItem[];
   proofs!: IProof[];
@@ -108,7 +108,7 @@ export class OrderDocument {
     }
     
     // Default initializations to replicate Mongoose behavior
-    if (!this.sponsors) this.sponsors = [];
+    this.self_supports = data.self_supports || data.sponsors || [];
     if (!this.items) this.items = [];
     if (!this.proofs) this.proofs = [];
     if (!this.branchAdminApproval) this.branchAdminApproval = { status: 'pending' };
@@ -152,12 +152,12 @@ export class OrderDocument {
       this.items.length > 0
     ) {
       const totalCost = this.items.reduce((sum, i) => sum + i.total, 0);
-      const totalSponsorship = (this.sponsors || []).reduce((sum, s) => sum + s.amount, 0);
-      const totalAvailable = (this.managementAmount ?? 0) + totalSponsorship;
+      const totalSelfSupport = (this.self_supports || []).reduce((sum, s) => sum + s.amount, 0);
+      const totalAvailable = (this.managementAmount ?? 0) + totalSelfSupport;
     
       if (totalCost > totalAvailable) {
         throw new Error(
-          `Order total (${totalCost}) exceeds available funds — management (${this.managementAmount ?? 0}) + sponsorship (${totalSponsorship})`
+          `Order total (${totalCost}) exceeds available funds — management (${this.managementAmount ?? 0}) + self support (${totalSelfSupport})`
         );
       }
     }
@@ -198,7 +198,7 @@ export class OrderDocument {
       createdBy: this.createdBy,
       bill: this.bill,
       // Complex json types
-      sponsors: this.sponsors as any,
+      self_supports: this.self_supports as any,
       items: this.items as any,
       proofs: this.proofs as any,
       branchAdminApproval: this.branchAdminApproval as any,

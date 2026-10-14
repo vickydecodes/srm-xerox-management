@@ -4,7 +4,7 @@ const testData = {
   branch: '6a7fff91511298995ff58941',
   purpose: 'aaaa',
   managementAmount: 0,
-  sponsors: [ { name: 'cookie inc', amount: 11111 } ],
+  self_supports: [ { name: 'cookie inc', amount: 11111 } ],
   items: [
     {
       type: 'Service',

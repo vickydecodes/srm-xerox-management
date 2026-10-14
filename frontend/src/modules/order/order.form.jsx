@@ -111,7 +111,7 @@ export default function OrderForm({ form, shops = [], searchProducts }) {
     name: "fundingMethod",
   });
   const items = useWatch({ control: form.control, name: "items" }) || [];
-  const sponsors = useWatch({ control: form.control, name: "sponsors" }) || [];
+  const selfSupports = useWatch({ control: form.control, name: "self_supports" }) || [];
   const managementAmount =
     useWatch({ control: form.control, name: "managementAmount" }) || 0;
 
@@ -119,7 +119,7 @@ export default function OrderForm({ form, shops = [], searchProducts }) {
     (sum, i) => sum + (Number(i?.quantity) || 0) * (Number(i?.price) || 0),
     0,
   );
-  const totalSponsorship = sponsors.reduce(
+  const totalSelfSupport = selfSupports.reduce(
     (sum, s) => sum + (Number(s?.amount) || 0),
     0,
   );
@@ -127,7 +127,7 @@ export default function OrderForm({ form, shops = [], searchProducts }) {
     fundingMethod === "management"
       ? Number(managementAmount || 0)
       : fundingMethod === "self_support"
-        ? totalSponsorship
+        ? totalSelfSupport
         : 0;
   const overBudget = totalCost > totalAvailable;
 
@@ -828,17 +828,17 @@ export default function OrderForm({ form, shops = [], searchProducts }) {
                 onValueChange={(value) => {
                   field.onChange(value);
                   if (value === "management") {
-                    form.setValue("sponsors", [], { shouldValidate: true });
+                    form.setValue("self_supports", [], { shouldValidate: true });
                   } else {
                     form.setValue("managementAmount", 0, {
                       shouldValidate: true,
                     });
                     form.setValue(
-                      "sponsors",
+                      "self_supports",
                       [
                         {
                           name: "Self Support",
-                          amount: totalSponsorship,
+                          amount: totalSelfSupport,
                         },
                       ],
                       { shouldValidate: true },
@@ -896,7 +896,7 @@ export default function OrderForm({ form, shops = [], searchProducts }) {
       {fundingMethod === "self_support" && (
         <FormField
           control={form.control}
-          name="sponsors.0.amount"
+          name="self_supports.0.amount"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Self Support Amount</FormLabel>

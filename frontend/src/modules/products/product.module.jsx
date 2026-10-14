@@ -1,3 +1,5 @@
+import { allow } from "@/core/utils/allow.util";
+import { useAuth } from "@/core/contexts/auth.context";
 import { createCrud } from "@/core/factory/entity.crud";
 import { useProductColumns } from "./product.columns";
 import { modals } from "./product.modals";
@@ -8,6 +10,7 @@ import { createEntityQueryActions } from "@/core/utils/entity.util";
 
 export const useProductModule = (exported) => {
   const { openModal } = useUI();
+  const { user } = useAuth();
   const store = useProductStore();
   const { set, add, update, remove, setCurrent, setQuery } = store;
 
@@ -17,7 +20,7 @@ export const useProductModule = (exported) => {
     entity: "Product",
     urls: products,
     store: store,
-    getRole: () => "super_admin",
+    getRole: () => user?.role || null,
   });
 
   const openView = (product) => {
@@ -88,6 +91,11 @@ export const useProductModule = (exported) => {
   });
 
   return {
+    allow: {
+      create: allow(undefined, user?.role),
+      update: allow(undefined, user?.role),
+      delete: allow(undefined, user?.role),
+    },
     get state() {
       return useProductStore.getState().list;
     },

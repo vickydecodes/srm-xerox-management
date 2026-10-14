@@ -1,3 +1,4 @@
+import { allow } from "@/core/utils/allow.util";
 import { createCrud } from "@/core/factory/entity.crud";
 import { useCreditColumns } from "./credits.columns";
 import { modals } from "./credits.modals";
@@ -25,7 +26,7 @@ export const useCreditModule = (exported) => {
     entity: "Credit",
     urls: credits,
     store: store,
-    getRole: () => "super_admin",
+    getRole: () => user?.role || null,
   });
 
   const openCreate = () => {
@@ -52,6 +53,11 @@ export const useCreditModule = (exported) => {
   });
 
   return {
+    allow: {
+      create: allow(undefined, user?.role),
+      update: allow(undefined, user?.role),
+      delete: allow(undefined, user?.role),
+    },
     get state() { return useCreditStore.getState().list; },
     get loading() { return useCreditStore.getState().loading; },
     get pagination() { return useCreditStore.getState().pagination; },

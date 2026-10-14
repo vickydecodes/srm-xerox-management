@@ -1,3 +1,5 @@
+import { allow } from "@/core/utils/allow.util";
+import { useAuth } from "@/core/contexts/auth.context";
 import { createCrud } from "@/core/factory/entity.crud";
 import { useDepartmentColumns } from "./department.columns";
 import { modals } from "./department.modals";
@@ -8,6 +10,7 @@ import { createEntityQueryActions } from "@/core/utils/entity.util";
 
 export const useDepartmentModule = (exported) => {
   const { openModal } = useUI();
+  const { user } = useAuth();
 
   const list = useDepartmentStore((s) => s.list);
   const loading = useDepartmentStore((s) => s.loading);
@@ -23,7 +26,7 @@ export const useDepartmentModule = (exported) => {
     entity: "Department",
     urls: departments,
     store: store,
-    getRole: () => "super_admin",
+    getRole: () => user?.role || null,
   });
 
   const openView = (department) => {
@@ -98,6 +101,11 @@ export const useDepartmentModule = (exported) => {
   const clearCredit = (id, data) => crud.clearCredit(id, data);
 
   return {
+    allow: {
+      create: allow(undefined, user?.role),
+      update: allow(undefined, user?.role),
+      delete: allow(undefined, user?.role),
+    },
     get state() {
       return useDepartmentStore.getState().list;
     },

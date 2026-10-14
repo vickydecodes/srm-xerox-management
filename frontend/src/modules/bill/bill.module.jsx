@@ -1,3 +1,5 @@
+import { allow } from "@/core/utils/allow.util";
+import { useAuth } from "@/core/contexts/auth.context";
 import { createCrud } from "@/core/factory/entity.crud";
 import { useBillColumns } from "./bill.coulmns";
 import { modals } from "./bill.modals";
@@ -9,6 +11,7 @@ import { useAction } from "@/core/hooks/useAction";
 
 export const useBillModule = (exported) => {
   const { openModal } = useUI();
+  const { user } = useAuth();
   const { navigateWith } = useAction();
   const store = useBillStore();
   const { setQuery } = store;
@@ -18,7 +21,7 @@ export const useBillModule = (exported) => {
     entity: 'Bill',
     urls: bills,
     store: store,
-    getRole: () => 'super_admin',
+    getRole: () => user?.role || null,
   });
 
   const openView = (bill) => {
@@ -61,6 +64,11 @@ export const useBillModule = (exported) => {
   });
 
   return {
+    allow: {
+      create: allow(undefined, user?.role),
+      update: allow(undefined, user?.role),
+      delete: allow(undefined, user?.role),
+    },
     get state() {
       return useBillStore.getState().list;
     },

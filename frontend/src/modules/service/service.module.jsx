@@ -1,3 +1,5 @@
+import { allow } from "@/core/utils/allow.util";
+import { useAuth } from "@/core/contexts/auth.context";
 import { createCrud } from "@/core/factory/entity.crud";
 import { useServiceColumns } from "./service.columns";
 import { modals } from "./service.modals";
@@ -8,6 +10,7 @@ import { createEntityQueryActions } from "@/core/utils/entity.util";
 
 export const useServiceModule = (exported) => {
   const { openModal } = useUI();
+  const { user } = useAuth();
 
   
   const list = useServiceStore((s) => s.list);
@@ -24,7 +27,7 @@ export const useServiceModule = (exported) => {
     entity: "Service",
     urls: services,
     store: store,
-    getRole: () => "super_admin",
+    getRole: () => user?.role || null,
   });
 
   const openErase = (id) => {
@@ -90,6 +93,11 @@ export const useServiceModule = (exported) => {
   });
 
   return {
+    allow: {
+      create: allow(undefined, user?.role),
+      update: allow(undefined, user?.role),
+      delete: allow(undefined, user?.role),
+    },
     get state() { return useServiceStore.getState().list; },
     get loading() { return useServiceStore.getState().loading; },
     get pagination() { return useServiceStore.getState().pagination; },

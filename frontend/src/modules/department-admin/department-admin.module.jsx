@@ -1,3 +1,4 @@
+import { allow } from "@/core/utils/allow.util";
 import { createCrud } from "@/core/factory/entity.crud";
 import { useDepartmentAdminColumns } from "./department-admin.columns";
 import { modals } from "./department-admin.modals";
@@ -19,6 +20,7 @@ export const useDepartmentAdminModule = (exported) => {
 
   const store = useDepartmentAdminStore();
   const { set, setCurrent, setQuery } = store;
+  const { user, adminResetPassword } = useAuth();
 
   const { users } = apiurls;
 
@@ -26,10 +28,8 @@ export const useDepartmentAdminModule = (exported) => {
     entity: "Department Admin",
     urls: users,
     store: store,
-    getRole: () => "super_admin",
+    getRole: () => user?.role || null,
   });
-
-  const { adminResetPassword } = useAuth();
 
   const openResetPassword = (admin) => {
     const adminId = admin._id || admin.id;
@@ -99,8 +99,8 @@ export const useDepartmentAdminModule = (exported) => {
   };
 
   const {
-    fetch: baseFetch,
-    reset: baseReset,
+    fetch,
+    reset,
     sortByColumn,
     presets,
     csv,
@@ -113,10 +113,12 @@ export const useDepartmentAdminModule = (exported) => {
     setQuery,
   });
 
-  const fetch = (extras = {}) => baseFetch({ role: ROLE, ...extras });
-  const reset = (extras = {}) => baseReset({ role: ROLE, ...extras });
-
   return {
+    allow: {
+      create: allow(['super_admin', 'branch_admin'], user?.role),
+      update: allow(undefined, user?.role),
+      delete: allow(undefined, user?.role),
+    },
     get state() { return useDepartmentAdminStore.getState().list; },
     get loading() { return useDepartmentAdminStore.getState().loading; },
     get pagination() { return useDepartmentAdminStore.getState().pagination; },

@@ -82,7 +82,7 @@ model Order {
   bill             String?
 
   // JSON fields for complex nested docs
-  sponsors            Json @default("[]")
+  self_supports       Json @default("[]")
   items               Json @default("[]")
   proofs              Json @default("[]")
   branchAdminApproval Json @default("{}")

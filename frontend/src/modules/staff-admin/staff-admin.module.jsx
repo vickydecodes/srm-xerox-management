@@ -1,3 +1,4 @@
+import { allow } from "@/core/utils/allow.util";
 import { createCrud } from "@/core/factory/entity.crud";
 import { useStaffColumns } from "./staff-admin.columns";
 import { modals } from "./staff-admin.modals";
@@ -11,7 +12,7 @@ const ROLE = 'staff';
 
 export const useStaffModule = (exported) => {
   const { openModal } = useUI();
-  const {adminResetPassword}=useAuth()
+  const { user, adminResetPassword }=useAuth()
 
   const list = useStaffStore((s) => s.list);
   const loading = useStaffStore((s) => s.loading);
@@ -27,7 +28,7 @@ export const useStaffModule = (exported) => {
     entity: 'Staff',
     urls: users,
     store: store,
-    getRole: () => 'super_admin',
+    getRole: () => user?.role || null,
   });
 
   const openView = (staff) => {
@@ -92,16 +93,18 @@ export const useStaffModule = (exported) => {
     });
   };
 
-  const { fetch: baseFetch, reset: baseReset, sortByColumn, presets, csv, xlsx, pdf, getQuery } = createEntityQueryActions({
+  const { fetch, reset, sortByColumn, presets, csv, xlsx, pdf, getQuery } = createEntityQueryActions({
     crud,
     getQuery: () => useStaffStore.getState().query,
     setQuery,
   });
 
-  const fetch = (extras = {}) => baseFetch({ role: ROLE, ...extras });
-  const reset = (extras = {}) => baseReset({ role: ROLE, ...extras });
-
   return {
+    allow: {
+      create: allow(undefined, user?.role),
+      update: allow(undefined, user?.role),
+      delete: allow(undefined, user?.role),
+    },
     get state() { return useStaffStore.getState().list; },
     get loading() { return useStaffStore.getState().loading; },
     get pagination() { return useStaffStore.getState().pagination; },

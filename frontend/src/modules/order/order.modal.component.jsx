@@ -192,8 +192,8 @@ export const View = ({ order, exported, closeModal } = {}) => {
           <div className="rounded-md border p-3">
             <span className="text-muted-foreground block">Self Support</span>
             <span>
-              {order?.sponsors?.length
-                ? order.sponsors
+              {order?.self_supports?.length
+                ? order.self_supports
                     .map((s) => `${s.name || "Self Support"} (₹${Number(s.amount || 0).toFixed(2)})`)
                     .join(", ")
                 : "-"}
@@ -489,7 +489,7 @@ export const Create = ({
       attachmentEmail: "",
       fundingMethod: "",
       managementAmount: 0,
-      sponsors: [],
+      self_supports: [],
       items: [],
       proofFiles: [],
     },
@@ -559,7 +559,7 @@ export const Create = ({
       }
     }
     if (errors.proofFiles) messages.push(errors.proofFiles.message || "At least one proof document (Image or PDF) is required");
-    if (errors.sponsors) messages.push("Please check self-support entries");
+    if (errors.self_supports || errors.sponsors) messages.push("Please check self-support entries");
 
     const firstMsg = messages[0] || "Please fill in all required fields before saving";
     toast.error(firstMsg);
@@ -657,7 +657,7 @@ export const Edit = ({
       attachmentEmail: order?.attachmentEmail || "",
       fundingMethod: "",
       managementAmount: order?.managementAmount || 0,
-      sponsors: order?.sponsors || [],
+      self_supports: order?.self_supports || order?.self_supports || [],
       proofFiles: [],
       items:
         order?.items?.map((i) => ({

@@ -59,7 +59,7 @@ export const createOrderSchema = z.object({
     .preprocess(parseJsonIfNeeded, z.coerce.number().min(0, 'Management amount cannot be negative'))
     .optional(),
 
-  sponsors: z.preprocess(
+  self_supports: z.preprocess(
     parseJsonIfNeeded,
     z
       .array(
@@ -67,9 +67,9 @@ export const createOrderSchema = z.object({
           name: z
             .string()
             .trim()
-            .min(1, 'Sponsor name is required'),
+            .min(1, 'Self support name is required'),
 
-          amount: z.coerce.number().min(0, 'Sponsor amount cannot be negative'),
+          amount: z.coerce.number().min(0, 'Self support amount cannot be negative'),
         })
       )
       .optional()

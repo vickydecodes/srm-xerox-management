@@ -55,6 +55,10 @@ vi.mock('@/core/contexts/ui.context', () => ({
   useUI: () => ({ openModal: vi.fn() }),
 }));
 
+vi.mock('@/core/contexts/auth.context', () => ({
+  useAuth: () => ({ user: { role: 'super_admin' }, role: 'super_admin', adminResetPassword: vi.fn() }),
+}));
+
 // ---------------------------------------------------------------------------
 // Module registry — add one line per module here.
 // Only `branch` is wired below as the reference implementation;
@@ -128,6 +132,15 @@ describe.each(MODULES)('module contract: $name', ({ useModule, useStore, apiUrls
     expect(Array.isArray(result.current.state)).toBe(true);
     expect(result.current.loading).toBeDefined();
     expect(result.current.pagination).toBeDefined();
+  });
+
+  test('module hook exposes allow permissions object', () => {
+    const { result } = renderHook(() => useModule());
+
+    expect(result.current.allow).toBeDefined();
+    expect(typeof result.current.allow.create).toBe('boolean');
+    expect(typeof result.current.allow.update).toBe('boolean');
+    expect(typeof result.current.allow.delete).toBe('boolean');
   });
 
   test('module hook exposes store passthrough methods', () => {

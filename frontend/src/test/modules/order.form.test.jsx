@@ -18,7 +18,7 @@ function Wrapper(props) {
       fundingMethod: '',
       managementAmount: 0,
       items: [],
-      sponsors: [],
+      self_supports: [],
       proofFiles: [],
     },
   });

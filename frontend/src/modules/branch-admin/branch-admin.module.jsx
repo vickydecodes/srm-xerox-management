@@ -1,3 +1,4 @@
+import { allow } from "@/core/utils/allow.util";
 import { createCrud } from "@/core/factory/entity.crud";
 import { useBranchAdminColumns } from "./branch-admin.columns";
 import { modals } from "./branch-admin.modals";
@@ -19,7 +20,7 @@ export const useBranchAdminModule = (exported) => {
 
   const store = useBranchAdminStore();
   const { set, setCurrent, setQuery } = store;
-  const { adminResetPassword } = useAuth();
+  const { user, adminResetPassword } = useAuth();
 
   const { users } = apiurls;
 
@@ -27,7 +28,7 @@ export const useBranchAdminModule = (exported) => {
     entity: "Branch Admin",
     urls: users,
     store: store,
-    getRole: () => "super_admin",
+    getRole: () => user?.role || null,
   });
 
   const openView = (admin) => {
@@ -93,9 +94,7 @@ export const useBranchAdminModule = (exported) => {
     });
   };
 
-  const {
-    fetch: baseFetch,
-    reset: baseReset,
+  const { fetch, reset,
     sortByColumn,
     presets,
     csv,
@@ -108,11 +107,14 @@ export const useBranchAdminModule = (exported) => {
     setQuery,
   });
 
-  // always scope to role: branch_admin, since `users` is a shared collection
-  const fetch = (extras = {}) => baseFetch({ role: ROLE, ...extras });
-  const reset = (extras = {}) => baseReset({ role: ROLE, ...extras });
+  
 
   return {
+    allow: {
+      create: allow(undefined, user?.role),
+      update: allow(undefined, user?.role),
+      delete: allow(undefined, user?.role),
+    },
     get state() { return useBranchAdminStore.getState().list; },
     get loading() { return useBranchAdminStore.getState().loading; },
     get pagination() { return useBranchAdminStore.getState().pagination; },

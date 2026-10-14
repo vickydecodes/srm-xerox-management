@@ -21,7 +21,7 @@ const validOrder = {
   branch: 'branch-1',       // required
   attachmentEmail: 'user@example.com',
   items: [validItem],
-  sponsors: [],
+  self_supports: [],
   proofFiles: [{ name: 'proof.pdf' }],
 };
 
@@ -123,19 +123,19 @@ describe('orderCreateSchema', () => {
     expect(r.success).toBe(false);
   });
 
-  it('accepts sponsors with name and amount', () => {
+  it('accepts self_supports with name and amount', () => {
     const r = orderCreateSchema.safeParse({
       ...validOrder,
       fundingMethod: 'self_support',
-      sponsors: [{ name: 'CSR', amount: 100 }],
+      self_supports: [{ name: 'CSR', amount: 100 }],
     });
     expect(r.success).toBe(true);
   });
 
-  it('rejects sponsor with negative amount', () => {
+  it('rejects self support with negative amount', () => {
     const r = orderCreateSchema.safeParse({
       ...validOrder,
-      sponsors: [{ name: 'CSR', amount: -5 }],
+      self_supports: [{ name: 'CSR', amount: -5 }],
     });
     expect(r.success).toBe(false);
   });
