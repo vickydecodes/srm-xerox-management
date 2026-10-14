@@ -28,6 +28,9 @@ vi.mock('@/modules/search', () => ({
 vi.mock('@/modules/branch-admin', () => ({
   useBranchAdminModule: () => ({ list: vi.fn() }),
 }));
+vi.mock('@/modules/manager', () => ({
+  useManagerModule: () => ({ list: vi.fn() }),
+}));
 vi.mock('@/modules/shop-admin', () => ({
   useShopAdminModule: () => ({ list: vi.fn() }),
 }));
@@ -78,6 +81,7 @@ describe('ApiContext', () => {
       'inventoryProducts',
       'search',
       'branchAdmins',
+      'managers',
       'shopAdmins',
       'staffs',
       'departmentAdmins',

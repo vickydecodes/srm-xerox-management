@@ -9,6 +9,7 @@ import { useBranchModule } from '@/modules/branch';
 import { useInventoryProductModule } from '@/modules/inventory-product';
 import { useSearchModule } from '@/modules/search';
 import { useBranchAdminModule } from "@/modules/branch-admin";
+import { useManagerModule } from "@/modules/manager";
 import { useShopAdminModule } from "@/modules/shop-admin";
 import { useStaffModule } from "@/modules/staff-admin";
 import { useDepartmentAdminModule } from "@/modules/department-admin";
@@ -43,6 +44,7 @@ export const ApiProvider = ({ children }) => {
     const inventoryProductModule = useInventoryProductModule(exported);
     const searchModule = useSearchModule(exported);
     const branchAdminModule = useBranchAdminModule(exported);
+    const managerModule = useManagerModule(exported);
     const shopAdminModule = useShopAdminModule(exported);
     const staffModule = useStaffModule(exported);
     const departmentAdminModule = useDepartmentAdminModule(exported);
@@ -62,6 +64,7 @@ export const ApiProvider = ({ children }) => {
         inventoryProducts: inventoryProductModule,
         search: searchModule,
         branchAdmins: branchAdminModule,
+        managers: managerModule,
         shopAdmins: shopAdminModule,
         staffs: staffModule,
         departmentAdmins: departmentAdminModule,

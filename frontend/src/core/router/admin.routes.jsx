@@ -14,6 +14,7 @@ import {
   IconSettings,
   IconBuildingStore,
   IconUserCog,
+  IconUserCheck,
   IconUsers,
   IconShoppingCart,
   IconTools,
@@ -26,6 +27,7 @@ import Product from "@/pages/product/product";
 import Bill from "@/pages/bill/bill";
 import Branch from "@/pages/branch/branch";
 import BranchAdmin from "@/pages/branch-admin/branch-admin";
+import Manager from "@/pages/manager/manager";
 import BillCreation from "@/pages/bill-creation/bill-creation";
 import InventoryProduct from "@/pages/inventory-product/inventory-product";
 import ShopAdmin from "@/pages/shop-admin/shop-admin";
@@ -66,6 +68,14 @@ export const adminRoutes = {
       description: "Branch administrator controls and management.",
       icon: <IconUserCog className="h-5 w-5 shrink-0" />,
       element: <BranchAdmin />,
+    },
+    {
+      path: "/super_admin/manager",
+      label: "Manager",
+      title: "Manager Management",
+      description: "Manage branch managers and their details.",
+      icon: <IconUserCheck className="h-5 w-5 shrink-0" />,
+      element: <Manager />,
     },
     {
       path: "/super_admin/department",

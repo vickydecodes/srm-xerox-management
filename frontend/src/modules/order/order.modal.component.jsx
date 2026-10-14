@@ -65,7 +65,7 @@ export const View = ({ order, exported, closeModal } = {}) => {
   const { user } = useAuth();
   const { orders } = exported;
   const isSuperAdmin = user?.role === "super_admin";
-  const isBranchAdmin = user?.role === "branch_admin";
+  const isBranchAdmin = user?.role === "branch_admin" || user?.role === "manager";
   const isDeptAdmin = user?.role === "department_admin";
   const isShopOrStaff = user?.role === "shop_admin" || user?.role === "staff";
 
@@ -332,11 +332,13 @@ export const View = ({ order, exported, closeModal } = {}) => {
                     <span>
                       {history.approver?.role === "branch_admin"
                         ? "Branch Admin"
-                        : history.approver?.role === "super_admin"
-                          ? "Super Admin"
-                          : history.approver?.role === "department_admin"
-                            ? "Department Admin"
-                            : "User"}
+                        : history.approver?.role === "manager"
+                          ? "Manager"
+                          : history.approver?.role === "super_admin"
+                            ? "Super Admin"
+                            : history.approver?.role === "department_admin"
+                              ? "Department Admin"
+                              : "User"}
                       :{" "}
                       <span
                         className={

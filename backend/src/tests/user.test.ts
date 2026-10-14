@@ -145,6 +145,43 @@ describe('User API Endpoint Suite', () => {
     tester.assertValidationError(res);
   });
 
+  it('should return validation error when creating manager without branch', async () => {
+    const timestamp = Date.now();
+    const res = await tester.post(
+      baseRoute,
+      {
+        name: `Test Manager No Branch ${timestamp}`,
+        email: `manager_nobranch_${timestamp}@srmist.edu.in`,
+        phone: '9876543213',
+        password: 'Password123',
+        role: 'manager',
+      },
+      token
+    );
+
+    tester.assertValidationError(res);
+  });
+
+  it('should successfully create a manager user with branch', async () => {
+    const timestamp = Date.now();
+    const res = await tester.post(
+      baseRoute,
+      {
+        name: `Test Manager ${timestamp}`,
+        email: `manager_${timestamp}@srmist.edu.in`,
+        phone: '9876543214',
+        password: 'Password123',
+        role: 'manager',
+        branch: testBranchId,
+      },
+      token
+    );
+
+    tester.assertCreated(res, 'User', (data) => {
+      expect(data.role).to.equal('manager');
+    });
+  });
+
   it('should successfully fetch all users', async () => {
     const res = await tester.get(baseRoute, token);
 

@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/core/contexts/auth.context";
 import { useApi } from "@/core/contexts/api.context";
 import { toast } from "sonner";
 import {
@@ -82,6 +83,7 @@ const chartConfig = {
 
 export default function BaDashboard({ data, refreshData }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { bills: billsModule } = useApi();
   const stats = data?.stats || {};
   const methods = data?.paymentMethods || [];
@@ -121,11 +123,13 @@ export default function BaDashboard({ data, refreshData }) {
     { title: "Inventory Products", value: stats.inventoryProducts || 0, icon: <IconReceipt className="w-5 h-5 text-primary" /> },
   ];
 
+  const basePath = `/${user?.role || 'branch_admin'}`;
+
   const quickActions = [
-    { title: "Manage Departments", icon: <IconBuildingCommunity className="w-5 h-5" />, path: "/branch_admin/department" },
-    { title: "Department Admins", icon: <IconUsers className="w-5 h-5" />, path: "/branch_admin/department-admin" },
-    { title: "View Orders", icon: <IconClipboardList className="w-5 h-5" />, path: "/branch_admin/order" },
-    { title: "Credit Tracker", icon: <IconCreditCard className="w-5 h-5" />, path: "/branch_admin/credits" },
+    { title: "Manage Departments", icon: <IconBuildingCommunity className="w-5 h-5" />, path: `${basePath}/department` },
+    { title: "Department Admins", icon: <IconUsers className="w-5 h-5" />, path: `${basePath}/department-admin` },
+    { title: "View Orders", icon: <IconClipboardList className="w-5 h-5" />, path: `${basePath}/order` },
+    { title: "Credit Tracker", icon: <IconCreditCard className="w-5 h-5" />, path: `${basePath}/credits` },
   ];
 
   // Data preps
@@ -218,7 +222,7 @@ export default function BaDashboard({ data, refreshData }) {
                 <h3 className="text-sm font-medium text-foreground">Recent Activity</h3>
                 <p className="text-xs text-muted-foreground">Latest checkout logs.</p>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => navigate("/branch_admin/bill")} className="text-xs h-7">
+              <Button variant="ghost" size="sm" onClick={() => navigate(`${basePath}/bill`)} className="text-xs h-7">
                 View All
               </Button>
             </div>

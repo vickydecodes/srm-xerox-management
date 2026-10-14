@@ -18,6 +18,7 @@ export const baseUserSchema = z.object({
   role: z.enum([
     'super_admin',
     'branch_admin',
+    'manager',
     'department_admin',
     'shop_admin',
     'staff',
@@ -37,7 +38,7 @@ export const createUserSchema = baseUserSchema.refine((data) => {
   if (data.role === 'department_admin') {
     return !!data.department && !!data.branch;
   }
-  if (data.role === 'branch_admin') {
+  if (data.role === 'branch_admin' || data.role === 'manager') {
     return !!data.branch;
   }
   return true;

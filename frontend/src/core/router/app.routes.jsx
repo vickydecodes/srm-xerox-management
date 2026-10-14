@@ -3,6 +3,7 @@ import { Route, Routes } from 'react-router-dom';
 import Layout from '@/components/global/layout.jsx';
 import { adminRoutes } from './admin.routes.jsx';
 import { branchAdminRoutes } from './branch.routes.jsx';
+import { managerRoutes } from './manager.routes.jsx';
 import { departmentAdminRoutes } from './department.routes.jsx';
 import { shopAdminRoutes } from './shop.routes.jsx';
 import { staffRoutes } from './staff.routes.jsx';
@@ -17,6 +18,7 @@ import PublicRoute from './public.route.jsx';
 const roleRouteGroups = [
     adminRoutes,
     branchAdminRoutes,
+    managerRoutes,
     departmentAdminRoutes,
     shopAdminRoutes,
     staffRoutes,

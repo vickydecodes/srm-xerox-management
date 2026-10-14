@@ -66,7 +66,7 @@ export const View = ({ admin } = {}) => (
 
 export const Create = ({ submitFn = () => {}, closeModal = () => {}, exported } = {}) => {
   const { user } = useAuth();
-  const isBranchAdmin = user?.role === "branch_admin";
+  const isBranchAdmin = user?.role === "branch_admin" || user?.role === "manager";
   const userBranchId = safeId(user?.branch);
 
   const form = useForm({
@@ -146,7 +146,7 @@ export const Create = ({ submitFn = () => {}, closeModal = () => {}, exported } 
 
 export const Edit = ({ admin, submitFn = () => {}, closeModal = () => {}, exported } = {}) => {
   const { user } = useAuth();
-  const isBranchAdmin = user?.role === "branch_admin";
+  const isBranchAdmin = user?.role === "branch_admin" || user?.role === "manager";
 
   const form = useForm({
     resolver: zodResolver(departmentAdminEditSchema),

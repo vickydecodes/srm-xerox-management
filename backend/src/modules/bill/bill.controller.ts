@@ -62,7 +62,7 @@ const controllers = {
       if (!userDept || userDept !== id) {
         return sendResponse.forbidden?.(res, 'Access denied to bills for this department') ?? res.status(403).json({ message: 'Forbidden' });
       }
-    } else if (role === 'branch_admin') {
+    } else if (role === 'branch_admin' || role === 'manager') {
       const userBranch = req.user?.branch ? String(req.user.branch) : (req.user?.id ? (await User.findById(req.user.id))?.branch?.toString() : undefined);
       const dept = await Department.findById(id);
       if (!dept || String(dept.branch) !== String(userBranch)) {
@@ -86,7 +86,7 @@ const controllers = {
       if (bill.paymentMethod !== 'CREDIT' || String(bill.department) !== String(userDept)) {
         return sendResponse.forbidden?.(res, 'Access denied to this bill') ?? res.status(403).json({ message: 'Forbidden' });
       }
-    } else if (role === 'branch_admin') {
+    } else if (role === 'branch_admin' || role === 'manager') {
       const userBranch = req.user?.branch ? String(req.user.branch) : (req.user?.id ? (await User.findById(req.user.id))?.branch?.toString() : undefined);
       let isBranch = String(bill.branch) === String(userBranch);
       if (!isBranch && bill.department) {
@@ -183,7 +183,7 @@ const controllers = {
       if (bill.paymentMethod !== 'CREDIT' || String(bill.department) !== String(userDept)) {
         return sendResponse.forbidden?.(res, 'Access denied to this bill') ?? res.status(403).json({ message: 'Forbidden' });
       }
-    } else if (role === 'branch_admin') {
+    } else if (role === 'branch_admin' || role === 'manager') {
       const userBranch = req.user?.branch ? String(req.user.branch) : (req.user?.id ? (await User.findById(req.user.id))?.branch?.toString() : undefined);
       let isBranch = String(bill.branch) === String(userBranch);
       if (!isBranch && bill.department) {

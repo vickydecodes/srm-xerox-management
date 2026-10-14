@@ -249,7 +249,7 @@ export const getAllBills = async (
       department: userDept || '__NONE__',
       paymentMethod: 'CREDIT',
     };
-  } else if (role === 'branch_admin') {
+  } else if (role === 'branch_admin' || role === 'manager') {
     // Branch user should only get their branch's bills, and only CREDIT bills (no CASH or UPI)
     let userBranch = ctx?.branch;
     if (!userBranch && ctx?.id) {

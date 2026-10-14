@@ -93,6 +93,7 @@ vi.mock("@/pages/settings/settings", () => ({
 import AppRoutes from "@/core/router/app.routes";
 import { adminRoutes } from "@/core/router/admin.routes";
 import { branchAdminRoutes } from "@/core/router/branch.routes";
+import { managerRoutes } from "@/core/router/manager.routes";
 import { departmentAdminRoutes } from "@/core/router/department.routes";
 import { shopAdminRoutes } from "@/core/router/shop.routes";
 import { staffRoutes } from "@/core/router/staff.routes";
@@ -110,6 +111,7 @@ describe("Route configs (shape)", () => {
   const groups = [
     adminRoutes,
     branchAdminRoutes,
+    managerRoutes,
     departmentAdminRoutes,
     shopAdminRoutes,
     staffRoutes,
@@ -144,8 +146,9 @@ describe("Route configs (shape)", () => {
     expect(paths).toEqual(
       expect.arrayContaining([
         "/super_admin/",
-        "/super_admin/bill",
-        "/super_admin/product",
+        "/super_admin/branch",
+        "/super_admin/manager",
+        "/super_admin/department",
         "/super_admin/settings",
         "/super_admin/profile",
       ])

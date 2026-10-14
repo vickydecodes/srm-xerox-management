@@ -48,7 +48,7 @@ describe('OrderForm', () => {
   it('renders shop / order type fields', () => {
     render(<Wrapper />);
 
-    expect(screen.getByText('Attending Shop')).toBeInTheDocument();
+    expect(screen.getByText('Select Shop')).toBeInTheDocument();
     expect(screen.getByText('Type of Order')).toBeInTheDocument();
     expect(screen.getByLabelText('Event Name')).toBeInTheDocument();
     expect(screen.getByLabelText('Event Date')).toBeInTheDocument();
@@ -57,11 +57,11 @@ describe('OrderForm', () => {
   it('renders proof documents upload section for admin', () => {
     render(<Wrapper />);
 
-    expect(screen.getByText(/Proof Documents & Signatures/i)).toBeInTheDocument();
+    expect(screen.getByText(/Approved Document Attachements/i)).toBeInTheDocument();
     expect(screen.getByText(/Required before saving/i)).toBeInTheDocument();
   });
 
-  it('adds the selected product when Add more product is clicked', async () => {
+  it('adds the selected product when Add product is clicked', async () => {
     const user = userEvent.setup();
     const originalResizeObserver = window.ResizeObserver;
     window.ResizeObserver = class {
@@ -75,7 +75,7 @@ describe('OrderForm', () => {
 
       await user.click(screen.getByLabelText('Select a Product / Service'));
       await user.click(await screen.findByRole('option', { name: /A4 Paper/ }));
-      await user.click(screen.getByRole('button', { name: 'Add more product' }));
+      await user.click(screen.getByRole('button', { name: 'Add product' }));
 
       expect(screen.getByText('A4 Paper')).toBeInTheDocument();
       expect(screen.getByText('Product')).toBeInTheDocument();

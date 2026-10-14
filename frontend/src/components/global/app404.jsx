@@ -26,6 +26,12 @@ const roleConfig = {
     redirect: '/teacher/',
     cta: 'Go to Teaching Panel',
   },
+  manager: {
+    label: 'Page Not Found',
+    message: 'This page isn’t available within the manager panel.',
+    redirect: '/manager/',
+    cta: 'Go to Dashboard',
+  },
   shop_admin: {
     label: 'Page Not Found',
     message: 'This page doesn’t exist in your student area.',

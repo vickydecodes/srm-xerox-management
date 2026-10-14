@@ -41,6 +41,8 @@ export default function Dashboard() {
         return "Super Admin";
       case "branch_admin":
         return "Branch Admin";
+      case "manager":
+        return "Manager";
       case "department_admin":
         return "Department Admin";
       case "shop_admin":
@@ -58,6 +60,7 @@ export default function Dashboard() {
       case "super_admin":
         return <SaDashboard {...props} />;
       case "branch_admin":
+      case "manager":
         return <BaDashboard {...props} />;
       case "department_admin":
         return <DaDashboard {...props} />;

@@ -64,6 +64,7 @@ export default function Profile() {
     const map = {
       super_admin: "Super Admin",
       branch_admin: "Branch Admin",
+      manager: "Manager",
       department_admin: "Department Admin",
       shop_admin: "Shop Admin",
       staff: "Staff Member",
@@ -88,7 +89,7 @@ export default function Profile() {
       })
     : "N/A";
 
-  const showBranch = user.role === "branch_admin";
+  const showBranch = user.role === "branch_admin" || user.role === "manager";
   const showDepartment = user.role === "department_admin";
   const showShop = user.role === "shop_admin";
 

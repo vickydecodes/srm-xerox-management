@@ -125,6 +125,7 @@ describe('Dashboard page', () => {
   it.each([
     ['super_admin', 'Super Admin'],
     ['branch_admin', 'Branch Admin'],
+    ['manager', 'Manager'],
     ['department_admin', 'Department Admin'],
     ['shop_admin', 'Shop Admin'],
     ['staff', 'Staff Member'],

@@ -12,7 +12,7 @@ export class UserDocument {
   phone!: string;
   address?: string;
   password!: string;
-  role!: 'super_admin' | 'branch_admin' | 'department_admin' | 'shop_admin' | 'staff';
+  role!: 'super_admin' | 'branch_admin' | 'manager' | 'department_admin' | 'shop_admin' | 'staff';
   branch?: string;
   department?: string;
   shop?: string;

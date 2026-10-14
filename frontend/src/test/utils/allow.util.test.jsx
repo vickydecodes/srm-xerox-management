@@ -20,4 +20,9 @@ describe('allow utility', () => {
     expect(allow(ALL_ROLES, null)).toBe(false);
     expect(allow(ALL_ROLES, undefined)).toBe(false);
   });
+
+  it('includes manager in ALL_ROLES', () => {
+    expect(ALL_ROLES).toContain('manager');
+    expect(allow(undefined, 'manager')).toBe(true);
+  });
 });

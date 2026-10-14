@@ -15,7 +15,7 @@ model User {
   phone         String
   address       String?
   password      String
-  role          String // 'super_admin', 'branch_admin', 'department_admin', 'shop_admin', 'staff'
+  role          String // 'super_admin', 'branch_admin', 'manager', 'department_admin', 'shop_admin', 'staff'
   branch        String?
   department    String?
   shop          String?

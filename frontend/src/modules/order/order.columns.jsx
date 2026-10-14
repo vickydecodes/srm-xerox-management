@@ -127,7 +127,7 @@ export const useOrderColumns = (orders) => {
 
         const isSuperAdmin = user?.role === "super_admin";
         const isDeptAdmin = user?.role === "department_admin";
-        const isBranchAdmin = user?.role === "branch_admin";
+        const isBranchAdmin = user?.role === "branch_admin" || user?.role === "manager";
         const isShopOrStaff =
           user?.role === "shop_admin" || user?.role === "staff";
 

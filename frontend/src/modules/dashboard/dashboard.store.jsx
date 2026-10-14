@@ -16,6 +16,7 @@ export const useDashboardStore = create((set) => ({
           config = apiurls.dashboard.superAdmin;
           break;
         case "branch_admin":
+        case "manager":
           config = apiurls.dashboard.branchAdmin;
           break;
         case "department_admin":

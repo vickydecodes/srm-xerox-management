@@ -56,6 +56,7 @@ export async function accessControl(req: AccessRequest, res: Response, next: Nex
         req.queryFilter.branch = req.branch;
         break;
       case 'branch_admin':
+      case 'manager':
         req.queryFilter.branch = req.branch;
         break;
       case 'department_admin':

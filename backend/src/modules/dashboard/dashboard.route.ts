@@ -25,7 +25,8 @@ const restrictTo = (...roles: string[]) => {
 };
 
 router.get('/super-admin', restrictTo('super_admin'), getSuperAdminDashboard);
-router.get('/branch-admin', restrictTo('branch_admin'), getBranchAdminDashboard);
+router.get('/branch-admin', restrictTo('branch_admin', 'manager'), getBranchAdminDashboard);
+router.get('/manager', restrictTo('manager', 'branch_admin'), getBranchAdminDashboard);
 router.get('/department-admin', restrictTo('department_admin'), getDepartmentAdminDashboard);
 router.get('/shop-admin', restrictTo('shop_admin'), getShopAdminDashboard);
 router.get('/staff', restrictTo('staff'), getStaffDashboard);
