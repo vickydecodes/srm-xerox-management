@@ -11,6 +11,12 @@
     "migrate:deploy": "prisma migrate deploy",
     "start": "node dist/server.js",
     "seed": "npx tsx src/lib/seed.ts",
+    "seed:prod": "tsx src/scripts/seed_prod.ts",
+    "seed:superadmin": "tsx src/scripts/seed_super_admin.ts",
+    "seed:branches": "tsx src/scripts/seed_branches.ts",
+    "seed:departments": "tsx src/scripts/seed_departments.ts",
+    "seed:branchadmins": "tsx src/scripts/seed_branch_admins.ts",
+    "seed:deptadmins": "tsx src/scripts/seed_department_admins.ts",
     "postinstall": "prisma generate",
     "setup": "npm install && prisma db push && prisma generate",
     "contract:emit": "prisma contract emit"

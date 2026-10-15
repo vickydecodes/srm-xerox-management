@@ -3,7 +3,8 @@ import multer from 'multer';
 export const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 20 * 1024 * 1024, // 20MB
+    fileSize: 50 * 1024 * 1024, // 50MB
+    fieldSize: 50 * 1024 * 1024, // 50MB
   },
 });
 
@@ -34,7 +35,8 @@ export const proofUpload = multer({
   storage: multer.memoryStorage(),
   fileFilter: proofFileFilter,
   limits: {
-    fileSize: 20 * 1024 * 1024, // 20MB
+    fileSize: 50 * 1024 * 1024, // 50MB
+    fieldSize: 50 * 1024 * 1024, // 50MB
   },
 });
 

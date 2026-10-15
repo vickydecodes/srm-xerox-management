@@ -13,9 +13,11 @@ const errorHandler = (err: any, req: Request, res: Response, next: NextFunction)
       err.code = err.code ?? 'CAST_ERROR';
       err.message = `Invalid value for field "${err.path}": ${err.value}`;
     } else if (err.code === 11000) {
-      
       err.statusCode = 409;
       err.code = err.code ?? 'DUPLICATE_KEY';
+    } else if (err.name === 'MulterError' || err.code === 'LIMIT_FIELD_VALUE' || err.code === 'LIMIT_FILE_SIZE') {
+      err.statusCode = 400;
+      err.code = err.code ?? 'FILE_UPLOAD_ERROR';
     }
   }
 

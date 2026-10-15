@@ -22,11 +22,11 @@ export const useBranchAdminModule = (exported) => {
   const { set, setCurrent, setQuery } = store;
   const { user, adminResetPassword } = useAuth();
 
-  const { users } = apiurls;
+  const { branch_admin } = apiurls;
 
   const crud = createCrud({
     entity: "Branch Admin",
-    urls: users,
+    urls: branch_admin,
     store: store,
     getRole: () => user?.role || null,
   });
@@ -107,7 +107,7 @@ export const useBranchAdminModule = (exported) => {
     setQuery,
   });
 
-  
+
 
   return {
     allow: {

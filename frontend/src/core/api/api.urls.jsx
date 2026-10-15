@@ -1,5 +1,25 @@
 const base_url = import.meta.env.VITE_BASE_URL;
 
+const createUserUrls = (role) => ({
+  create: { method: "post", url: () => `${base_url}/users` },
+  getAll: {
+    method: "get",
+    url: () => `${base_url}/users${role ? `?role=${role}` : ""}`,
+  },
+  getOne: { method: "get", url: (id) => `${base_url}/users/${id}` },
+  edit: { method: "put", url: (id) => `${base_url}/users/${id}` },
+  delete: { method: "delete", url: (id) => `${base_url}/users/${id}` },
+  setActiveStatus: {
+    method: "patch",
+    url: (id) => `${base_url}/users/${id}/active-status`,
+  },
+  retrieve: {
+    method: "put",
+    url: (id) => `${base_url}/users/${id}/retrieve`,
+  },
+  erase: { method: "delete", url: (id) => `${base_url}/users/${id}/erase` },
+});
+
 const apiurls = {
   auth: {
     login: { method: "post", url: () => `${base_url}/auths/login` },
@@ -14,22 +34,27 @@ const apiurls = {
       url: () => `${base_url}/auths/admin/reset-password`,
     },
   },
-  users: {
-    create: { method: "post", url: () => `${base_url}/users` },
-    getAll: { method: "get", url: () => `${base_url}/users` },
-    getOne: { method: "get", url: (id) => `${base_url}/users/${id}` },
-    edit: { method: "put", url: (id) => `${base_url}/users/${id}` },
-    delete: { method: "delete", url: (id) => `${base_url}/users/${id}` },
-    setActiveStatus: {
-      method: "patch",
-      url: (id) => `${base_url}/users/${id}/active-status`,
-    },
-    retrieve: {
-      method: "put",
-      url: (id) => `${base_url}/users/${id}/retrieve`,
-    },
-    erase: { method: "delete", url: (id) => `${base_url}/users/${id}/erase` },
-  },
+  users: createUserUrls(),
+
+  branch_admin: createUserUrls("branch_admin"),
+  branchAdmin: createUserUrls("branch_admin"),
+  branchAdmins: createUserUrls("branch_admin"),
+
+  department_admin: createUserUrls("department_admin"),
+  departmentAdmin: createUserUrls("department_admin"),
+  departmentAdmins: createUserUrls("department_admin"),
+
+  manager: createUserUrls("manager"),
+  managers: createUserUrls("manager"),
+
+  shop_admin: createUserUrls("shop_admin"),
+  shopAdmin: createUserUrls("shop_admin"),
+  shopAdmins: createUserUrls("shop_admin"),
+
+  staff: createUserUrls("staff"),
+  staff_admin: createUserUrls("staff"),
+  staffAdmin: createUserUrls("staff"),
+
 
   services: {
     create: { method: "post", url: () => `${base_url}/services` },

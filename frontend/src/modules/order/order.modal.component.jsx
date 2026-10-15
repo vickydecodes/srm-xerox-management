@@ -563,6 +563,12 @@ export const Create = ({
           const { attachmentFile, ...cleanItem } = item;
           if (attachmentFile) {
             itemAttachmentFiles.push({ index: idx, file: attachmentFile });
+            if (cleanItem.attachment && typeof cleanItem.attachment === "object") {
+              cleanItem.attachment = {
+                filename: cleanItem.attachment.filename || attachmentFile.name,
+                mimetype: cleanItem.attachment.mimetype || attachmentFile.type,
+              };
+            }
           }
           return cleanItem;
         });
@@ -786,6 +792,12 @@ export const Edit = ({
           const { attachmentFile, ...cleanItem } = item;
           if (attachmentFile) {
             itemAttachmentFiles.push({ index: idx, file: attachmentFile });
+            if (cleanItem.attachment && typeof cleanItem.attachment === "object") {
+              cleanItem.attachment = {
+                filename: cleanItem.attachment.filename || attachmentFile.name,
+                mimetype: cleanItem.attachment.mimetype || attachmentFile.type,
+              };
+            }
           }
           return cleanItem;
         });

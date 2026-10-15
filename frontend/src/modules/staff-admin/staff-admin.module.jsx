@@ -22,11 +22,11 @@ export const useStaffModule = (exported) => {
   const store = useStaffStore();
   const { set, setCurrent, setQuery } = store;
 
-  const { users } = apiurls;
+  const { staff } = apiurls;
 
   const crud = createCrud({
     entity: 'Staff',
-    urls: users,
+    urls: staff,
     store: store,
     getRole: () => user?.role || null,
   });

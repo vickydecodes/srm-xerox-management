@@ -22,11 +22,11 @@ export const useShopAdminModule = (exported) => {
   const { set, setCurrent, setQuery } = store;
   const { user, adminResetPassword } = useAuth();
 
-  const { users } = apiurls;
+  const { shop_admin } = apiurls;
 
   const crud = createCrud({
     entity: 'Shop Admin',
-    urls: users,
+    urls: shop_admin,
     store: store,
     getRole: () => user?.role || null,
   });

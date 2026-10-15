@@ -22,11 +22,11 @@ export const useDepartmentAdminModule = (exported) => {
   const { set, setCurrent, setQuery } = store;
   const { user, adminResetPassword } = useAuth();
 
-  const { users } = apiurls;
+  const { department_admin } = apiurls;
 
   const crud = createCrud({
     entity: "Department Admin",
-    urls: users,
+    urls: department_admin,
     store: store,
     getRole: () => user?.role || null,
   });

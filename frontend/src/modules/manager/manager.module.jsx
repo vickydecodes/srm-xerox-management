@@ -23,11 +23,11 @@ export const useManagerModule = (exported) => {
   }
   const { user, adminResetPassword } = auth;
 
-  const { users } = apiurls;
+  const { manager } = apiurls;
 
   const crud = createCrud({
     entity: "Manager",
-    urls: users,
+    urls: manager,
     store: store,
     getRole: () => user?.role || null,
   });

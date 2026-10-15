@@ -61,3 +61,5 @@ export function MonthPicker({
     </div>
   )
 }
+
+export { DatePicker } from "./date-picker"

@@ -23,6 +23,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/core/contexts/auth.context";
 import { cn } from "@/lib/utils";
+import { DatePicker } from "@/components/ui/date-picker";
 
 const formatVariant = (variant) => {
   if (!variant) return "";
@@ -487,7 +488,11 @@ export default function OrderForm({ form, shops = [], searchProducts }) {
               </span>
             </FormLabel>
             <FormControl>
-              <Input type="date" min={minEventDateString} {...field} />
+              <DatePicker
+                minDate={minEventDateString}
+                placeholder="Select event date"
+                {...field}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -521,7 +526,10 @@ export default function OrderForm({ form, shops = [], searchProducts }) {
               Approved Date <span className="text-destructive">*</span>
             </FormLabel>
             <FormControl>
-              <Input type="date" {...field} />
+              <DatePicker
+                placeholder="Select approved date"
+                {...field}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
