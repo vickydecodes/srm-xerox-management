@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { ShieldAlert } from 'lucide-react';
 
-import unserviceableImg from '/logo.png';
+import unserviceableImg from '/final_logo.svg';
 import { useAuth } from '@/core/contexts/auth.context';
 
 const roleConfig = {

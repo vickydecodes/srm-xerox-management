@@ -81,14 +81,14 @@ export default function Layout({ routes, logoutComponent }) {
                             {/* Breadcrumb row */}
                             <div className="flex items-center gap-3">
                                 <img
-                                    src="/final_logo.png"
-                                    alt="SRM Logo"
+                                    src="/final_logo.svg"
+                                    alt="Reffero POS Billing & Inventory Portal"
                                     className="h-10 w-fit object-contain shrink-0"
                                 />
                                 <div className='flex flex-col'>
                                     <div className='flex flex-row items-center gap-3'>
                                         <span className="text-sm text-gray-700 dark:text-gray-500">
-                                            SRM DTP &amp; Xerox
+                                            Reffero POS Billing &amp; Inventory Portal
                                         </span>
                                         <span className="text-gray-300 dark:text-neutral-700">/</span>
                                         <h1 className="text-base font-semibold text-gray-900 dark:text-white">
@@ -130,7 +130,7 @@ export const Logo = ({ role }) => (
             path: `/`,
             icon: (
                 <img
-                    src="/logo2.png"
+                    src="/final_logo.png"
                     alt="Logo"
                     className="h-16 w-16 shrink-0 object-contain"
                 />
@@ -145,7 +145,7 @@ export const LogoIcon = () => (
         className="relative z-20 flex items-center justify-center py-1"
     >
         <img
-            src="/logo2.png"
+            src="/final_logo.png"
             alt="Logo"
             className="h-16 w-16 shrink-0 object-contain"
         />
