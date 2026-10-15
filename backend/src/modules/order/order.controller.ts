@@ -32,19 +32,44 @@ const controllers = {
     res: Response
   ) => {
     const files = (req.files as Express.Multer.File[]) || (req.file ? [req.file] : []);
+    const proofFiles = files.filter(f => f.fieldname === 'proofs' || !f.fieldname.startsWith('item_attachment_'));
+    const itemFiles = files.filter(f => f.fieldname.startsWith('item_attachment_'));
     const existingProofs = (req.body as any).proofs || [];
 
-    if (files && files.length > 0) {
+    if (proofFiles && proofFiles.length > 0) {
       if (req.user?.role !== 'department_admin' && req.user?.role !== 'super_admin') {
         return sendResponse.forbidden(res, 'Only department admin can upload proof documents');
       }
-      const uploadedProofs = files.map((file) => ({
+      const uploadedProofs = proofFiles.map((file) => ({
         proof: `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
         filename: file.originalname,
         mimetype: file.mimetype,
         verified: false,
       }));
       (req.body as any).proofs = [...existingProofs, ...uploadedProofs];
+    }
+
+    if (itemFiles && itemFiles.length > 0) {
+      let parsedItems = (req.body as any).items;
+      if (typeof parsedItems === 'string') {
+        try { parsedItems = JSON.parse(parsedItems); } catch { }
+      }
+      if (Array.isArray(parsedItems)) {
+        itemFiles.forEach((file) => {
+          const match = file.fieldname.match(/^item_attachment_(\d+)$/);
+          if (match) {
+            const idx = parseInt(match[1], 10);
+            if (parsedItems[idx]) {
+              parsedItems[idx].attachment = {
+                fileData: `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
+                filename: file.originalname,
+                mimetype: file.mimetype,
+              };
+            }
+          }
+        });
+        (req.body as any).items = parsedItems;
+      }
     }
 
     const order = await service.createOrder(
@@ -66,6 +91,9 @@ const controllers = {
     const queries = buildQuery(req);
 
     const branch = extractBranch(queries);
+
+    // All orders go to all shops: do not filter out orders by shop
+    delete queries.shop;
 
     const result = await service.getAllOrders(
       queries,
@@ -112,12 +140,14 @@ const controllers = {
     const { id } = req.params;
 
     const files = (req.files as Express.Multer.File[]) || (req.file ? [req.file] : []);
+    const proofFiles = files.filter(f => f.fieldname === 'proofs' || !f.fieldname.startsWith('item_attachment_'));
+    const itemFiles = files.filter(f => f.fieldname.startsWith('item_attachment_'));
 
-    if (files && files.length > 0) {
+    if (proofFiles && proofFiles.length > 0) {
       if (req.user?.role !== 'department_admin' && req.user?.role !== 'super_admin') {
         return sendResponse.forbidden(res, 'Only department admin can upload proof documents');
       }
-      const uploadedProofs = files.map((file) => ({
+      const uploadedProofs = proofFiles.map((file) => ({
         proof: `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
         filename: file.originalname,
         mimetype: file.mimetype,
@@ -125,6 +155,29 @@ const controllers = {
       }));
       const existingProofs = (req.body as any).proofs || [];
       (req.body as any).proofs = [...existingProofs, ...uploadedProofs];
+    }
+
+    if (itemFiles && itemFiles.length > 0) {
+      let parsedItems = (req.body as any).items;
+      if (typeof parsedItems === 'string') {
+        try { parsedItems = JSON.parse(parsedItems); } catch { }
+      }
+      if (Array.isArray(parsedItems)) {
+        itemFiles.forEach((file) => {
+          const match = file.fieldname.match(/^item_attachment_(\d+)$/);
+          if (match) {
+            const idx = parseInt(match[1], 10);
+            if (parsedItems[idx]) {
+              parsedItems[idx].attachment = {
+                fileData: `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
+                filename: file.originalname,
+                mimetype: file.mimetype,
+              };
+            }
+          }
+        });
+        (req.body as any).items = parsedItems;
+      }
     }
 
     const order = await service.updateOrder(
@@ -401,4 +454,4 @@ export const {
   markOrderDelivered,
   uploadOrderProofs,
   verifyOrderProof,
-} = wrapControllers(controllers);
+} = wrapControllers(controllers);

@@ -135,7 +135,7 @@ export const useManagerModule = (exported) => {
     openActiveStatus,
     openResetPassword,
     crud,
-    fetch: fetch({ role: 'manager' }),
+    fetch,
     reset,
     sortByColumn,
     filters: presets,

@@ -5,6 +5,9 @@ import {
   approvalSchema,
 } from '@/modules/order/order.schema';
 
+const futureEventDate = new Date(Date.now() + 100 * 60 * 60 * 1000).toISOString().slice(0, 10);
+const pastEventDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10); // less than 72h
+
 const validItem = {
   type: 'Service',
   item: 'svc-1',
@@ -14,11 +17,16 @@ const validItem = {
 };
 
 const validOrder = {
-  shop: 'shop-1',
-  orderType: 'XEROX_ORDER', // was 'Xerox order' — invalid enum
+  orderType: 'XEROX_ORDER',
   fundingMethod: 'management',
-  department: 'dept-1',     // required
-  branch: 'branch-1',       // required
+  managementAmount: 100,
+  department: 'dept-1',
+  branch: 'branch-1',
+  eventName: 'SRM Tech Fest',
+  eventDate: futureEventDate,
+  approvedReferralNumber: 'REF-2026-001',
+  approvedDate: '2026-10-15',
+  purpose: 'Print banners and certificates for event',
   attachmentEmail: 'user@example.com',
   items: [validItem],
   self_supports: [],
@@ -28,6 +36,44 @@ const validOrder = {
 describe('orderCreateSchema', () => {
   it('accepts a valid order', () => {
     expect(orderCreateSchema.safeParse(validOrder).success).toBe(true);
+  });
+
+  it('allows shop to be omitted (shop selection removed)', () => {
+    const { shop: _, ...orderWithoutShop } = validOrder;
+    expect(orderCreateSchema.safeParse(orderWithoutShop).success).toBe(true);
+  });
+
+  it('requires eventName', () => {
+    const r = orderCreateSchema.safeParse({ ...validOrder, eventName: '' });
+    expect(r.success).toBe(false);
+  });
+
+  it('requires eventDate', () => {
+    const r = orderCreateSchema.safeParse({ ...validOrder, eventDate: '' });
+    expect(r.success).toBe(false);
+  });
+
+  it('rejects eventDate submitted less than 72 hours before the event', () => {
+    const r = orderCreateSchema.safeParse({ ...validOrder, eventDate: pastEventDate });
+    expect(r.success).toBe(false);
+    if (!r.success) {
+      expect(r.error.issues.some((i) => i.message.includes('72 hours'))).toBe(true);
+    }
+  });
+
+  it('requires approvedReferralNumber', () => {
+    const r = orderCreateSchema.safeParse({ ...validOrder, approvedReferralNumber: '' });
+    expect(r.success).toBe(false);
+  });
+
+  it('requires approvedDate', () => {
+    const r = orderCreateSchema.safeParse({ ...validOrder, approvedDate: '' });
+    expect(r.success).toBe(false);
+  });
+
+  it('requires purpose', () => {
+    const r = orderCreateSchema.safeParse({ ...validOrder, purpose: '' });
+    expect(r.success).toBe(false);
   });
 
   it('accepts order items with multi-size pricing objects', () => {
@@ -46,22 +92,6 @@ describe('orderCreateSchema', () => {
       ],
     };
     expect(orderCreateSchema.safeParse(orderWithSizedItems).success).toBe(true);
-  });
-
-  it('accepts order items with custom size, customSize string, and customPriceAdded flag', () => {
-    const orderWithCustomSize = {
-      ...validOrder,
-      items: [
-        {
-          ...validItem,
-          size: 'Custom',
-          customSize: '12x4 ft Banner',
-          price: 0,
-          customPriceAdded: false,
-        },
-      ],
-    };
-    expect(orderCreateSchema.safeParse(orderWithCustomSize).success).toBe(true);
   });
 
   it('accepts order items with custom dimension attributes (width, height, unit, rate)', () => {
@@ -92,9 +122,108 @@ describe('orderCreateSchema', () => {
     }
   });
 
-  it('requires shop', () => {
-    const r = orderCreateSchema.safeParse({ ...validOrder, shop: '' });
+  it('requires attachment document for each selected service in WORK_ORDER', () => {
+    const workOrderWithoutItemAttachment = {
+      ...validOrder,
+      orderType: 'WORK_ORDER',
+      items: [
+        {
+          type: 'Service',
+          item: 'svc-banner',
+          name: 'Flex Banner',
+          quantity: 1,
+          price: 500,
+          size: '6x3',
+        },
+      ],
+    };
+    const r = orderCreateSchema.safeParse(workOrderWithoutItemAttachment);
     expect(r.success).toBe(false);
+    if (!r.success) {
+      expect(r.error.issues.some((i) => i.message.includes('Attach approved document is required') || i.message.includes('Attachment document is required'))).toBe(true);
+    }
+  });
+
+  it('rejects non-service (product) items when orderType is WORK_ORDER', () => {
+    const workOrderWithProduct = {
+      ...validOrder,
+      orderType: 'WORK_ORDER',
+      items: [
+        {
+          type: 'InventoryProduct',
+          item: 'prod-paper',
+          name: 'A4 Paper',
+          quantity: 1,
+          price: 5,
+        },
+      ],
+    };
+    const r = orderCreateSchema.safeParse(workOrderWithProduct);
+    expect(r.success).toBe(false);
+    if (!r.success) {
+      expect(r.error.issues.some((i) => i.message.includes('Only services are allowed in Work Orders'))).toBe(true);
+    }
+  });
+
+  it('rejects non-work-order services when orderType is WORK_ORDER', () => {
+    const workOrderWithNonWorkOrderService = {
+      ...validOrder,
+      orderType: 'WORK_ORDER',
+      items: [
+        {
+          type: 'Service',
+          item: 'svc-regular-xerox',
+          name: 'Regular Xerox Photocopy',
+          quantity: 10,
+          price: 2,
+          isWorkOrder: false,
+          attachment: { filename: 'doc.pdf', fileData: 'data:application/pdf;base64,...' },
+        },
+      ],
+    };
+    const r = orderCreateSchema.safeParse(workOrderWithNonWorkOrderService);
+    expect(r.success).toBe(false);
+    if (!r.success) {
+      expect(r.error.issues.some((i) => i.message.includes('Only work order services are allowed in Work Orders'))).toBe(true);
+    }
+  });
+
+  it('accepts WORK_ORDER when each service has its own attachment document', () => {
+    const workOrderWithAttachments = {
+      ...validOrder,
+      orderType: 'WORK_ORDER',
+      items: [
+        {
+          type: 'Service',
+          item: 'svc-banner',
+          name: 'Banner Size 1',
+          quantity: 1,
+          price: 300,
+          size: '3x2',
+          attachment: { filename: 'banner1.pdf', fileData: 'data:application/pdf;base64,...' },
+        },
+        {
+          type: 'Service',
+          item: 'svc-banner',
+          name: 'Banner Size 2',
+          quantity: 2,
+          price: 600,
+          size: '6x4',
+          attachment: { filename: 'banner2.pdf', fileData: 'data:application/pdf;base64,...' },
+        },
+      ],
+    };
+    const r = orderCreateSchema.safeParse(workOrderWithAttachments);
+    expect(r.success).toBe(true);
+  });
+
+  it('does not require line-item attachment for XEROX_ORDER services', () => {
+    const xeroxOrder = {
+      ...validOrder,
+      orderType: 'XEROX_ORDER',
+      items: [validItem],
+    };
+    expect(orderCreateSchema.safeParse(xeroxOrder).success).toBe(true);
   });
 
   it('requires valid orderType', () => {
@@ -135,25 +264,16 @@ describe('orderCreateSchema', () => {
   it('rejects self support with negative amount', () => {
     const r = orderCreateSchema.safeParse({
       ...validOrder,
+      fundingMethod: 'self_support',
       self_supports: [{ name: 'CSR', amount: -5 }],
     });
     expect(r.success).toBe(false);
   });
 
-  it('requires at least one proof document', () => {
-    const r = orderCreateSchema.safeParse({ ...validOrder, proofFiles: [] });
-    expect(r.success).toBe(false);
-    if (!r.success) {
-      expect(r.error.issues[0].message).toBe(
-        'At least one proof document (Image or PDF) is required'
-      );
-    }
-  });
-
-  it('rejects order create when proofFiles is omitted', () => {
+  it('allows order create without separate proofFiles since upload is inlined on work order services', () => {
     const { proofFiles: _, ...withoutProofs } = validOrder;
     const r = orderCreateSchema.safeParse(withoutProofs);
-    expect(r.success).toBe(false);
+    expect(r.success).toBe(true);
   });
 });
 

@@ -14,11 +14,13 @@ vi.mock('@/core/contexts/auth.context', () => ({
 }));
 
 import { useManagerModule } from '@/modules/manager/manager.module';
+import { useManagerStore } from '@/modules/manager/manager.store';
 import { apiRequest } from '@/core/api/api.request';
 
 describe('useManagerModule', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useManagerStore.setState({ query: {}, list: [], loading: false });
   });
 
   it('exposes a callable fetch function', () => {
@@ -32,8 +34,10 @@ describe('useManagerModule', () => {
     await result.current.fetch({ page: 2, limit: 10, search: 'Vikram' });
 
     expect(apiRequest).toHaveBeenCalledWith(
+      'get',
+      expect.stringContaining('/users'),
       expect.objectContaining({
-        query: expect.objectContaining({
+        params: expect.objectContaining({
           role: 'manager',
           page: 2,
           limit: 10,
@@ -48,8 +52,10 @@ describe('useManagerModule', () => {
     await result.current.fetch();
 
     expect(apiRequest).toHaveBeenCalledWith(
+      'get',
+      expect.stringContaining('/users'),
       expect.objectContaining({
-        query: expect.objectContaining({
+        params: expect.objectContaining({
           role: 'manager',
         }),
       })

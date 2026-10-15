@@ -162,12 +162,51 @@ export const submitOrder = async (
     throw new Error('Order is not in draft status');
   }
 
+  if (order.eventDate) {
+    const minDateStr = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const dateStr = new Date(order.eventDate).toISOString().slice(0, 10);
+    if (dateStr < minDateStr) {
+      const error: any = new Error(
+        'Order form must be submitted at least 72 hours before the event date'
+      );
+      error.statusCode = 400;
+      throw error;
+    }
+  }
+
+  // Populate proofs from item attachments if order.proofs is empty
+  const itemAttachments = (order.items || [])
+    .filter((item: any) => item.attachment)
+    .map((item: any) => ({
+      proof: item.attachment.fileData || item.attachment.proof,
+      filename: item.attachment.filename,
+      mimetype: item.attachment.mimetype,
+      verified: false,
+    }));
+
+  if ((!order.proofs || order.proofs.length === 0) && itemAttachments.length > 0) {
+    order.proofs = itemAttachments;
+  }
+
   if (!order.proofs || order.proofs.length === 0) {
     const error: any = new Error(
       'Order cannot be submitted without at least one proof document (Image or PDF)'
     );
     error.statusCode = 400;
     throw error;
+  }
+
+  if (order.orderType === 'WORK_ORDER' && order.items && order.items.length > 0) {
+    const serviceWithoutAttachment = order.items.find(
+      (item: any) => item.type === 'Service' && !item.attachment && (!order.proofs || order.proofs.length === 0)
+    );
+    if (serviceWithoutAttachment) {
+      const error: any = new Error(
+        `Work order cannot be submitted without attach approved document for each service (${serviceWithoutAttachment.name})`
+      );
+      error.statusCode = 400;
+      throw error;
+    }
   }
 
   order.status = 'pending';
@@ -421,4 +460,4 @@ export const verifyOrderProof = async (
 
   await order.save();
   return enhanceOrder(order);
-};
+};

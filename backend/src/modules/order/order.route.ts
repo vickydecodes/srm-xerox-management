@@ -44,7 +44,7 @@ router.use(accessControl);
 
 router.post(
   '/',
-  proofUpload.array('proofs', 10),
+  proofUpload.any(),
   zodValidate(
     createOrderSchema,
     'body',
@@ -62,7 +62,7 @@ router.get('/:id', getOrderById);
 
 router.put(
   '/:id',
-  proofUpload.array('proofs', 10),
+  proofUpload.any(),
   zodValidate(
     updateOrderSchema,
     'body',

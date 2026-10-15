@@ -36,7 +36,17 @@ export const searchProducts = async (
   const isServiceKeyword = ['service', 'services'].includes(cleanQuery);
   const isProductKeyword = ['product', 'products'].includes(cleanQuery);
 
-  const queryProducts = !isServiceKeyword;
+  const isWorkOrderFilter =
+    extraParams.orderType === 'WORK_ORDER' ||
+    extraParams.isWorkOrder === true ||
+    extraParams.isWorkOrder === 'true';
+
+  const isXeroxOrderFilter =
+    extraParams.orderType === 'XEROX_ORDER' ||
+    extraParams.isWorkOrder === false ||
+    extraParams.isWorkOrder === 'false';
+
+  const queryProducts = !isServiceKeyword && !isWorkOrderFilter;
   const queryServices = !isProductKeyword;
 
   const configs: MultiModelSearchConfig[] = [];
@@ -52,8 +62,8 @@ export const searchProducts = async (
         },
       },
       mapFn: async (ip: any) => {
-        const prod = typeof ip.product === 'object' && ip.product !== null 
-          ? ip.product 
+        const prod = typeof ip.product === 'object' && ip.product !== null
+          ? ip.product
           : await Product.findById(ip.product);
         ip.product = prod;
         let resolvedVariant = null;
@@ -119,10 +129,16 @@ export const searchProducts = async (
   }
 
   const isTypeQuery = isServiceKeyword || isProductKeyword;
-  const filterParams = {
+  const filterParams: Record<string, any> = {
     ...extraParams,
     ...(isTypeQuery || !cleanQuery ? {} : { search: query }),
   };
+
+  if (isWorkOrderFilter) {
+    filterParams.isWorkOrder = true;
+  } else if (isXeroxOrderFilter) {
+    filterParams.isWorkOrder = false;
+  }
 
   const results = await multiModelDynamicFilter(
     configs,
@@ -130,19 +146,13 @@ export const searchProducts = async (
     { visibility: 'active-only' }
   );
 
-  const isWorkOrderFilter =
-    extraParams.orderType === 'WORK_ORDER' ||
-    extraParams.isWorkOrder === true ||
-    extraParams.isWorkOrder === 'true';
-
-  const isXeroxOrderFilter =
-    extraParams.orderType === 'XEROX_ORDER' ||
-    extraParams.isWorkOrder === false ||
-    extraParams.isWorkOrder === 'false';
 
   if (isWorkOrderFilter) {
     return results.filter((item) => {
-      return item.isWorkOrder === true || item.details?.isWorkOrder === true;
+      return (
+        item.type === 'Service' &&
+        (item.isWorkOrder === true || item.details?.isWorkOrder === true)
+      );
     });
   }
 

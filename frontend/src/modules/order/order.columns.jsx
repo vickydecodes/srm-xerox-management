@@ -69,7 +69,7 @@ export const useOrderColumns = (orders) => {
         const shop = row.getValue("shop");
         const status = row.original?.status;
 
-        if (!shop) return <span className="text-muted-foreground">-</span>;
+        if (!shop) return <span className="text-muted-foreground text-xs italic">All Shops</span>;
 
         const isReady = status === "ready_for_pickup";
 

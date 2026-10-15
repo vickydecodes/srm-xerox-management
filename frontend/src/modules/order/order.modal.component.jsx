@@ -115,7 +115,7 @@ export const View = ({ order, exported, closeModal } = {}) => {
         </DialogTitle>
         <DialogDescription>
           {order?.department?.name || "-"} · {order?.branch?.name || "-"} ·
-          Shop: {order?.shop?.name || "-"}
+          Shop: {order?.shop?.name || order?.shop || "All Shops"}
         </DialogDescription>
       </DialogHeader>
 
@@ -130,6 +130,20 @@ export const View = ({ order, exported, closeModal } = {}) => {
             <span>
               {order?.eventDate
                 ? new Date(order.eventDate).toLocaleDateString(undefined, {
+                    timeZone: "UTC",
+                  })
+                : "-"}
+            </span>
+          </div>
+          <div className="rounded-md border p-3">
+            <span className="text-muted-foreground block">Approved Referral Number</span>
+            <span className="font-mono">{order?.approvedReferralNumber || "-"}</span>
+          </div>
+          <div className="rounded-md border p-3">
+            <span className="text-muted-foreground block">Approved Date</span>
+            <span>
+              {order?.approvedDate
+                ? new Date(order.approvedDate).toLocaleDateString(undefined, {
                     timeZone: "UTC",
                   })
                 : "-"}
@@ -151,29 +165,54 @@ export const View = ({ order, exported, closeModal } = {}) => {
           {order?.items?.length ? (
             order.items.map((item, i) => {
               const isCustom = item.type === "Service" && item.size === "Custom";
+              const attachmentUrl =
+                typeof item.attachment === "object"
+                  ? item.attachment?.fileData || item.attachment?.proof
+                  : item.attachment;
+              const attachmentName =
+                typeof item.attachment === "object"
+                  ? item.attachment?.filename || item.attachment?.name || "Service Document"
+                  : "Service Document";
+
               return (
                 <div
                   key={i}
-                  className="flex justify-between items-center border-b py-2 last:border-b-0"
+                  className="flex flex-col gap-1 border-b py-2.5 last:border-b-0"
                 >
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="font-medium text-sm">
-                      {item.name}
-                    </span>
-                    {item.size && (
-                      <span className="text-xs text-muted-foreground font-medium">
-                        ({isCustom && item.customSize ? item.customSize : item.size})
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="font-medium text-sm">
+                        {item.name}
                       </span>
-                    )}
-                    <span className="text-xs text-muted-foreground">
-                      x{item.quantity}
-                    </span>
+                      {item.size && (
+                        <span className="text-xs text-muted-foreground font-medium">
+                          ({isCustom && item.customSize ? item.customSize : item.size})
+                        </span>
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        x{item.quantity}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-sm font-semibold">
+                        ₹{Number(item.total || (item.quantity * item.price) || 0).toFixed(2)}
+                      </span>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-sm font-semibold">
-                      ₹{Number(item.total || (item.quantity * item.price) || 0).toFixed(2)}
-                    </span>
-                  </div>
+                  {item.attachment && (
+                    <div className="flex items-center gap-1.5 text-xs text-primary pt-0.5">
+                      <span>📎</span>
+                      <a
+                        href={attachmentUrl}
+                        download={attachmentName}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="hover:underline font-medium truncate max-w-[300px]"
+                      >
+                        {attachmentName}
+                      </a>
+                    </div>
+                  )}
                 </div>
               );
             })
@@ -487,6 +526,8 @@ export const Create = ({
       orderType: undefined,
       eventName: "",
       eventDate: "",
+      approvedReferralNumber: "",
+      approvedDate: "",
       purpose: "",
       attachmentEmail: "",
       fundingMethod: "",
@@ -503,6 +544,10 @@ export const Create = ({
   const loadSettings = createPreset(exported?.settings);
   const loadShops = createPreset(exported?.shops);
 
+  const watchedEventDate = form.watch("eventDate");
+  const minDateStr = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const isLocked = Boolean(watchedEventDate && watchedEventDate < minDateStr);
+
   const { run, loading, ErrorAlert, clearError } = useAsync(submitFn);
 
   useClearError(form, clearError);
@@ -511,7 +556,19 @@ export const Create = ({
     run: (data) => {
       const { proofFiles, ...rest } = data;
       delete rest.fundingMethod;
-      if (proofFiles && proofFiles.length > 0) {
+
+      const itemAttachmentFiles = [];
+      if (Array.isArray(rest.items)) {
+        rest.items = rest.items.map((item, idx) => {
+          const { attachmentFile, ...cleanItem } = item;
+          if (attachmentFile) {
+            itemAttachmentFiles.push({ index: idx, file: attachmentFile });
+          }
+          return cleanItem;
+        });
+      }
+
+      if ((proofFiles && proofFiles.length > 0) || itemAttachmentFiles.length > 0) {
         const formData = new FormData();
         Object.entries(rest).forEach(([key, val]) => {
           if (val !== undefined && val !== null) {
@@ -521,7 +578,12 @@ export const Create = ({
             );
           }
         });
-        proofFiles.forEach((file) => formData.append("proofs", file));
+        if (proofFiles) {
+          proofFiles.forEach((file) => formData.append("proofs", file));
+        }
+        itemAttachmentFiles.forEach(({ index, file }) => {
+          formData.append(`item_attachment_${index}`, file);
+        });
         return submitFn(formData);
       }
       return submitFn(rest);
@@ -544,8 +606,12 @@ export const Create = ({
   const handleOrderFormInvalid = (errors) => {
     console.error("Order form validation errors:", errors);
     const messages = [];
-    if (errors.shop) messages.push("Please select an attending shop");
     if (errors.orderType) messages.push("Please select type of order");
+    if (errors.eventName) messages.push("Please enter event name");
+    if (errors.eventDate) messages.push(errors.eventDate.message || "Event date must be at least 72 hours in advance");
+    if (errors.approvedReferralNumber) messages.push("Please enter approved referral number");
+    if (errors.approvedDate) messages.push("Please enter approved date");
+    if (errors.purpose) messages.push("Please enter purpose");
     if (errors.attachmentEmail) messages.push(errors.attachmentEmail.message || "Please enter a valid email address");
     if (errors.items) {
       if (errors.items.message || errors.items.root?.message) {
@@ -553,6 +619,7 @@ export const Create = ({
       } else if (Array.isArray(errors.items)) {
         errors.items.forEach((itemErr, idx) => {
           if (itemErr) {
+            if (itemErr.attachment) messages.push(itemErr.attachment.message || `Item #${idx + 1}: Attachment document is required`);
             if (itemErr.price) messages.push(`Item #${idx + 1}: ${itemErr.price.message}`);
             if (itemErr.quantity) messages.push(`Item #${idx + 1}: ${itemErr.quantity.message}`);
             if (itemErr.item) messages.push(`Item #${idx + 1}: ${itemErr.item.message}`);
@@ -561,6 +628,8 @@ export const Create = ({
       }
     }
     if (errors.proofFiles) messages.push(errors.proofFiles.message || "At least one proof document (Image or PDF) is required");
+    if (errors.fundingMethod) messages.push("Please choose a payment method");
+    if (errors.managementAmount) messages.push(errors.managementAmount.message || "Management amount must be greater than 0");
     if (errors.self_supports || errors.sponsors) messages.push("Please check self-support entries");
 
     const firstMsg = messages[0] || "Please fill in all required fields before saving";
@@ -608,13 +677,17 @@ export const Create = ({
             <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-xs text-destructive space-y-1">
               <p className="font-semibold">Please correct the following before saving:</p>
               <ul className="list-disc list-inside space-y-0.5">
-                {form.formState.errors.shop && <li>Please select an Attending Shop</li>}
                 {form.formState.errors.orderType && <li>Please select Type of Order</li>}
+                {form.formState.errors.eventName && <li>Event Name is required</li>}
+                {form.formState.errors.eventDate && <li>{form.formState.errors.eventDate.message || "Event Date must be at least 72 hours in advance"}</li>}
+                {form.formState.errors.approvedReferralNumber && <li>Approved Referral Number is required</li>}
+                {form.formState.errors.approvedDate && <li>Approved Date is required</li>}
+                {form.formState.errors.purpose && <li>Purpose is required</li>}
                 {form.formState.errors.attachmentEmail && (
                   <li>{form.formState.errors.attachmentEmail.message || "Valid Attachment Sender Email is required"}</li>
                 )}
                 {form.formState.errors.items && (
-                  <li>{form.formState.errors.items.message || form.formState.errors.items.root?.message || "Please add at least one item"}</li>
+                  <li>{form.formState.errors.items.message || form.formState.errors.items.root?.message || "Please add at least one item and attach documents for Work Order services"}</li>
                 )}
                 {form.formState.errors.proofFiles && (
                   <li>{form.formState.errors.proofFiles.message || "At least one proof document (Image or PDF) is required"}</li>
@@ -627,8 +700,8 @@ export const Create = ({
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button type="submit" loading={loading} loadingText="Saving..">
-              Save
+            <Button type="submit" loading={loading} loadingText="Saving.." disabled={isLocked}>
+              {isLocked ? "Locked (< 72h)" : "Save"}
             </Button>
           </DialogFooter>
         </form>
@@ -655,6 +728,10 @@ export const Edit = ({
       eventDate: order?.eventDate
         ? new Date(order.eventDate).toISOString().slice(0, 10)
         : "",
+      approvedReferralNumber: order?.approvedReferralNumber || "",
+      approvedDate: order?.approvedDate
+        ? new Date(order.approvedDate).toISOString().slice(0, 10)
+        : "",
       purpose: order?.purpose || "",
       attachmentEmail: order?.attachmentEmail || "",
       fundingMethod: "",
@@ -678,6 +755,8 @@ export const Edit = ({
           customRate: i.customRate ?? "",
           sizes: i.item?.sizes || i.sizes || [],
           isCustomSize: i.size === "Custom" || i.item?.isCustomSize || i.isCustomSize || false,
+          attachment: i.attachment || null,
+          attachmentFile: null,
         })) || [],
     },
   });
@@ -688,6 +767,10 @@ export const Edit = ({
   const loadSettings = createPreset(exported?.settings);
   const loadShops = createPreset(exported?.shops);
 
+  const watchedEventDate = form.watch("eventDate");
+  const minDateStr = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const isLocked = Boolean(watchedEventDate && watchedEventDate < minDateStr);
+
   const { run, loading, ErrorAlert, clearError } = useAsync(submitFn);
 
   useClearError(form, clearError);
@@ -696,7 +779,19 @@ export const Edit = ({
     run: (data) => {
       const { proofFiles, ...rest } = data;
       delete rest.fundingMethod;
-      if (proofFiles && proofFiles.length > 0) {
+
+      const itemAttachmentFiles = [];
+      if (Array.isArray(rest.items)) {
+        rest.items = rest.items.map((item, idx) => {
+          const { attachmentFile, ...cleanItem } = item;
+          if (attachmentFile) {
+            itemAttachmentFiles.push({ index: idx, file: attachmentFile });
+          }
+          return cleanItem;
+        });
+      }
+
+      if ((proofFiles && proofFiles.length > 0) || itemAttachmentFiles.length > 0) {
         const formData = new FormData();
         Object.entries(rest).forEach(([key, val]) => {
           if (val !== undefined && val !== null) {
@@ -706,7 +801,12 @@ export const Edit = ({
             );
           }
         });
-        proofFiles.forEach((file) => formData.append("proofs", file));
+        if (proofFiles) {
+          proofFiles.forEach((file) => formData.append("proofs", file));
+        }
+        itemAttachmentFiles.forEach(({ index, file }) => {
+          formData.append(`item_attachment_${index}`, file);
+        });
         return submitFn(formData);
       }
       return submitFn(rest);
@@ -769,13 +869,17 @@ export const Edit = ({
             <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-xs text-destructive space-y-1">
               <p className="font-semibold">Please correct the following before saving:</p>
               <ul className="list-disc list-inside space-y-0.5">
-                {form.formState.errors.shop && <li>Please select an Attending Shop</li>}
                 {form.formState.errors.orderType && <li>Please select Type of Order</li>}
+                {form.formState.errors.eventName && <li>Event Name is required</li>}
+                {form.formState.errors.eventDate && <li>{form.formState.errors.eventDate.message || "Event Date must be at least 72 hours in advance"}</li>}
+                {form.formState.errors.approvedReferralNumber && <li>Approved Referral Number is required</li>}
+                {form.formState.errors.approvedDate && <li>Approved Date is required</li>}
+                {form.formState.errors.purpose && <li>Purpose is required</li>}
                 {form.formState.errors.attachmentEmail && (
                   <li>{form.formState.errors.attachmentEmail.message || "Valid Attachment Sender Email is required"}</li>
                 )}
                 {form.formState.errors.items && (
-                  <li>{form.formState.errors.items.message || form.formState.errors.items.root?.message || "Please add at least one item"}</li>
+                  <li>{form.formState.errors.items.message || form.formState.errors.items.root?.message || "Please add at least one item and attach documents for Work Order services"}</li>
                 )}
               </ul>
             </div>
@@ -785,8 +889,8 @@ export const Edit = ({
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button type="submit" loading={loading} loadingText="Saving..">
-              Save
+            <Button type="submit" loading={loading} loadingText="Saving.." disabled={isLocked}>
+              {isLocked ? "Locked (< 72h)" : "Save"}
             </Button>
           </DialogFooter>
         </form>

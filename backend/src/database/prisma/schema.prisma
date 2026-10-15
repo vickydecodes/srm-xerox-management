@@ -73,6 +73,8 @@ model Order {
   purpose          String?
   eventName        String?
   eventDate        DateTime?
+  approvedReferralNumber String?
+  approvedDate     DateTime?
   attachmentEmail  String?
   managementAmount Float?
   status           String    @default("draft")

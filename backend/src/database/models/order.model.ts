@@ -1,7 +1,7 @@
 import prisma from '@config/prisma.config.js';
 import { CounterModel } from './counter.model.js';
 
-export interface IOrder extends OrderDocument {}
+export interface IOrder extends OrderDocument { }
 
 export enum OrderItemType {
   PRODUCT = 'InventoryProduct',
@@ -27,6 +27,7 @@ export interface IOrderItem {
   customHeight?: number;
   customUnit?: string;
   customRate?: number;
+  attachment?: any;
 }
 
 export interface IApproval {
@@ -67,6 +68,8 @@ export class OrderDocument {
   purpose?: string;
   eventName?: string;
   eventDate?: Date;
+  approvedReferralNumber?: string;
+  approvedDate?: Date;
 
   managementAmount?: number;
   self_supports!: ISelfSupport[];
@@ -106,7 +109,7 @@ export class OrderDocument {
     if (!this._id) {
       this.isNew = true;
     }
-    
+
     // Default initializations to replicate Mongoose behavior
     this.self_supports = data.self_supports || data.sponsors || [];
     if (!this.items) this.items = [];
@@ -154,7 +157,7 @@ export class OrderDocument {
       const totalCost = this.items.reduce((sum, i) => sum + i.total, 0);
       const totalSelfSupport = (this.self_supports || []).reduce((sum, s) => sum + s.amount, 0);
       const totalAvailable = (this.managementAmount ?? 0) + totalSelfSupport;
-    
+
       if (totalCost > totalAvailable) {
         throw new Error(
           `Order total (${totalCost}) exceeds available funds — management (${this.managementAmount ?? 0}) + self support (${totalSelfSupport})`
@@ -186,6 +189,8 @@ export class OrderDocument {
       purpose: this.purpose,
       eventName: this.eventName,
       eventDate: this.eventDate,
+      approvedReferralNumber: this.approvedReferralNumber,
+      approvedDate: this.approvedDate,
       attachmentEmail: this.attachmentEmail,
       managementAmount: this.managementAmount,
       status: this.status,
@@ -296,11 +301,11 @@ export class OrderModel {
 }
 
 type OrderModelType = typeof OrderModel & {
-  new (data: any): OrderDocument;
+  new(data: any): OrderDocument;
   (data: any): OrderDocument;
 };
 
-const OrderFn = function(data: any) { return new OrderDocument(data); };
+const OrderFn = function (data: any) { return new OrderDocument(data); };
 Object.setPrototypeOf(OrderFn, OrderModel);
 export const Order = OrderFn as unknown as OrderModelType;
 export default Order;

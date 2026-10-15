@@ -34,11 +34,14 @@ export const useServiceColumns = (services) => {
     {
       accessorKey: "isWorkOrder",
       header: () => Hint("Work Order", "Whether this service is designated for work orders"),
-      cell: ({ row }) => (
-        <span className={row.getValue("isWorkOrder") ? "text-blue-600 dark:text-blue-400 font-medium" : "text-muted-foreground"}>
-          {row.getValue("isWorkOrder") ? "Yes" : "No"}
-        </span>
-      ),
+      cell: ({ row }) =>
+        row.getValue("isWorkOrder") ? (
+          <span className="text-[10px] bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 font-semibold px-2 py-0.5 rounded-full inline-flex items-center">
+            Work Order
+          </span>
+        ) : (
+          <span className="text-muted-foreground text-xs">—</span>
+        ),
     },
     {
       accessorKey: "active",

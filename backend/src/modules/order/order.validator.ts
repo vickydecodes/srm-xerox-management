@@ -36,7 +36,7 @@ export const verifyProofSchema = z.object({
 
 export const createOrderSchema = z.object({
   orderType: z.enum(['WORK_ORDER', 'XEROX_ORDER']),
-  shop: objectId,
+  shop: objectId.optional(),
 
   purpose: z
     .string()
@@ -46,6 +46,21 @@ export const createOrderSchema = z.object({
   eventName: z.string().trim().optional(),
 
   eventDate: z.preprocess(
+    (value) => (value === '' || value === null ? undefined : value),
+    z.coerce.date().refine(
+      (date) => {
+        if (!date) return true;
+        const minDateStr = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        const dateStr = date.toISOString().slice(0, 10);
+        return dateStr >= minDateStr;
+      },
+      { message: 'Event date must be at least 72 hours in advance' }
+    ).optional()
+  ),
+
+  approvedReferralNumber: z.string().trim().optional(),
+
+  approvedDate: z.preprocess(
     (value) => (value === '' || value === null ? undefined : value),
     z.coerce.date().optional()
   ),
@@ -105,6 +120,7 @@ export const createOrderSchema = z.object({
           customHeight: z.coerce.number().optional(),
           customUnit: z.string().trim().optional(),
           customRate: z.coerce.number().optional(),
+          attachment: z.any().optional(),
         })
       )
       .optional()
@@ -130,4 +146,4 @@ export const createOrderSchema = z.object({
 
 export const updateOrderSchema =
   createOrderSchema.partial();
-
+
