@@ -125,4 +125,32 @@ describe('Profile page', () => {
 
     expect(navigateMock).toHaveBeenCalledWith('/shop_admin/changepassword');
   });
+
+  it('renders both branch and department for department_admin', () => {
+    useAuth.mockReturnValue({
+      user: buildUser({
+        role: 'department_admin',
+        branch: { name: 'Faculty of Engineering and Technology (E&T)' },
+        department: { name: 'Computer Science and Engineering (CSE)' },
+      }),
+    });
+    render(<Profile />);
+
+    expect(screen.getByText('Faculty of Engineering and Technology (E&T)')).toBeInTheDocument();
+    expect(screen.getByText('Computer Science and Engineering (CSE)')).toBeInTheDocument();
+  });
+
+  it('renders only branch and not department for manager or branch_admin', () => {
+    useAuth.mockReturnValue({
+      user: buildUser({
+        role: 'manager',
+        branch: { name: 'Kattankulathur Campus' },
+        department: { name: 'Some Department' },
+      }),
+    });
+    render(<Profile />);
+
+    expect(screen.getByText('Kattankulathur Campus')).toBeInTheDocument();
+    expect(screen.queryByText('Some Department')).not.toBeInTheDocument();
+  });
 });

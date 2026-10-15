@@ -37,6 +37,9 @@ export class UserDocument {
     this._originalPassword = this.password;
     if (this.active === undefined) this.active = true;
     if (this.deleted === undefined) this.deleted = false;
+    this.branch = data.branchObj || data.branch;
+    this.department = data.departmentObj || data.department;
+    this.shop = data.shopObj || data.shop;
   }
 
   async runPreSaveHooks() {
@@ -101,10 +104,26 @@ export class UserModel {
     if (!id) return null;
     const doc = await prisma.user.findUnique({
       where: { id: id.toString() },
-      include: { branchObj: true, departmentObj: true, shopObj: true }
+      include: {
+        branchObj: true,
+        departmentObj: true,
+        shopObj: true
+      }
     });
     if (!doc) return null;
-    return new UserDocument({ ...doc, _id: doc.id });
+
+    let branch = doc.branchObj;
+    if (!branch && doc.departmentObj?.branch) {
+      branch = await prisma.branch.findUnique({
+        where: { id: doc.departmentObj.branch }
+      });
+    }
+
+    return new UserDocument({
+      ...doc,
+      _id: doc.id,
+      branchObj: branch || doc.branchObj,
+    });
   }
 
   static async findByIdAndUpdate(id: string, data: any, options: any = {}) {

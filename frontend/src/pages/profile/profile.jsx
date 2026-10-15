@@ -89,9 +89,30 @@ export default function Profile() {
       })
     : "N/A";
 
-  const showBranch = user.role === "branch_admin" || user.role === "manager";
-  const showDepartment = user.role === "department_admin";
+  const isDeptAdmin = user.role === "department_admin";
+  const isBranchAdminOrManager =
+    user.role === "branch_admin" || user.role === "manager";
+
+  const showBranch = isBranchAdminOrManager || isDeptAdmin;
+  const showDepartment = isDeptAdmin;
   const showShop = user.role === "shop_admin";
+
+  const branchName =
+    user.branch?.name ||
+    (typeof user.branch === "string" ? user.branch : null) ||
+    user.department?.branch?.name ||
+    user.department?.branchObj?.name ||
+    "Main Headquarters (Global)";
+
+  const departmentName =
+    user.department?.name ||
+    (typeof user.department === "string" ? user.department : null) ||
+    "Not assigned";
+
+  const shopName =
+    user.shop?.name ||
+    (typeof user.shop === "string" ? user.shop : null) ||
+    "Not assigned";
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl mx-auto px-4 py-8">
@@ -212,12 +233,12 @@ export default function Profile() {
                   value={user.email || "—"}
                 />
 
-                {/* Branch – branch_admin only */}
+                {/* Branch – shown for branch_admin, manager, and department_admin */}
                 {showBranch && (
                   <InfoRow
                     icon={<IconBuilding className="w-5 h-5" />}
                     label="Branch"
-                    value={user.branch?.name || "Main Headquarters (Global)"}
+                    value={branchName}
                   />
                 )}
 
@@ -226,7 +247,7 @@ export default function Profile() {
                   <InfoRow
                     icon={<IconGitBranch className="w-5 h-5" />}
                     label="Department"
-                    value={user.department?.name || "Not assigned"}
+                    value={departmentName}
                   />
                 )}
 
@@ -235,7 +256,7 @@ export default function Profile() {
                   <InfoRow
                     icon={<IconShoppingCart className="w-5 h-5" />}
                     label="Shop"
-                    value={user.shop?.name || "Not assigned"}
+                    value={shopName}
                   />
                 )}
               </div>
