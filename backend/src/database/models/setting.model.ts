@@ -31,7 +31,7 @@ export class SettingDocument {
     
     // defaults
     if (this.srmCollegeEmail === undefined) this.srmCollegeEmail = 'srmxerox@srmist.edu.in';
-    if (this.pdfTitle === undefined) this.pdfTitle = 'SRM Xerox & DTP Management';
+    if (this.pdfTitle === undefined) this.pdfTitle = 'THE REPROGRAPHICS CENTRE';
     if (this.pdfPaperSize === undefined) this.pdfPaperSize = 'A5 Landscape';
     if (this.pdfMargin === undefined) this.pdfMargin = 30;
     if (this.pdfLogoSize === undefined) this.pdfLogoSize = 45;

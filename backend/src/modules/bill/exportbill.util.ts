@@ -6,7 +6,10 @@ import Bill from '@db/models/bill.model.ts';
 import Setting from '@db/models/setting.model.ts';
 
 export const generatePdfBuffer = (bill: any, docSetting: any): Promise<Buffer> => {
-  const pdfTitle = docSetting?.pdfTitle || 'SRM Xerox & DTP Management';
+  const savedPdfTitle = docSetting?.pdfTitle;
+  const pdfTitle = !savedPdfTitle || savedPdfTitle === 'SRM Xerox & DTP Management'
+    ? 'THE REPROGRAPHICS CENTRE'
+    : savedPdfTitle;
   const pdfPaperSize = docSetting?.pdfPaperSize || 'A5 Landscape';
   
   // Custom sizing defaults
@@ -64,7 +67,7 @@ export const generatePdfBuffer = (bill: any, docSetting: any): Promise<Buffer> =
     const headerBgColor = '#1e40af';
 
     // 1. Logo and Header
-    const logoPath = path.join(process.cwd(), '../frontend/public/logo.png');
+    const logoPath = path.join(process.cwd(), '../frontend/public/final_logo.png');
     let hasLogo = false;
     let logoSize = pdfPaperSize === 'A4 Portrait' ? (docSetting?.pdfLogoSize ?? 55) : customLogoSize;
     if (fs.existsSync(logoPath)) {
@@ -78,23 +81,23 @@ export const generatePdfBuffer = (bill: any, docSetting: any): Promise<Buffer> =
 
     const textStartX = hasLogo ? pdfMargin + logoSize + 10 : pdfMargin;
 
-    // College Title
+    // Organization heading
+    const invoiceTitleWidth = 135;
+    const invoiceTitleX = rightBound - invoiceTitleWidth;
+    const titleWidth = Math.max(80, invoiceTitleX - textStartX - 12);
     doc
       .fillColor(primaryColor)
       .fontSize(pdfPaperSize === 'A4 Portrait' ? 16 : 14)
       .font('Helvetica-Bold')
-      .text(pdfTitle, textStartX, pdfMargin);
+      .text(pdfTitle, textStartX, pdfMargin, { width: titleWidth, lineBreak: false });
 
     doc
       .fillColor(lightTextColor)
-      .fontSize(8)
+      .fontSize(6)
       .font('Helvetica')
-      .text('Kattankulathur Campus, Chennai, Tamil Nadu - 603203', textStartX, pdfMargin + 15)
-      .text('Official Xerox & Print Services Management System', textStartX, pdfMargin + 25);
-
-    // Invoice Title on far right
-    const invoiceTitleWidth = 135;
-    const invoiceTitleX = rightBound - invoiceTitleWidth;
+      .text('125, ANGEL STREET, THIRUMALAI NAGAR, RAMAPURAM,CHENNAI - 600 089', textStartX, pdfMargin + 17, { width: titleWidth, lineBreak: false })
+      .text('GST IN: 33AALPS4307B7ZV', textStartX, pdfMargin + 25, { width: titleWidth, lineBreak: false })
+      .text('Xerox, Printing & DTP Services', textStartX, pdfMargin + 33, { width: titleWidth, lineBreak: false });
 
     doc
       .fillColor(primaryColor)
@@ -120,33 +123,28 @@ export const generatePdfBuffer = (bill: any, docSetting: any): Promise<Buffer> =
     // Gold separator line (SRM Accent)
     doc.rect(pdfMargin, pdfMargin + 55, contentWidth, 2).fill(secondaryColor);
 
-    // 2. Billing Info & attending Shop info
+    // 2. Service location and attending shop
     let infoY = pdfMargin + 70;
 
     doc
       .fillColor(lightTextColor)
       .fontSize(7)
       .font('Helvetica-Bold')
-      .text('BILLED TO', pdfMargin, infoY);
+      .text('BRANCH', pdfMargin, infoY);
 
-    const deptName = bill.department?.name || 'Direct Walk-in';
     const branchName = bill.branch?.name || 'Main Campus';
     doc
       .fillColor(darkTextColor)
       .fontSize(10)
       .font('Helvetica-Bold')
-      .text(deptName, pdfMargin, infoY + 12)
-      .fillColor(lightTextColor)
-      .fontSize(8)
-      .font('Helvetica')
-      .text(`Branch: ${branchName}`, pdfMargin, infoY + 24);
+      .text(branchName, pdfMargin, infoY + 12, { width: contentWidth * 0.45, lineBreak: false });
 
     const shopColX = pdfMargin + (contentWidth * 0.55);
     doc
       .fillColor(lightTextColor)
       .fontSize(7)
       .font('Helvetica-Bold')
-      .text('ATTENDING SHOP', shopColX, infoY);
+      .text('SERVICE COUNTER', shopColX, infoY);
 
     const shopName = bill.createdBy?.shop?.name || 'Central Xerox Store';
     const operatorEmail = bill.createdBy?.email || 'operator@srmist.edu.in';
@@ -154,11 +152,11 @@ export const generatePdfBuffer = (bill: any, docSetting: any): Promise<Buffer> =
       .fillColor(darkTextColor)
       .fontSize(10)
       .font('Helvetica-Bold')
-      .text(shopName, shopColX, infoY + 12)
+      .text(shopName, shopColX, infoY + 12, { width: rightBound - shopColX, lineBreak: false })
       .fillColor(lightTextColor)
       .fontSize(8)
       .font('Helvetica')
-      .text(`Operator: ${operatorEmail}`, shopColX, infoY + 24);
+      .text(`Operator: ${operatorEmail}`, shopColX, infoY + 25, { width: rightBound - shopColX, lineBreak: false });
 
     // Separator before table
     let tableY = infoY + 45;
@@ -169,21 +167,23 @@ export const generatePdfBuffer = (bill: any, docSetting: any): Promise<Buffer> =
       .rect(pdfMargin, tableY, contentWidth, 20)
       .fill(headerBgColor);
 
-    const descX = pdfMargin + 5;
-    const typeX = pdfMargin + (contentWidth * 0.45);
-    const priceX = pdfMargin + (contentWidth * 0.60);
-    const qtyX = pdfMargin + (contentWidth * 0.75);
+    const serialX = pdfMargin + 5;
+    const descX = pdfMargin + (contentWidth * 0.08);
+    const typeX = pdfMargin + (contentWidth * 0.48);
+    const priceX = pdfMargin + (contentWidth * 0.62);
+    const qtyX = pdfMargin + (contentWidth * 0.76);
     const totalX = pdfMargin + (contentWidth * 0.85);
 
     doc
       .fillColor('#ffffff')
       .fontSize(8)
       .font('Helvetica-Bold')
-      .text('Item Description', descX, tableY + 6)
+      .text('S.No', serialX, tableY + 6)
+      .text('Particulars', descX, tableY + 6)
       .text('Type', typeX, tableY + 6)
-      .text('Price', priceX, tableY + 6, { width: contentWidth * 0.12, align: 'right' })
+      .text('Rate', priceX, tableY + 6, { width: contentWidth * 0.12, align: 'right' })
       .text('Qty', qtyX, tableY + 6, { width: contentWidth * 0.08, align: 'right' })
-      .text('Total', totalX, tableY + 6, { width: contentWidth * 0.13, align: 'right' });
+      .text('Amount', totalX, tableY + 6, { width: contentWidth * 0.13, align: 'right' });
 
     tableY += 20;
 
@@ -200,7 +200,8 @@ export const generatePdfBuffer = (bill: any, docSetting: any): Promise<Buffer> =
 
       doc
         .fillColor(darkTextColor)
-        .text(item.name || 'Unknown Item', descX, tableY + 6, { width: contentWidth * 0.40, lineBreak: false })
+        .text(String(rowIdx + 1), serialX, tableY + 6)
+        .text(item.name || 'Unknown Item', descX, tableY + 6, { width: contentWidth * 0.37, lineBreak: false })
         .text(itemType, typeX, tableY + 6)
         .text(`Rs. ${(item.price || 0).toFixed(2)}`, priceX, tableY + 6, { width: contentWidth * 0.12, align: 'right' })
         .text(String(item.quantity || 0), qtyX, tableY + 6, { width: contentWidth * 0.08, align: 'right' })

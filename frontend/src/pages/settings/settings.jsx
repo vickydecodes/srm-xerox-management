@@ -10,6 +10,9 @@ import { Save, X, RefreshCw, FileText, Settings as SettingsIcon } from 'lucide-r
 import { apiurls } from '@/core/api/api.urls';
 import axios from 'axios';
 
+const defaultPdfTitle = 'THE REPROGRAPHICS CENTRE';
+const previousDefaultPdfTitle = 'SRM Xerox & DTP Management';
+
 export default function Settings() {
   const { settings } = useApi();
 
@@ -37,7 +40,8 @@ export default function Settings() {
   const loadDefaults = () => {
     if (settings?.config) {
       setSrmCollegeEmail(settings.config.srmCollegeEmail ?? "");
-      setPdfTitle(settings.config.pdfTitle ?? "SRM Xerox & DTP Management");
+      const savedPdfTitle = settings.config.pdfTitle;
+      setPdfTitle(!savedPdfTitle || savedPdfTitle === previousDefaultPdfTitle ? defaultPdfTitle : savedPdfTitle);
       setPdfPaperSize(settings.config.pdfPaperSize ?? "A5 Landscape");
       setPdfMargin(settings.config.pdfMargin ?? 30);
       setPdfLogoSize(settings.config.pdfLogoSize ?? 45);
@@ -50,7 +54,9 @@ export default function Settings() {
 
   const isDirty =
     srmCollegeEmail !== (settings?.config?.srmCollegeEmail ?? "") ||
-    pdfTitle !== (settings?.config?.pdfTitle ?? "SRM Xerox & DTP Management") ||
+    pdfTitle !== (settings?.config?.pdfTitle === previousDefaultPdfTitle
+      ? defaultPdfTitle
+      : settings?.config?.pdfTitle ?? defaultPdfTitle) ||
     pdfPaperSize !== (settings?.config?.pdfPaperSize ?? "A5 Landscape") ||
     Number(pdfMargin) !== (settings?.config?.pdfMargin ?? 30) ||
     Number(pdfLogoSize) !== (settings?.config?.pdfLogoSize ?? 45);
@@ -193,7 +199,7 @@ export default function Settings() {
                     <Input
                       id="pdfTitle"
                       type="text"
-                      placeholder="e.g. SRM Xerox & DTP Management"
+                      placeholder={defaultPdfTitle}
                       value={pdfTitle}
                       onChange={(e) => setPdfTitle(e.target.value)}
                       disabled={isReadonly}

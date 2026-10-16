@@ -239,7 +239,7 @@ model ErrorLog {
 model Setting {
   id              String   @id @default(uuid()) @map("_id")
   srmCollegeEmail String   @default("srmxerox@srmist.edu.in")
-  pdfTitle        String   @default("SRM Xerox & DTP Management")
+  pdfTitle        String   @default("THE REPROGRAPHICS CENTRE")
   pdfPaperSize    String   @default("A5 Landscape")
   pdfMargin       Float    @default(30)
   pdfLogoSize     Float    @default(45)
