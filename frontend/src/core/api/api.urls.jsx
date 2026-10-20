@@ -252,23 +252,58 @@ const apiurls = {
   dashboard: {
     superAdmin: {
       method: "get",
-      url: (lt, gt) => `${base_url}/dashboards/super-admin${lt || gt ? '?' : ''}${lt ? 'lt=' + lt + '&' : ''}${gt ? 'gt=' + gt : ''}`,
+      url: (lt, gt, variant) => {
+        const params = new URLSearchParams();
+        if (variant) params.append('variant', variant);
+        if (lt) params.append('lt', lt);
+        if (gt) params.append('gt', gt);
+        const query = params.toString();
+        return `${base_url}/dashboards/super-admin${query ? `?${query}` : ''}`;
+      },
     },
     branchAdmin: {
       method: "get",
-      url: (lt, gt) => `${base_url}/dashboards/branch-admin${lt || gt ? '?' : ''}${lt ? 'lt=' + lt + '&' : ''}${gt ? 'gt=' + gt : ''}`,
+      url: (lt, gt, variant) => {
+        const params = new URLSearchParams();
+        if (variant) params.append('variant', variant);
+        if (lt) params.append('lt', lt);
+        if (gt) params.append('gt', gt);
+        const query = params.toString();
+        return `${base_url}/dashboards/branch-admin${query ? `?${query}` : ''}`;
+      },
     },
     departmentAdmin: {
       method: "get",
-      url: (lt, gt) => `${base_url}/dashboards/department-admin${lt || gt ? '?' : ''}${lt ? 'lt=' + lt + '&' : ''}${gt ? 'gt=' + gt : ''}`,
+      url: (lt, gt, variant) => {
+        const params = new URLSearchParams();
+        if (variant) params.append('variant', variant);
+        if (lt) params.append('lt', lt);
+        if (gt) params.append('gt', gt);
+        const query = params.toString();
+        return `${base_url}/dashboards/department-admin${query ? `?${query}` : ''}`;
+      },
     },
     shopAdmin: {
       method: "get",
-      url: (lt, gt) => `${base_url}/dashboards/shop-admin${lt || gt ? '?' : ''}${lt ? 'lt=' + lt + '&' : ''}${gt ? 'gt=' + gt : ''}`,
+      url: (lt, gt, variant) => {
+        const params = new URLSearchParams();
+        if (variant) params.append('variant', variant);
+        if (lt) params.append('lt', lt);
+        if (gt) params.append('gt', gt);
+        const query = params.toString();
+        return `${base_url}/dashboards/shop-admin${query ? `?${query}` : ''}`;
+      },
     },
     staff: {
       method: "get",
-      url: (lt, gt) => `${base_url}/dashboards/staff${lt || gt ? '?' : ''}${lt ? 'lt=' + lt + '&' : ''}${gt ? 'gt=' + gt : ''}`,
+      url: (lt, gt, variant) => {
+        const params = new URLSearchParams();
+        if (variant) params.append('variant', variant);
+        if (lt) params.append('lt', lt);
+        if (gt) params.append('gt', gt);
+        const query = params.toString();
+        return `${base_url}/dashboards/staff${query ? `?${query}` : ''}`;
+      },
     },
   },
 

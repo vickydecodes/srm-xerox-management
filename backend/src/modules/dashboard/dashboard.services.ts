@@ -18,7 +18,32 @@ type DashboardBill = {
   items: Array<{ name: string; quantity: number; price: number; total?: number }>;
 };
 
-const buildDateFilter = (lt?: string, gt?: string) => {
+export type DashboardVariant = 'daily' | 'weekly' | 'monthly';
+
+const buildDateFilter = (variant?: string, lt?: string, gt?: string) => {
+  if (variant) {
+    const normalized = variant.toLowerCase().trim();
+    const now = new Date();
+
+    if (normalized === 'daily' || normalized === '1d') {
+      const startOfDay = new Date(now);
+      startOfDay.setHours(0, 0, 0, 0);
+      return { createdAt: { gte: startOfDay, lte: now } };
+    }
+
+    if (normalized === 'weekly' || normalized === '7d') {
+      const pastWeek = new Date(now);
+      pastWeek.setDate(now.getDate() - 7);
+      return { createdAt: { gte: pastWeek, lte: now } };
+    }
+
+    if (normalized === 'monthly' || normalized === '30d') {
+      const pastMonth = new Date(now);
+      pastMonth.setDate(now.getDate() - 30);
+      return { createdAt: { gte: pastMonth, lte: now } };
+    }
+  }
+
   const createdAt: { lte?: Date; gte?: Date } = {};
   if (lt) createdAt.lte = new Date(lt);
   if (gt) createdAt.gte = new Date(gt);
@@ -129,8 +154,39 @@ const summarizeBranchRevenue = async (bills: DashboardBill[]) => {
     .sort((a, b) => b.total - a.total);
 };
 
-export const getSuperAdminDashboard = async (lt?: string, gt?: string) => {
-  const dateFilter = buildDateFilter(lt, gt);
+type DashboardParams = {
+  variant?: string;
+  lt?: string;
+  gt?: string;
+};
+
+const resolveFilterParams = (
+  param1?: string | DashboardParams,
+  param2?: string,
+  param3?: string
+) => {
+  if (param1 && typeof param1 === 'object') {
+    return {
+      variant: param1.variant,
+      lt: param1.lt,
+      gt: param1.gt,
+    };
+  }
+  // Backwards compatibility for (lt, gt) or (variant, lt, gt)
+  return {
+    variant: param3 !== undefined ? (param1 as string) : undefined,
+    lt: param3 !== undefined ? param2 : (param1 as string),
+    gt: param3 !== undefined ? param3 : param2,
+  };
+};
+
+export const getSuperAdminDashboard = async (
+  paramsOrLt?: string | DashboardParams,
+  gt?: string,
+  param3?: string
+) => {
+  const { variant, lt, gt: resolvedGt } = resolveFilterParams(paramsOrLt, gt, param3);
+  const dateFilter = buildDateFilter(variant, lt, resolvedGt);
   const [
     branchCount,
     departmentCount,
@@ -176,9 +232,15 @@ export const getSuperAdminDashboard = async (lt?: string, gt?: string) => {
   };
 };
 
-export const getBranchAdminDashboard = async (branchId: string, lt?: string, gt?: string) => {
+export const getBranchAdminDashboard = async (
+  branchId: string,
+  paramsOrLt?: string | DashboardParams,
+  gt?: string,
+  param3?: string
+) => {
   const branchObjectId = branchId || null;
-  const dateFilter = buildDateFilter(lt, gt);
+  const { variant, lt, gt: resolvedGt } = resolveFilterParams(paramsOrLt, gt, param3);
+  const dateFilter = buildDateFilter(variant, lt, resolvedGt);
   const billFilter = { branch: branchObjectId, deleted: false, ...dateFilter };
   const [
     departmentCount,
@@ -220,8 +282,14 @@ export const getBranchAdminDashboard = async (branchId: string, lt?: string, gt?
   };
 };
 
-export const getDepartmentAdminDashboard = async (departmentId: string, lt?: string, gt?: string) => {
-  const dateFilter = buildDateFilter(lt, gt);
+export const getDepartmentAdminDashboard = async (
+  departmentId: string,
+  paramsOrLt?: string | DashboardParams,
+  gt?: string,
+  param3?: string
+) => {
+  const { variant, lt, gt: resolvedGt } = resolveFilterParams(paramsOrLt, gt, param3);
+  const dateFilter = buildDateFilter(variant, lt, resolvedGt);
   const [
     department,
     usersCount,
@@ -262,9 +330,15 @@ export const getDepartmentAdminDashboard = async (departmentId: string, lt?: str
   };
 };
 
-export const getShopAdminDashboard = async (shopId: string, lt?: string, gt?: string) => {
+export const getShopAdminDashboard = async (
+  shopId: string,
+  paramsOrLt?: string | DashboardParams,
+  gt?: string,
+  param3?: string
+) => {
   const shopObjectId = shopId || null;
-  const dateFilter = buildDateFilter(lt, gt);
+  const { variant, lt, gt: resolvedGt } = resolveFilterParams(paramsOrLt, gt, param3);
+  const dateFilter = buildDateFilter(variant, lt, resolvedGt);
   const shopUsers = await User.find({ shop: shopObjectId, deleted: false });
   const shopUserIds = shopUsers.map((user) => user._id);
   const staffCount = shopUsers.filter((user) => user.active && user.role === 'staff').length;
@@ -292,9 +366,15 @@ export const getShopAdminDashboard = async (shopId: string, lt?: string, gt?: st
   };
 };
 
-export const getStaffDashboard = async (userId: string, lt?: string, gt?: string) => {
+export const getStaffDashboard = async (
+  userId: string,
+  paramsOrLt?: string | DashboardParams,
+  gt?: string,
+  param3?: string
+) => {
   const userObjectId = userId || null;
-  const dateFilter = buildDateFilter(lt, gt);
+  const { variant, lt, gt: resolvedGt } = resolveFilterParams(paramsOrLt, gt, param3);
+  const dateFilter = buildDateFilter(variant, lt, resolvedGt);
   const billFilter = { createdBy: userObjectId, deleted: false, ...dateFilter };
   const bills = await Bill.find(billFilter);
 

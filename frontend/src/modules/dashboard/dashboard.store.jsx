@@ -7,7 +7,7 @@ export const useDashboardStore = create((set) => ({
   data: null,
   loading: false,
 
-  fetchDashboard: async (role, dateRange) => {
+  fetchDashboard: async (role, dateRangeOrParams, maybeVariant) => {
     set({ loading: true });
     try {
       let config;
@@ -32,20 +32,39 @@ export const useDashboardStore = create((set) => ({
           throw new Error("Invalid role for dashboard fetch");
       }
 
+      let dateRange;
+      let variant;
+
+      if (typeof dateRangeOrParams === 'string') {
+        variant = dateRangeOrParams;
+      } else if (dateRangeOrParams && ('variant' in dateRangeOrParams || 'from' in dateRangeOrParams || 'to' in dateRangeOrParams)) {
+        if (dateRangeOrParams.variant) variant = dateRangeOrParams.variant;
+        dateRange = dateRangeOrParams.dateRange || dateRangeOrParams;
+      } else {
+        dateRange = dateRangeOrParams;
+      }
+
+      if (maybeVariant) {
+        variant = maybeVariant;
+      }
+
       let lt = undefined;
       let gt = undefined;
-      if (dateRange?.to) {
+      if (!variant && dateRange?.to) {
         const endDate = new Date(dateRange.to);
         endDate.setHours(23, 59, 59, 999);
         lt = endDate.toISOString();
       }
-      if (dateRange?.from) {
+      if (!variant && dateRange?.from) {
         const startDate = new Date(dateRange.from);
         startDate.setHours(0, 0, 0, 0);
         gt = startDate.toISOString();
       }
 
-      const res = await apiRequest("get", config.url(lt, gt));
+      const url = variant !== undefined
+        ? config.url(lt, gt, variant)
+        : config.url(lt, gt);
+      const res = await apiRequest("get", url);
       set({ data: res.data, loading: false });
       return res.data;
     } catch (err) {

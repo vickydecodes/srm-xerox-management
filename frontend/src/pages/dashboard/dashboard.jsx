@@ -17,6 +17,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { dashboard } = useApi();
+  const [variant, setVariant] = useState(null);
   const [dateRange, setDateRange] = useState({
     from: undefined,
     to: undefined,
@@ -24,13 +25,31 @@ export default function Dashboard() {
 
   const fetchDashboard = () => {
     if (dashboard && user?.role) {
-      dashboard.fetch(user.role, dateRange);
+      const payload = variant ? { ...dateRange, variant } : dateRange;
+      dashboard.fetch(user.role, payload);
     }
   };
 
   useEffect(() => {
     fetchDashboard();
-  }, [user?.role, dateRange]);
+  }, [user?.role, variant, dateRange]);
+
+  const handleVariantChange = (selectedVariant) => {
+    if (variant === selectedVariant) {
+      // Toggle off -> returns to all time
+      setVariant(null);
+    } else {
+      setVariant(selectedVariant);
+      setDateRange({ from: undefined, to: undefined });
+    }
+  };
+
+  const handleDateRangeChange = (range) => {
+    setDateRange(range);
+    if (range?.from || range?.to) {
+      setVariant(null);
+    }
+  };
 
   const data = dashboard?.data;
   const loading = dashboard?.loading;
@@ -91,7 +110,7 @@ export default function Dashboard() {
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-500">
       {/* Welcome Header */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-border/60">
+      <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 pb-4 border-b border-border/60">
         <div className="space-y-1 text-left">
           <h1 className="text-xl font-semibold text-foreground tracking-tight">
             Hey, {user.name}
@@ -100,8 +119,40 @@ export default function Dashboard() {
             {getRoleLabel(user.role)} Dashboard
           </p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-3 items-center">
-          <DateRangePicker date={dateRange} setDate={setDateRange} />
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Daily, Weekly, Monthly Filter Variants */}
+          <div className="inline-flex items-center rounded-lg border border-border/80 bg-muted/40 p-1 shadow-sm">
+            <Button
+              type="button"
+              size="sm"
+              variant={variant === "daily" ? "default" : "ghost"}
+              onClick={() => handleVariantChange("daily")}
+              className="h-7 px-3 text-xs font-medium rounded-md transition-all"
+            >
+              Daily
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={variant === "weekly" ? "default" : "ghost"}
+              onClick={() => handleVariantChange("weekly")}
+              className="h-7 px-3 text-xs font-medium rounded-md transition-all"
+            >
+              Weekly
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={variant === "monthly" ? "default" : "ghost"}
+              onClick={() => handleVariantChange("monthly")}
+              className="h-7 px-3 text-xs font-medium rounded-md transition-all"
+            >
+              Monthly
+            </Button>
+          </div>
+
+          <DateRangePicker date={dateRange} setDate={handleDateRangeChange} />
+
           {user.role === "shop_admin" && (
             <Button
               onClick={() => navigate(`/${user.role}/bill-creation`)}

@@ -223,4 +223,42 @@ describe('Dashboard services', () => {
       { method: 'UPI', count: 1, amount: 80 },
     ]);
   });
+
+  it('filters by variant: daily, weekly, and monthly', async () => {
+    vi.useFakeTimers();
+    const fixedNow = new Date('2025-05-15T12:00:00.000Z');
+    vi.setSystemTime(fixedNow);
+
+    try {
+      // Daily test
+      await getSuperAdminDashboard({ variant: 'daily' });
+      const dailyCalls = models.bill.find.mock.calls;
+      const dailyCall = dailyCalls[dailyCalls.length - 1]![0];
+      const startOfDay = new Date(fixedNow);
+      startOfDay.setHours(0, 0, 0, 0);
+      expect(dailyCall.createdAt.gte.getTime()).toBe(startOfDay.getTime());
+      expect(dailyCall.createdAt.lte.getTime()).toBe(fixedNow.getTime());
+
+      // Weekly test (7 days)
+      await getSuperAdminDashboard({ variant: 'weekly' });
+      const weeklyCalls = models.bill.find.mock.calls;
+      const weeklyCall = weeklyCalls[weeklyCalls.length - 1]![0];
+      const pastWeek = new Date(fixedNow);
+      pastWeek.setDate(fixedNow.getDate() - 7);
+      expect(weeklyCall.createdAt.gte.getTime()).toBe(pastWeek.getTime());
+      expect(weeklyCall.createdAt.lte.getTime()).toBe(fixedNow.getTime());
+
+      // Monthly test (30 days)
+      await getSuperAdminDashboard({ variant: 'monthly' });
+      const monthlyCalls = models.bill.find.mock.calls;
+      const monthlyCall = monthlyCalls[monthlyCalls.length - 1]![0];
+      const pastMonth = new Date(fixedNow);
+      pastMonth.setDate(fixedNow.getDate() - 30);
+      expect(monthlyCall.createdAt.gte.getTime()).toBe(pastMonth.getTime());
+      expect(monthlyCall.createdAt.lte.getTime()).toBe(fixedNow.getTime());
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
+
