@@ -76,9 +76,9 @@ export const useBranchModule = (exported) => {
 
   return {
     allow: {
-      create: allow(undefined, user?.role),
-      update: allow(undefined, user?.role),
-      delete: allow(undefined, user?.role),
+      create: allow(['super_admin', 'branch_admin'], user?.role),
+      update: allow(['super_admin', 'branch_admin'], user?.role),
+      delete: allow(['super_admin', 'branch_admin'], user?.role),
     },
     get state() {
       return useBranchStore.getState().list;

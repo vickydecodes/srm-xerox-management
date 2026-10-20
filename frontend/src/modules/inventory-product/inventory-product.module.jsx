@@ -80,10 +80,10 @@ export const useInventoryProductModule = (exported) => {
       setQuery,
     });
   return {
-    allow: {
-      create: allow(undefined, user?.role),
-      update: allow(undefined, user?.role),
-      delete: allow(undefined, user?.role),
+     allow: {
+      create: allow(['staff'], user?.role),
+      update: allow(['staff'], user?.role),
+      delete: allow(['staff'], user?.role),
     },
     get state() {
       return useInventoryProductStore.getState().list;

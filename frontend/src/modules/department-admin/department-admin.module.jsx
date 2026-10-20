@@ -114,10 +114,10 @@ export const useDepartmentAdminModule = (exported) => {
   });
 
   return {
-    allow: {
-      create: allow(['super_admin', 'branch_admin', 'manager'], user?.role),
-      update: allow(undefined, user?.role),
-      delete: allow(undefined, user?.role),
+     allow: {
+      create: allow(['super_admin', 'branch_admin'], user?.role),
+      update: allow(['super_admin', 'branch_admin'], user?.role),
+      delete: allow(['super_admin', 'branch_admin'], user?.role),
     },
     get state() { return useDepartmentAdminStore.getState().list; },
     get loading() { return useDepartmentAdminStore.getState().loading; },

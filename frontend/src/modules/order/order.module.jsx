@@ -125,9 +125,9 @@ export const useOrderModule = (exported) => {
 
   return {
     allow: {
-      create: allow(undefined, user?.role),
-      update: allow(undefined, user?.role),
-      delete: allow(undefined, user?.role),
+      create: allow(['shop_admin'], user?.role),
+      update: allow(['shop_admin'], user?.role),
+      delete: allow(['shop_admin'], user?.role),
     },
     get state() {
       return useOrderStore.getState().list;

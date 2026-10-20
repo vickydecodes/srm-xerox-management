@@ -92,9 +92,9 @@ export const useProductModule = (exported) => {
 
   return {
     allow: {
-      create: allow(undefined, user?.role),
-      update: allow(undefined, user?.role),
-      delete: allow(undefined, user?.role),
+      create: allow(['staff'], user?.role),
+      update: allow(['staff'], user?.role),
+      delete: allow(['staff'], user?.role),
     },
     get state() {
       return useProductStore.getState().list;
