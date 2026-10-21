@@ -35,39 +35,24 @@ const formatVariant = (variant) => {
   return entries.map(([k, v]) => `${k}: ${v}`).join(", ");
 };
 
-const DEFAULT_SERVICE_SIZES = [
-  { size: "Standard", price: null },
-  { size: "A4", price: null },
-  { size: "A3", price: null },
-  { size: "A2", price: null },
-  { size: "A1", price: null },
-  { size: "A0", price: null },
-  { size: "Legal", price: null },
-  { size: "Letter", price: null },
-];
-
 // Builds a fresh line-item object from a product/service record
 const buildItemRow = (selectedItem) => {
   const isService = selectedItem.type === "Service";
   const rawSizes = selectedItem.sizes || selectedItem.details?.sizes || [];
 
-  // Custom size and dimensions are supported for ALL services or items configured with isCustomSize
-  const itemIsCustom =
-    isService ||
-    (selectedItem.isCustomSize ?? selectedItem.details?.isCustomSize ?? false);
+  // Boolean check: custom size only if explicitly configured
+  const itemIsCustom = Boolean(
+    selectedItem.isCustomSize ?? selectedItem.details?.isCustomSize ?? false
+  );
 
-  // For services: if rawSizes are configured, use them; if empty, provide standard service sizes
-  let itemSizes = rawSizes;
-  if (isService && rawSizes.length === 0) {
-    itemSizes = DEFAULT_SERVICE_SIZES.map((s) => ({
-      ...s,
-      price: Number(selectedItem.price) || 0,
-    }));
-  } else if (itemIsCustom && rawSizes.length > 0) {
-    itemSizes = rawSizes.filter((s) =>
+  let itemSizes = Array.isArray(rawSizes) ? [...rawSizes] : [];
+  if (itemIsCustom && itemSizes.length > 0) {
+    itemSizes = itemSizes.filter((s) =>
       typeof s === "object" ? s.size !== "Standard" : s !== "Standard",
     );
   }
+
+  const hasSizes = itemSizes.length > 0 || itemIsCustom;
 
   const firstSize = itemSizes.length > 0 ? itemSizes[0] : null;
   const initialSize = firstSize
@@ -91,6 +76,20 @@ const buildItemRow = (selectedItem) => {
     initialPrice = 0;
   }
 
+  const dimMatch =
+    typeof initialSize === "string"
+      ? initialSize.match(/^(\d+(?:\.\d+)?)\s*[xX*×]\s*(\d+(?:\.\d+)?)$/)
+      : null;
+  const initialWidth = dimMatch ? Number(dimMatch[2]) : "";
+  const initialHeight = dimMatch ? Number(dimMatch[1]) : "";
+  const initialUnit =
+    selectedItem.unit === "inch" || selectedItem.details?.unit === "inch"
+      ? "inch"
+      : "ft";
+  const initialCustomSize = dimMatch
+    ? `${dimMatch[1]}×${dimMatch[2]} ${initialUnit}`
+    : "";
+
   return {
     type: selectedItem.type,
     item: selectedItem._id,
@@ -99,9 +98,9 @@ const buildItemRow = (selectedItem) => {
     price: initialPrice,
     variant: selectedItem.variant,
     size: initialSize,
-    customSize: "",
-    customWidth: "",
-    customHeight: "",
+    customSize: initialCustomSize,
+    customWidth: initialWidth,
+    customHeight: initialHeight,
     customUnit:
       selectedItem.unit === "inch" || selectedItem.details?.unit === "inch"
         ? "inch"
@@ -111,6 +110,7 @@ const buildItemRow = (selectedItem) => {
       (firstSize && typeof firstSize === "object" && Number(firstSize.price)) ||
       0,
     sizes: itemSizes,
+    hasSizes: Boolean(hasSizes),
     isCustomSize: itemIsCustom,
     isWorkOrder: Boolean(
       selectedItem.isWorkOrder === true ||
@@ -644,10 +644,9 @@ export default function OrderForm({ form, shops = [], searchProducts }) {
                         )}
                     </div>
 
-                    {/* Size Selector for all services and products with sizes/custom size */}
-                    {(currentType === "Service" ||
-                      (items[index]?.sizes && items[index]?.sizes.length > 0) ||
-                      items[index]?.isCustomSize) && (
+                    {/* Size Selector only if sizes are available or item is configured with isCustomSize */}
+                    {((items[index]?.sizes && items[index]?.sizes.length > 0) ||
+                      Boolean(items[index]?.isCustomSize)) && (
                         <div className="mt-1.5 space-y-1.5 w-full max-w-[240px]">
                           <FormField
                             control={form.control}
@@ -671,22 +670,28 @@ export default function OrderForm({ form, shops = [], searchProducts }) {
                                   onValueChange={(val) => {
                                     field.onChange(val);
                                     if (val !== "Custom") {
-                                      form.setValue(
-                                        `items.${index}.customSize`,
-                                        "",
-                                      );
-                                      form.setValue(
-                                        `items.${index}.customWidth`,
-                                        "",
-                                      );
-                                      form.setValue(
-                                        `items.${index}.customHeight`,
-                                        "",
-                                      );
-                                      form.setValue(
-                                        `items.${index}.customPriceAdded`,
-                                        false,
-                                      );
+                                      const dimMatch =
+                                        typeof val === "string"
+                                          ? val.match(/^(\d+(?:\.\d+)?)\s*[xX*×]\s*(\d+(?:\.\d+)?)$/)
+                                          : null;
+                                      if (dimMatch) {
+                                        const d1 = Number(dimMatch[1]);
+                                        const d2 = Number(dimMatch[2]);
+                                        const u = items[index]?.customUnit || "ft";
+                                        const sqft = Math.round(d1 * d2 * 100) / 100;
+                                        form.setValue(`items.${index}.customWidth`, d2, { shouldValidate: true });
+                                        form.setValue(`items.${index}.customHeight`, d1, { shouldValidate: true });
+                                        form.setValue(
+                                          `items.${index}.customSize`,
+                                          `${d1}×${d2} ${u}${sqft > 0 ? ` (${sqft} sq.ft)` : ""}`,
+                                          { shouldValidate: true }
+                                        );
+                                      } else {
+                                        form.setValue(`items.${index}.customSize`, "");
+                                        form.setValue(`items.${index}.customWidth`, "");
+                                        form.setValue(`items.${index}.customHeight`, "");
+                                      }
+                                      form.setValue(`items.${index}.customPriceAdded`, false);
                                       // Update price based on selected size
                                       const allSizes = items[index]?.sizes || [];
                                       const matchedSize = allSizes.find((sz) =>
@@ -765,8 +770,7 @@ export default function OrderForm({ form, shops = [], searchProducts }) {
                                         </SelectItem>
                                       );
                                     })}
-                                    {(currentType === "Service" ||
-                                      items[index]?.isCustomSize) && (
+                                    {Boolean(items[index]?.isCustomSize) && (
                                         <SelectItem
                                           value="Custom"
                                           className="text-xs font-semibold text-primary"
@@ -781,21 +785,18 @@ export default function OrderForm({ form, shops = [], searchProducts }) {
                           />
 
                           {/* Dimension inputs & Square Feet calculation when Custom is selected */}
-                          {(items[index]?.isCustomSize ||
-                            currentType === "Service") &&
+                          {Boolean(items[index]?.isCustomSize) &&
                             items[index]?.size === "Custom" && (
                               <div className="rounded-md border p-2 bg-muted/20 space-y-1.5 mt-1.5 w-full min-w-[240px]">
                                 <div className="flex items-center justify-between text-[11px] font-semibold text-muted-foreground">
                                   <span>Dimensions & Sq.Ft</span>
                                   <div className="flex items-center gap-1">
-                                    <label className="text-[10px] text-muted-foreground">
+                                    <Label className="text-[10px] text-muted-foreground">
                                       Unit:
-                                    </label>
-                                    <select
-                                      className="h-5 text-[10px] rounded border bg-background px-1"
+                                    </Label>
+                                    <Select
                                       value={items[index]?.customUnit || "ft"}
-                                      onChange={(e) => {
-                                        const newUnit = e.target.value;
+                                      onValueChange={(newUnit) => {
                                         form.setValue(
                                           `items.${index}.customUnit`,
                                           newUnit,
@@ -809,9 +810,14 @@ export default function OrderForm({ form, shops = [], searchProducts }) {
                                         );
                                       }}
                                     >
-                                      <option value="ft">Feet (ft)</option>
-                                      <option value="inch">Inches (in)</option>
-                                    </select>
+                                      <SelectTrigger className="h-5 w-[85px] text-[10px] bg-background">
+                                        <SelectValue placeholder="Unit" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="ft" className="text-xs">Feet (ft)</SelectItem>
+                                        <SelectItem value="inch" className="text-xs">Inches (in)</SelectItem>
+                                      </SelectContent>
+                                    </Select>
                                   </div>
                                 </div>
 
@@ -947,16 +953,18 @@ export default function OrderForm({ form, shops = [], searchProducts }) {
                               <span className="truncate max-w-[130px] font-medium text-foreground">
                                 📄 {items[index]?.attachment?.filename || items[index]?.attachment?.name || "Attached approved document"}
                               </span>
-                              <button
+                              <Button
                                 type="button"
-                                className="text-destructive font-bold text-xs hover:text-destructive/80 ml-1.5 shrink-0"
+                                variant="ghost"
+                                size="icon"
+                                className="h-5 w-5 text-destructive font-bold text-xs hover:text-destructive/80 ml-1.5 shrink-0 p-0"
                                 onClick={() => {
                                   form.setValue(`items.${index}.attachment`, null, { shouldValidate: true });
                                   form.setValue(`items.${index}.attachmentFile`, null);
                                 }}
                               >
                                 ✕
-                              </button>
+                              </Button>
                             </div>
                           ) : (
                             <div>

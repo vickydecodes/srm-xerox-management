@@ -75,10 +75,10 @@ export const useXeroxOrderColumns = (xeroxOrders) => {
     },
     {
       accessorKey: "shop",
-      header: () => Hint("Shop", "Assigned Xerox shop"),
+      header: () => Hint("Shop", "Attending Xerox shop"),
       cell: ({ row }) => {
         const shop = row.getValue("shop");
-        if (!shop) return <span className="text-muted-foreground text-xs italic">All Shops</span>;
+        if (!shop) return <span className="text-muted-foreground text-xs italic">Unassigned</span>;
         return <span className="font-medium text-foreground">{shop?.name || shop || "-"}</span>;
       },
     },

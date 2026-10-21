@@ -173,6 +173,9 @@ export const createBill = async (data: CreateBillPayload, createdBy: string) => 
           throw new Error('This order belongs to another shop');
         }
       }
+      if (!order.shop && creatorUser?.shop) {
+        order.shop = creatorUser.shop as any;
+      }
       order.bill = bill._id as any;
       order.status = 'ready_for_pickup';
 
@@ -189,6 +192,9 @@ export const createBill = async (data: CreateBillPayload, createdBy: string) => 
           throw new Error('This order belongs to another shop');
         }
       }
+      if (!eventOrder.shop && creatorUser?.shop) {
+        eventOrder.shop = creatorUser.shop as any;
+      }
       eventOrder.bill = bill._id as any;
       eventOrder.status = 'ready_for_pickup';
 
@@ -204,6 +210,9 @@ export const createBill = async (data: CreateBillPayload, createdBy: string) => 
         if (xeroxOrder.shop && creatorUser.shop && xeroxOrder.shop.toString() !== creatorUser.shop.toString()) {
           throw new Error('This order belongs to another shop');
         }
+      }
+      if (!xeroxOrder.shop && creatorUser?.shop) {
+        xeroxOrder.shop = creatorUser.shop as any;
       }
       xeroxOrder.bill = bill._id as any;
       xeroxOrder.status = 'ready_for_pickup';

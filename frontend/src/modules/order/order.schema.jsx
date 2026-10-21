@@ -30,7 +30,7 @@ const baseOrderSchema = z.object({
   orderType: z.enum(['WORK_ORDER', 'XEROX_ORDER'], {
     error: 'Please select type of order',
   }),
-  fundingMethod: z.enum(['management', 'self_support'], {
+  fundingMethod: z.enum(['department', 'management', 'self_support'], {
     error: 'Please choose a payment method',
   }),
   eventName: z.string().min(1, { message: 'Event name is required' }),
@@ -82,7 +82,7 @@ const validateOrder = (data, ctx) => {
   }
 
   // Payment method validation
-  if (data.fundingMethod === 'management') {
+  if (data.fundingMethod === 'management' || data.fundingMethod === 'department') {
     if (data.managementAmount === undefined || data.managementAmount === null || Number(data.managementAmount) <= 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -105,12 +105,16 @@ export const orderCreateSchema = baseOrderSchema.extend({
   proofFiles: z.array(z.any()).optional().default([]),
 }).superRefine(validateOrder);
 
-export const orderEditSchema = baseOrderSchema.extend({
-  proofFiles: z.array(z.any()).optional().default([]),
-}).superRefine(validateOrder);
+export const orderEditSchema = baseOrderSchema.partial().superRefine((data, ctx) => {
+  if (data.items) {
+    validateOrder(data, ctx);
+  }
+});
 
 export const approvalSchema = z.object({
-  status: z.enum(['approved', 'rejected'], { error: 'Select approve or reject' }),
+  status: z.enum(['approved', 'rejected'], {
+    required_error: 'Please select an approval status',
+  }),
   remarks: z.string().optional(),
   verifyProofs: z.boolean().optional(),
 });

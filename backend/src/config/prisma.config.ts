@@ -1,7 +1,18 @@
 import { PrismaClient } from '@prisma/client';
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
-import 'dotenv/config';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+
+dotenv.config();
+const currentDir = typeof __dirname !== 'undefined' ? __dirname : path.dirname(fileURLToPath(import.meta.url));
+if (!process.env.DATABASE_URL) {
+  dotenv.config({ path: path.resolve(currentDir, '../../.env') });
+}
+if (!process.env.DATABASE_URL) {
+  dotenv.config({ path: path.resolve(process.cwd(), 'backend/.env') });
+}
 
 const connectionString = process.env.DATABASE_URL;
 const pool = new Pool({ connectionString });

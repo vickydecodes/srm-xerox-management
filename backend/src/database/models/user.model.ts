@@ -37,9 +37,20 @@ export class UserDocument {
     this._originalPassword = this.password;
     if (this.active === undefined) this.active = true;
     if (this.deleted === undefined) this.deleted = false;
-    this.branch = typeof data.branch === 'string' ? data.branch : (data.branch?.id || data.branch?._id || data.branchObj?.id || data.branchObj?._id || data.branch);
-    this.department = typeof data.department === 'string' ? data.department : (data.department?.id || data.department?._id || data.departmentObj?.id || data.departmentObj?._id || data.department);
-    this.shop = typeof data.shop === 'string' ? data.shop : (data.shop?.id || data.shop?._id || data.shopObj?.id || data.shopObj?._id || data.shop);
+    const resolvedBranch = data.branchObj || (typeof data.branch === 'object' && data.branch?.name ? data.branch : null);
+    this.branch = resolvedBranch
+      ? { _id: resolvedBranch.id || resolvedBranch._id, id: resolvedBranch.id || resolvedBranch._id, name: resolvedBranch.name, code: resolvedBranch.code } as any
+      : (data.branch || null);
+
+    const resolvedDept = data.departmentObj || (typeof data.department === 'object' && data.department?.name ? data.department : null);
+    this.department = resolvedDept
+      ? { _id: resolvedDept.id || resolvedDept._id, id: resolvedDept.id || resolvedDept._id, name: resolvedDept.name, code: resolvedDept.code } as any
+      : (data.department || null);
+
+    const resolvedShop = data.shopObj || (typeof data.shop === 'object' && data.shop?.name ? data.shop : null);
+    this.shop = resolvedShop
+      ? { _id: resolvedShop.id || resolvedShop._id, id: resolvedShop.id || resolvedShop._id, name: resolvedShop.name, code: resolvedShop.code } as any
+      : (data.shop || null);
   }
 
   async runPreSaveHooks() {
@@ -77,9 +88,9 @@ export class UserDocument {
       active: this.active,
       deleted: this.deleted,
       deletedAt: this.deletedAt,
-      branch: this.branch,
-      department: this.department,
-      shop: this.shop,
+      branch: typeof this.branch === 'object' && this.branch !== null ? ((this.branch as any)._id || (this.branch as any).id) : this.branch,
+      department: typeof this.department === 'object' && this.department !== null ? ((this.department as any)._id || (this.department as any).id) : this.department,
+      shop: typeof this.shop === 'object' && this.shop !== null ? ((this.shop as any)._id || (this.shop as any).id) : this.shop,
     };
 
     if (this.isNew) {
@@ -113,9 +124,16 @@ export class UserModel {
     if (!doc) return null;
 
     let branch = doc.branchObj;
-    if (!branch && doc.departmentObj?.branch) {
+    if (!branch && (doc.branch || doc.departmentObj?.branch)) {
       branch = await prisma.branch.findUnique({
-        where: { id: doc.departmentObj.branch }
+        where: { id: (doc.branch || doc.departmentObj?.branch) as string }
+      });
+    }
+
+    let department = doc.departmentObj;
+    if (!department && doc.department) {
+      department = await prisma.department.findUnique({
+        where: { id: doc.department as string }
       });
     }
 
@@ -123,6 +141,7 @@ export class UserModel {
       ...doc,
       _id: doc.id,
       branchObj: branch || doc.branchObj,
+      departmentObj: department || doc.departmentObj,
     });
   }
 
@@ -147,14 +166,48 @@ export class UserModel {
   }
 
   static async find(query: any) {
-    const docs = await prisma.user.findMany({ where: query as any });
+    const docs = await prisma.user.findMany({
+      where: query as any,
+      include: {
+        branchObj: true,
+        departmentObj: true,
+        shopObj: true,
+      }
+    });
     return docs.map((doc: any) => new UserDocument({ ...doc, _id: doc.id }));
   }
 
   static async findOne(query: any) {
-    const doc = await prisma.user.findFirst({ where: query as any });
+    const doc = await prisma.user.findFirst({
+      where: query as any,
+      include: {
+        branchObj: true,
+        departmentObj: true,
+        shopObj: true,
+      },
+    });
     if (!doc) return null;
-    return new UserDocument({ ...doc, _id: doc.id });
+
+    let branch = doc.branchObj;
+    if (!branch && (doc.branch || doc.departmentObj?.branch)) {
+      branch = await prisma.branch.findUnique({
+        where: { id: (doc.branch || doc.departmentObj?.branch) as string },
+      });
+    }
+
+    let department = doc.departmentObj;
+    if (!department && doc.department) {
+      department = await prisma.department.findUnique({
+        where: { id: doc.department as string },
+      });
+    }
+
+    return new UserDocument({
+      ...doc,
+      _id: doc.id,
+      branchObj: branch || doc.branchObj,
+      departmentObj: department || doc.departmentObj,
+    });
   }
   static async create(data: any) {
     const doc = new UserDocument(data);

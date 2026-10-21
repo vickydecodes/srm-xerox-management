@@ -284,7 +284,7 @@ export const superAdminApproveXeroxOrder = async (
   return enhanceXeroxOrder(order);
 };
 
-export const markXeroxOrderInProgress = async (id: string) => {
+export const markXeroxOrderInProgress = async (id: string, shopId?: string) => {
   const order = await XeroxOrder.findById(id);
 
   if (!order) return null;
@@ -294,6 +294,9 @@ export const markXeroxOrderInProgress = async (id: string) => {
   }
 
   order.status = 'in_progress';
+  if (shopId && !order.shop) {
+    order.shop = toObjectId(shopId) as any;
+  }
 
   await order.save();
 

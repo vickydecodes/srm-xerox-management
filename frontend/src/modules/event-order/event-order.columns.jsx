@@ -86,6 +86,15 @@ export const useEventOrderColumns = (eventOrders) => {
       },
     },
     {
+      accessorKey: "shop",
+      header: () => Hint("Shop", "Attending Xerox shop"),
+      cell: ({ row }) => {
+        const shop = row.getValue("shop");
+        if (!shop) return <span className="text-muted-foreground text-xs italic">Unassigned</span>;
+        return <span className="font-medium text-foreground">{shop?.name || shop || "-"}</span>;
+      },
+    },
+    {
       accessorKey: "status",
       header: () => Hint("Status", "Current processing and approval status"),
       cell: ({ row }) => {

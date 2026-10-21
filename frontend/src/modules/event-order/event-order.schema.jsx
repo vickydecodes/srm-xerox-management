@@ -20,7 +20,7 @@ export const eventOrderItemSchema = z.object({
 });
 
 export const selfSupportSchema = z.object({
-  name: z.string().min(1, { error: 'Self support sponsor name is required' }),
+  name: z.string().min(1, { error: 'Self support name is required' }),
   amount: z.coerce.number().min(0, { error: 'Amount cannot be negative' }),
 });
 
@@ -48,9 +48,9 @@ export const baseEventOrderSchema = z.object({
     .string()
     .email({ message: 'Please enter a valid email address' })
     .min(1, { message: 'Email is required' }),
-  fundingMethod: z.enum(['management', 'self_support', 'registration_fee', 'combined'], {
-    error: 'Please choose a funding source',
-  }).default('management'),
+  fundingMethod: z.enum(['department', 'management', 'self_support', 'registration_fee', 'combined'], {
+    error: 'Please choose either Department or Self Support',
+  }).default('department'),
   managementAmount: z.coerce.number().min(0).optional().default(0),
   self_supports: z.array(selfSupportSchema).default([]),
   registrationFeeAmount: z.coerce.number().min(0).optional().default(0),
@@ -78,23 +78,8 @@ const validateEventOrder = (data, ctx) => {
     });
   }
 
-  if (data.fundingMethod === 'management') {
-    if (data.managementAmount === undefined || data.managementAmount === null || Number(data.managementAmount) <= 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Management amount must be greater than 0',
-        path: ['managementAmount'],
-      });
-    }
-  } else if (data.fundingMethod === 'self_support') {
-    if (!data.self_supports || data.self_supports.length === 0 || Number(data.self_supports[0]?.amount) <= 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Self support sponsor amount must be greater than 0',
-        path: ['self_supports'],
-      });
-    }
-  } else if (data.fundingMethod === 'registration_fee') {
+  // Department and Self Support cover full amount directly
+  if (data.fundingMethod === 'registration_fee') {
     if (data.registrationFeeAmount === undefined || data.registrationFeeAmount === null || Number(data.registrationFeeAmount) <= 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

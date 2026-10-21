@@ -1,5 +1,6 @@
 import prisma from '../config/prisma.config.ts';
 import { REPROGRAPHICS_PRICE_LIST } from './utils/pricelist.ts';
+import { seedEventServices } from './seed_event_services.ts';
 
 function generateServiceCode(sNo: number, name: string, usedCodes: Set<string>): string {
   const slug = name
@@ -82,6 +83,10 @@ export async function seedServices() {
   }
 
   console.log(`\n🎉 Successfully seeded ${seededServices.length} Services into PostgreSQL.`);
+  // Seed Event / Work Order specific services (Banner, Invitation, Certificate, Brochure, Poster)
+  const eventServices = await seedEventServices();
+  seededServices.push(...eventServices);
+
   return seededServices;
 }
 

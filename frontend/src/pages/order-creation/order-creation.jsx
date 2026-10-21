@@ -42,6 +42,10 @@ import {
 import { eventOrderCreateSchema } from "@/modules/event-order/event-order.schema";
 import { xeroxOrderCreateSchema } from "@/modules/xerox-order/xerox-order.schema";
 import { BillingItemSearchCombobox } from "@/modules/search/search.combobox";
+import { useBranchStore } from "@/modules/branch/branch.store";
+import { useDepartmentStore } from "@/modules/department/department.store";
+import { useServiceStore } from "@/modules/service/service.store";
+import { useShopStore } from "@/modules/shop/shop.store";
 
 export default function OrderCreation() {
   const navigate = useNavigate();
@@ -49,6 +53,11 @@ export default function OrderCreation() {
   const { user } = useAuth();
   const { eventOrders, xeroxOrders, services, shops, branches, departments, search } = useApi();
   const { createPreset } = useLoader();
+
+  const branchList = useBranchStore((s) => s.list) || [];
+  const deptList = useDepartmentStore((s) => s.list) || [];
+  const serviceList = useServiceStore((s) => s.list) || [];
+  const shopList = useShopStore((s) => s.list) || [];
 
   const tabParam = searchParams.get("tab");
   const getNormalizedTab = (t) => {
@@ -64,7 +73,12 @@ export default function OrderCreation() {
     }
   }, [tabParam]);
 
-  const loadResources = createPreset(services, shops, branches, departments);
+  const loadResources = createPreset(
+    { module: services, query: { full: true, isWorkOrder: true, is_work_order: true } },
+    shops,
+    branches,
+    departments
+  );
 
   useEffect(() => {
     loadResources();
@@ -75,8 +89,8 @@ export default function OrderCreation() {
     setSearchParams({ tab: val });
   };
 
-  const userBranchId = typeof user?.branch === "object" ? user.branch?._id : user?.branch || "";
-  const userDeptId = typeof user?.department === "object" ? user.department?._id : user?.department || "";
+  const userBranchId = typeof user?.branch === "object" ? (user.branch?._id || user.branch?.id) : user?.branch || "";
+  const userDeptId = typeof user?.department === "object" ? (user.department?._id || user.department?.id) : user?.department || "";
   const isSuperAdmin = user?.role === "super_admin";
 
   return (
@@ -111,9 +125,9 @@ export default function OrderCreation() {
             isSuperAdmin={isSuperAdmin}
             userBranchId={userBranchId}
             userDeptId={userDeptId}
-            branches={branches.state || []}
-            departments={departments.state || []}
-            shops={shops.state || []}
+            branches={branchList}
+            departments={deptList}
+            shops={shopList}
             searchProducts={search?.searchProducts}
             onSubmitSuccess={() => navigate(`/${user?.role}/xerox-order`)}
             onCancel={() => navigate(`/${user?.role}/xerox-order`)}
@@ -128,10 +142,17 @@ export default function OrderCreation() {
             isSuperAdmin={isSuperAdmin}
             userBranchId={userBranchId}
             userDeptId={userDeptId}
-            branches={branches.state || []}
-            departments={departments.state || []}
-            shops={shops.state || []}
-            services={services.state || []}
+            branches={branchList}
+            departments={deptList}
+            shops={shopList}
+            services={serviceList.filter(
+              (s) =>
+                s.isWorkOrder === true ||
+                s.is_work_order === true ||
+                String(s.isWorkOrder) === "true" ||
+                String(s.is_work_order) === "true"
+            )}
+            searchProducts={search?.searchProducts}
             onSubmitSuccess={() => navigate(`/${user?.role}/event-order`)}
             onCancel={() => navigate(`/${user?.role}/event-order`)}
             eventOrders={eventOrders}
@@ -145,6 +166,88 @@ export default function OrderCreation() {
 // ==========================================
 // EVENT ORDER FORM COMPONENT
 // ==========================================
+// Work Order (Event Order) Item Row Builder
+// ==========================================
+const buildEventOrderItemRow = (selectedItem) => {
+  const rawSizes = selectedItem.sizes || selectedItem.details?.sizes || [];
+
+  // Boolean check: custom size only if explicitly configured
+  const itemIsCustom = Boolean(
+    selectedItem.isCustomSize ?? selectedItem.details?.isCustomSize ?? false
+  );
+
+  // Sizing only if configured in DB; do not inject dummy sizes
+  let itemSizes = Array.isArray(rawSizes) ? [...rawSizes] : [];
+  if (itemIsCustom && itemSizes.length > 0) {
+    itemSizes = itemSizes.filter((s) =>
+      typeof s === "object" ? s.size !== "Standard" : s !== "Standard"
+    );
+  }
+
+  const hasSizes = itemSizes.length > 0 || itemIsCustom;
+
+  const firstSize = itemSizes.length > 0 ? itemSizes[0] : null;
+  const initialSize = firstSize
+    ? typeof firstSize === "object"
+      ? firstSize.size
+      : firstSize
+    : itemIsCustom
+      ? "Custom"
+      : "";
+
+  let initialPrice = Number(selectedItem.price) || 0;
+  if (
+    firstSize &&
+    typeof firstSize === "object" &&
+    firstSize.price !== undefined &&
+    firstSize.price !== null &&
+    Number(firstSize.price) > 0
+  ) {
+    initialPrice = Number(firstSize.price) || 0;
+  } else if (initialSize === "Custom") {
+    initialPrice = 0;
+  }
+
+  const dimMatch =
+    typeof initialSize === "string"
+      ? initialSize.match(/^(\d+(?:\.\d+)?)\s*[xX*×]\s*(\d+(?:\.\d+)?)$/)
+      : null;
+  const initialWidth = dimMatch ? Number(dimMatch[2]) : "";
+  const initialHeight = dimMatch ? Number(dimMatch[1]) : "";
+  const initialUnit =
+    selectedItem.unit === "inch" || selectedItem.details?.unit === "inch"
+      ? "inch"
+      : "ft";
+  const initialCustomSize = dimMatch
+    ? `${dimMatch[1]}×${dimMatch[2]} ${initialUnit}`
+    : "";
+
+  return {
+    type: "Service",
+    item: selectedItem._id || selectedItem.id,
+    name: selectedItem.name,
+    quantity: 1,
+    price: initialPrice,
+    variant: selectedItem.variant || null,
+    size: initialSize,
+    customSize: initialCustomSize,
+    customWidth: initialWidth,
+    customHeight: initialHeight,
+    customUnit: initialUnit,
+    customRate:
+      Number(selectedItem.price) ||
+      (firstSize && typeof firstSize === "object" && Number(firstSize.price)) ||
+      0,
+    sizes: itemSizes,
+    hasSizes: Boolean(hasSizes),
+    isCustomSize: itemIsCustom,
+    isWorkOrder: true,
+    customPriceAdded: false,
+    attachment: null,
+    attachmentFile: null,
+  };
+};
+
 function EventOrderForm({
   user,
   isSuperAdmin,
@@ -154,6 +257,7 @@ function EventOrderForm({
   departments,
   shops,
   services,
+  searchProducts,
   onSubmitSuccess,
   onCancel,
   eventOrders,
@@ -168,7 +272,7 @@ function EventOrderForm({
     defaultValues: {
       branch: userBranchId ? String(userBranchId) : "",
       department: userDeptId ? String(userDeptId) : "",
-      shop: "",
+      shop: null,
       eventName: "",
       eventStartDate: defaultMinDate,
       eventEndDate: defaultMinDate,
@@ -179,7 +283,7 @@ function EventOrderForm({
       approvedDate: new Date().toISOString().slice(0, 10),
       purpose: "",
       attachmentEmail: user?.email || "",
-      fundingMethod: "management",
+      fundingMethod: "department",
       managementAmount: 0,
       self_supports: [],
       registrationFeeAmount: 0,
@@ -190,13 +294,14 @@ function EventOrderForm({
           name: "",
           quantity: 1,
           price: 0,
-          size: "Standard",
+          size: "",
           customSize: "",
           isCustomSize: false,
           customWidth: 0,
           customHeight: 0,
           customUnit: "ft",
           customRate: 0,
+          sizes: [],
           attachment: null,
           attachmentFile: null,
         },
@@ -204,50 +309,180 @@ function EventOrderForm({
     },
   });
 
+  useEffect(() => {
+    const bId =
+      user?.branch?._id ||
+      user?.branch?.id ||
+      (typeof user?.branch === "string" ? user.branch : "") ||
+      userBranchId ||
+      branches[0]?._id ||
+      branches[0]?.id;
+    if (bId && !form.getValues("branch")) {
+      form.setValue("branch", String(bId));
+    }
+    const dId =
+      user?.department?._id ||
+      user?.department?.id ||
+      (typeof user?.department === "string" ? user.department : "") ||
+      userDeptId ||
+      departments[0]?._id ||
+      departments[0]?.id;
+    if (dId && !form.getValues("department")) {
+      form.setValue("department", String(dId));
+    }
+  }, [user, userBranchId, userDeptId, branches, departments, form]);
+
+  const branchName =
+    user?.branch?.name ||
+    user?.branchObj?.name ||
+    user?.department?.branch?.name ||
+    user?.department?.branchObj?.name ||
+    branches.find((b) => String(b._id || b.id) === String(user?.branch?._id || user?.branch?.id || user?.branch || userBranchId))?.name ||
+    (typeof user?.branch === "string" && !user?.branch.match(/^[0-9a-fA-F]{24}$/) && user?.branch.trim() ? user.branch : "") ||
+    user?.branchName ||
+    (branches[0]?.name || "Main Campus");
+
+  const deptName =
+    user?.department?.name ||
+    user?.dept?.name ||
+    user?.departmentObj?.name ||
+    user?.department?.dept_name ||
+    departments.find((d) => String(d._id || d.id) === String(user?.department?._id || user?.department?.id || user?.department || userDeptId))?.name ||
+    (typeof user?.department === "string" && !user?.department.match(/^[0-9a-fA-F]{24}$/) && user?.department.trim() ? user.department : "") ||
+    user?.departmentName ||
+    user?.deptName ||
+    (departments[0]?.name || "Department Requisition");
+
   const { fields: itemFields, append: appendItem, remove: removeItem } = useFieldArray({
     control: form.control,
     name: "items",
   });
 
-  const { fields: sponsorFields, append: appendSponsor, remove: removeSponsor } = useFieldArray({
-    control: form.control,
-    name: "self_supports",
-  });
-
   const watchedItems = form.watch("items") || [];
-  const watchedManagement = Number(form.watch("managementAmount") || 0);
-  const watchedRegistration = Number(form.watch("registrationFeeAmount") || 0);
-  const watchedSponsors = form.watch("self_supports") || [];
-  const watchedFundingMethod = form.watch("fundingMethod");
+  const watchedFundingMethod = form.watch("fundingMethod") || "department";
 
   const totalCost = watchedItems.reduce(
     (sum, i) => sum + (Number(i?.quantity) || 0) * (Number(i?.price) || 0),
     0
   );
 
-  const totalSponsorFunds = watchedSponsors.reduce(
-    (sum, s) => sum + (Number(s?.amount) || 0),
-    0
+  const workOrderServices = (services || []).filter(
+    (s) =>
+      s.isWorkOrder === true ||
+      s.is_work_order === true ||
+      String(s.isWorkOrder) === "true" ||
+      String(s.is_work_order) === "true"
   );
 
-  const totalAvailableFunding =
-    watchedFundingMethod === "management"
-      ? watchedManagement
-      : watchedFundingMethod === "self_support"
-        ? totalSponsorFunds
-        : watchedFundingMethod === "registration_fee"
-          ? watchedRegistration
-          : watchedManagement + totalSponsorFunds + watchedRegistration;
+  const effectiveSearchProducts =
+    searchProducts ||
+    (async (query = "") => {
+      const q = query.toLowerCase().trim();
+      if (!q) return workOrderServices;
+      return workOrderServices.filter(
+        (s) =>
+          s.name?.toLowerCase().includes(q) ||
+          s.code?.toLowerCase().includes(q) ||
+          s.description?.toLowerCase().includes(q)
+      );
+    });
 
-  const isOverBudget = totalCost > totalAvailableFunding && totalAvailableFunding > 0;
+  const recalcCustomPrice = (index, width, height, unit = "ft", rate) => {
+    const w = Number(width) || 0;
+    const h = Number(height) || 0;
+    const r = Number(rate) || 0;
+    const isInch = unit === "inch" || unit === "in";
 
-  const handleServiceSelect = (index, serviceId) => {
-    const s = services.find((srv) => srv._id === serviceId);
+    if (w > 0 && h > 0) {
+      const sqft = isInch
+        ? Math.round(((w * h) / 144) * 100) / 100
+        : Math.round(w * h * 100) / 100;
+      const calculatedPrice = r > 0 ? Math.round(sqft * r * 100) / 100 : 0;
+      const label = `${h}×${w} ${unit}${sqft > 0 ? ` (${sqft} sq.ft)` : ""}`;
+
+      if (calculatedPrice > 0) {
+        form.setValue(`items.${index}.price`, calculatedPrice, {
+          shouldValidate: true,
+        });
+      }
+      form.setValue(`items.${index}.customSize`, label, {
+        shouldValidate: true,
+      });
+      form.setValue(`items.${index}.customWidth`, width, {
+        shouldValidate: true,
+      });
+      form.setValue(`items.${index}.customHeight`, height, {
+        shouldValidate: true,
+      });
+      form.setValue(`items.${index}.customUnit`, unit, {
+        shouldValidate: true,
+      });
+      form.setValue(`items.${index}.customPriceAdded`, true, {
+        shouldValidate: true,
+      });
+    } else {
+      const label = w > 0 && h > 0 ? `${h}×${w} ${unit}` : "";
+      form.setValue(`items.${index}.customSize`, label);
+    }
+  };
+
+  const handleAddAnother = (index) => {
+    const row = form.getValues(`items.${index}`);
+    if (!row || !row.name) return;
+
+    appendItem({
+      type: "Service",
+      item: row.item,
+      name: row.name,
+      quantity: 1,
+      price: row.price,
+      variant: row.variant || null,
+      size:
+        row.sizes && row.sizes.length > 0
+          ? typeof row.sizes[0] === "object"
+            ? row.sizes[0].size
+            : row.sizes[0]
+          : row.isCustomSize
+            ? "Custom"
+            : "",
+      customSize: "",
+      customWidth: "",
+      customHeight: "",
+      customUnit: row.customUnit || "ft",
+      customRate: row.customRate || row.price || 0,
+      sizes: row.sizes || [],
+      hasSizes: Boolean(row.hasSizes ?? ((row.sizes && row.sizes.length > 0) || row.isCustomSize)),
+      isCustomSize: Boolean(row.isCustomSize),
+      isWorkOrder: true,
+      customPriceAdded: false,
+      attachment: null,
+      attachmentFile: null,
+    });
+  };
+
+  const handleServiceSelect = (index, service) => {
+    const s =
+      typeof service === "object" && service !== null
+        ? service
+        : workOrderServices.find((srv) => String(srv._id || srv.id) === String(service)) ||
+          services.find((srv) => String(srv._id || srv.id) === String(service));
     if (!s) return;
-    form.setValue(`items.${index}.item`, s._id);
-    form.setValue(`items.${index}.name`, s.name);
-    form.setValue(`items.${index}.price`, Number(s.price) || 0);
-    form.setValue(`items.${index}.isCustomSize`, Boolean(s.isCustomSize));
+
+    const row = buildEventOrderItemRow(s);
+    form.setValue(`items.${index}.type`, "Service", { shouldValidate: true });
+    form.setValue(`items.${index}.item`, row.item, { shouldValidate: true });
+    form.setValue(`items.${index}.name`, row.name, { shouldValidate: true });
+    form.setValue(`items.${index}.price`, row.price, { shouldValidate: true });
+    form.setValue(`items.${index}.size`, row.size, { shouldValidate: true });
+    form.setValue(`items.${index}.sizes`, row.sizes, { shouldValidate: true });
+    form.setValue(`items.${index}.hasSizes`, row.hasSizes, { shouldValidate: true });
+    form.setValue(`items.${index}.isCustomSize`, row.isCustomSize, { shouldValidate: true });
+    form.setValue(`items.${index}.customRate`, row.customRate, { shouldValidate: true });
+    form.setValue(`items.${index}.customUnit`, row.customUnit, { shouldValidate: true });
+    form.setValue(`items.${index}.customWidth`, row.customWidth ?? "", { shouldValidate: true });
+    form.setValue(`items.${index}.customHeight`, row.customHeight ?? "", { shouldValidate: true });
+    form.setValue(`items.${index}.customSize`, row.customSize ?? "", { shouldValidate: true });
+    form.setValue(`items.${index}.customPriceAdded`, false, { shouldValidate: true });
   };
 
   const handleProofChange = (e) => {
@@ -270,7 +505,17 @@ function EventOrderForm({
     setSubmitting(true);
     try {
       const { ...rest } = data;
+      const isDept = rest.fundingMethod === "department" || rest.fundingMethod === "management";
+      if (isDept) {
+        rest.managementAmount = totalCost;
+        rest.self_supports = [];
+      } else {
+        rest.managementAmount = 0;
+        rest.self_supports = [{ name: "Self Support", amount: totalCost }];
+      }
       delete rest.fundingMethod;
+      delete rest.registrationFeeAmount;
+      delete rest.shop;
 
       const itemAttachmentFiles = [];
       if (Array.isArray(rest.items)) {
@@ -333,78 +578,27 @@ function EventOrderForm({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* General Info Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {isSuperAdmin && (
-                <>
-                  <FormField
-                    control={form.control}
-                    name="branch"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Branch / Campus</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select branch" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {branches.map((b) => (
-                              <SelectItem key={b._id} value={b._id}>{b.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              <div>
+                <Label className="text-xs mb-1.5 block font-medium">Branch / Campus</Label>
+                <Input
+                  readOnly
+                  disabled
+                  value={branchName}
+                  className="bg-muted/40 font-medium cursor-default focus-visible:ring-0 select-none text-foreground"
+                />
+                <Input type="hidden" {...form.register("branch")} />
+              </div>
 
-                  <FormField
-                    control={form.control}
-                    name="department"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Department</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select department" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {departments.map((d) => (
-                              <SelectItem key={d._id} value={d._id}>{d.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </>
-              )}
-
-              <FormField
-                control={form.control}
-                name="shop"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Preferred Xerox Shop (Optional)</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Assign shop (or any available)" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {shops.map((s) => (
-                          <SelectItem key={s._id} value={s._id}>{s.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div>
+                <Label className="text-xs mb-1.5 block font-medium">Department</Label>
+                <Input
+                  readOnly
+                  disabled
+                  value={deptName}
+                  className="bg-muted/40 font-medium cursor-default focus-visible:ring-0 select-none text-foreground"
+                />
+                <Input type="hidden" {...form.register("department")} />
+              </div>
 
               <FormField
                 control={form.control}
@@ -536,13 +730,14 @@ function EventOrderForm({
                       name: "",
                       quantity: 1,
                       price: 0,
-                      size: "Standard",
+                      size: "",
                       customSize: "",
                       isCustomSize: false,
                       customWidth: 0,
                       customHeight: 0,
                       customUnit: "ft",
                       customRate: 0,
+                      sizes: [],
                       attachment: null,
                       attachmentFile: null,
                     })
@@ -558,103 +753,316 @@ function EventOrderForm({
                   return (
                     <div key={field.id} className="p-4 rounded-lg border bg-muted/20 space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="font-semibold text-xs text-primary">Item #{idx + 1}</span>
-                        {itemFields.length > 1 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="text-destructive size-7"
-                            onClick={() => removeItem(idx)}
-                          >
-                            <IconTrash className="size-4" />
-                          </Button>
-                        )}
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                        <div className="md:col-span-2">
-                          <Label className="text-xs">Service / Product *</Label>
-                          <Select onValueChange={(val) => handleServiceSelect(idx, val)}>
-                            <SelectTrigger className="mt-1">
-                              <SelectValue placeholder="Choose service..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {services.map((s) => (
-                                <SelectItem key={s._id} value={s._id}>
-                                  {s.name} (₹{s.price})
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-xs text-primary">Item #{idx + 1}</span>
+                          {form.watch(`items.${idx}.name`) && (
+                            <span className="text-xs font-medium text-foreground truncate max-w-[200px]">
+                              — {form.watch(`items.${idx}.name`)}
+                            </span>
+                          )}
                         </div>
-
-                        <div>
-                          <Label className="text-xs">Quantity *</Label>
-                          <Input
-                            type="number"
-                            min="1"
-                            className="mt-1"
-                            {...form.register(`items.${idx}.quantity`, { valueAsNumber: true })}
-                          />
-                        </div>
-
-                        <div>
-                          <Label className="text-xs">Unit Price (₹) *</Label>
-                          <Input
-                            type="number"
-                            min="0"
-                            className="mt-1"
-                            {...form.register(`items.${idx}.price`, { valueAsNumber: true })}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Custom Size Details if needed */}
-                      {isCustom && (
-                        <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 pt-2 border-t">
-                          <div>
-                            <Label className="text-xs">Width</Label>
-                            <Input
-                              type="number"
-                              className="mt-1"
-                              placeholder="Width"
-                              {...form.register(`items.${idx}.customWidth`, { valueAsNumber: true })}
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-xs">Height</Label>
-                            <Input
-                              type="number"
-                              className="mt-1"
-                              placeholder="Height"
-                              {...form.register(`items.${idx}.customHeight`, { valueAsNumber: true })}
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-xs">Unit</Label>
-                            <Select
-                              onValueChange={(val) => form.setValue(`items.${idx}.customUnit`, val)}
-                              defaultValue="ft"
+                        <div className="flex items-center gap-2">
+                          {form.watch(`items.${idx}.name`) &&
+                            ((form.watch(`items.${idx}.sizes`) || []).length > 0 ||
+                              Boolean(form.watch(`items.${idx}.isCustomSize`))) && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 text-xs text-primary px-2"
+                              onClick={() => handleAddAnother(idx)}
                             >
-                              <SelectTrigger className="mt-1">
-                                <SelectValue placeholder="Unit" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="ft">Feet (ft)</SelectItem>
-                                <SelectItem value="inch">Inches (in)</SelectItem>
-                              </SelectContent>
-                            </Select>
+                              <IconPlus className="size-3 mr-1" /> Add another size
+                            </Button>
+                          )}
+                          {itemFields.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive size-7"
+                              onClick={() => removeItem(idx)}
+                            >
+                              <IconTrash className="size-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+
+                      {(() => {
+                        const itemSizes = form.watch(`items.${idx}.sizes`) || [];
+                        const isCustom = Boolean(form.watch(`items.${idx}.isCustomSize`));
+                        const hasSizes = itemSizes.length > 0 || isCustom;
+
+                        return (
+                          <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-start">
+                            {/* 1. Service Search Combobox */}
+                            <div className={hasSizes ? "md:col-span-5" : "md:col-span-8"}>
+                              <Label className="text-xs mb-1.5 block">Search Service *</Label>
+                              <BillingItemSearchCombobox
+                                value={form.watch(`items.${idx}.item`)}
+                                currentItemName={form.watch(`items.${idx}.name`)}
+                                searchProducts={effectiveSearchProducts}
+                                queryParams={{ isWorkOrder: true, orderType: "WORK_ORDER" }}
+                                onSelect={(selected) => handleServiceSelect(idx, selected)}
+                                placeholder="Search work order services..."
+                                searchPlaceholder="Type service name (e.g., banner, binding)..."
+                              />
+                            </div>
+
+                            {/* 2. Size / Variant Selector (Only shown if sizes are available) */}
+                            {hasSizes && (
+                              <div className="md:col-span-3">
+                                <div className="flex items-center justify-between mb-1.5">
+                                  <Label className="text-xs block">Size / Variant</Label>
+                                  {form.watch(`items.${idx}.size`) === "Custom" && (
+                                    <span className="text-[10px] text-primary font-medium">Custom Specs</span>
+                                  )}
+                                </div>
+                                <Select
+                                  value={form.watch(`items.${idx}.size`) || undefined}
+                                  onValueChange={(val) => {
+                                    form.setValue(`items.${idx}.size`, val, { shouldValidate: true });
+                                    if (val !== "Custom") {
+                                      const dimMatch =
+                                        typeof val === "string"
+                                          ? val.match(/^(\d+(?:\.\d+)?)\s*[xX*×]\s*(\d+(?:\.\d+)?)$/)
+                                          : null;
+                                      if (dimMatch) {
+                                        const d1 = Number(dimMatch[1]);
+                                        const d2 = Number(dimMatch[2]);
+                                        const u = form.watch(`items.${idx}.customUnit`) || "ft";
+                                        const sqft = Math.round(d1 * d2 * 100) / 100;
+                                        form.setValue(`items.${idx}.customWidth`, d2, { shouldValidate: true });
+                                        form.setValue(`items.${idx}.customHeight`, d1, { shouldValidate: true });
+                                        form.setValue(
+                                          `items.${idx}.customSize`,
+                                          `${d1}×${d2} ${u}${sqft > 0 ? ` (${sqft} sq.ft)` : ""}`,
+                                          { shouldValidate: true }
+                                        );
+                                      } else {
+                                        form.setValue(`items.${idx}.customSize`, "");
+                                        form.setValue(`items.${idx}.customWidth`, "");
+                                        form.setValue(`items.${idx}.customHeight`, "");
+                                      }
+                                      form.setValue(`items.${idx}.customPriceAdded`, false);
+                                      
+                                      // Match with variant/size and set price
+                                      const allSizes = form.watch(`items.${idx}.sizes`) || [];
+                                      const matchedSize = allSizes.find((sz) =>
+                                        typeof sz === "object" ? sz.size === val : sz === val
+                                      );
+                                      if (
+                                        matchedSize &&
+                                        typeof matchedSize === "object" &&
+                                        matchedSize.price !== undefined &&
+                                        matchedSize.price !== null &&
+                                        Number(matchedSize.price) > 0
+                                      ) {
+                                        form.setValue(`items.${idx}.price`, Number(matchedSize.price) || 0, { shouldValidate: true });
+                                      } else if (form.watch(`items.${idx}.customRate`)) {
+                                        form.setValue(`items.${idx}.price`, Number(form.watch(`items.${idx}.customRate`)) || 0, { shouldValidate: true });
+                                      }
+                                    } else {
+                                      // Custom size selected: calculate from dimensions if already set
+                                      const w = form.watch(`items.${idx}.customWidth`);
+                                      const h = form.watch(`items.${idx}.customHeight`);
+                                      const u = form.watch(`items.${idx}.customUnit`) || "ft";
+                                      const r = Number(form.watch(`items.${idx}.customRate`)) || Number(form.watch(`items.${idx}.price`)) || 0;
+                                      form.setValue(`items.${idx}.customRate`, r);
+                                      recalcCustomPrice(idx, w, h, u, r);
+                                    }
+                                  }}
+                                >
+                                  <SelectTrigger className="h-9 text-xs bg-background">
+                                    <SelectValue placeholder="Select size / variant" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {(form.watch(`items.${idx}.sizes`) || []).map((sz) => {
+                                      const szPrice = typeof sz === "object" ? sz.price : undefined;
+                                      const szLabel =
+                                        typeof sz === "object"
+                                          ? szPrice !== undefined && szPrice !== null && Number(szPrice) > 0
+                                            ? `${sz.size} (₹${szPrice})`
+                                            : sz.size
+                                          : sz;
+                                      const szVal = typeof sz === "object" ? sz.size : sz;
+                                      return (
+                                        <SelectItem key={szVal} value={szVal} className="text-xs">
+                                          {szLabel}
+                                        </SelectItem>
+                                      );
+                                    })}
+                                    {isCustom && (
+                                      <SelectItem value="Custom" className="text-xs font-semibold text-primary">
+                                        Custom (Enter Dimensions)
+                                      </SelectItem>
+                                    )}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
+
+                            {/* 3. Quantity */}
+                            <div className="md:col-span-2">
+                              <Label className="text-xs mb-1.5 block">Quantity *</Label>
+                              <Input
+                                type="number"
+                                min="1"
+                                className="h-9 text-xs"
+                                {...form.register(`items.${idx}.quantity`, { valueAsNumber: true })}
+                              />
+                            </div>
+
+                            {/* 4. Unit Price (₹) */}
+                            <div className="md:col-span-2">
+                              <Label className="text-xs mb-1.5 block">Unit Price (₹) *</Label>
+                              <Input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                className="h-9 text-xs bg-muted/40 font-medium"
+                                readOnly={hasSizes && form.watch(`items.${idx}.size`) === "Custom"}
+                                {...form.register(`items.${idx}.price`, { valueAsNumber: true })}
+                              />
+                            </div>
                           </div>
-                          <div>
-                            <Label className="text-xs">Rate / sq unit</Label>
-                            <Input
-                              type="number"
-                              className="mt-1"
-                              placeholder="Rate"
-                              {...form.register(`items.${idx}.customRate`, { valueAsNumber: true })}
-                            />
+                        );
+                      })()}
+
+                      {/* Custom Size Details & Calculator when Custom is selected and service supports custom dimensions */}
+                      {Boolean(form.watch(`items.${idx}.isCustomSize`)) && form.watch(`items.${idx}.size`) === "Custom" && (
+                        <div className="rounded-md border p-3 bg-muted/30 space-y-2 mt-2">
+                          <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
+                            <span>📐 Custom Dimensions & Sizing</span>
+                            <div className="flex items-center gap-1.5">
+                              <Label className="text-[11px] text-muted-foreground">Unit:</Label>
+                              <Select
+                                value={form.watch(`items.${idx}.customUnit`) || "ft"}
+                                onValueChange={(newUnit) => {
+                                  form.setValue(`items.${idx}.customUnit`, newUnit);
+                                  recalcCustomPrice(
+                                    idx,
+                                    form.watch(`items.${idx}.customWidth`),
+                                    form.watch(`items.${idx}.customHeight`),
+                                    newUnit,
+                                    form.watch(`items.${idx}.customRate`)
+                                  );
+                                }}
+                              >
+                                <SelectTrigger className="h-6 w-[100px] text-xs bg-background">
+                                  <SelectValue placeholder="Unit" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="ft" className="text-xs">Feet (ft)</SelectItem>
+                                  <SelectItem value="inch" className="text-xs">Inches (in)</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
                           </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                            <div>
+                              <Label className="text-[11px] text-muted-foreground">Length / Height</Label>
+                              <Input
+                                type="number"
+                                min="0.1"
+                                step="0.1"
+                                placeholder="Length"
+                                className="h-8 text-xs bg-background mt-1"
+                                value={form.watch(`items.${idx}.customHeight`) ?? ""}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  form.setValue(`items.${idx}.customHeight`, val);
+                                  recalcCustomPrice(
+                                    idx,
+                                    form.watch(`items.${idx}.customWidth`),
+                                    val,
+                                    form.watch(`items.${idx}.customUnit`) || "ft",
+                                    form.watch(`items.${idx}.customRate`)
+                                  );
+                                }}
+                              />
+                            </div>
+
+                            <div>
+                              <Label className="text-[11px] text-muted-foreground">Width</Label>
+                              <Input
+                                type="number"
+                                min="0.1"
+                                step="0.1"
+                                placeholder="Width"
+                                className="h-8 text-xs bg-background mt-1"
+                                value={form.watch(`items.${idx}.customWidth`) ?? ""}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  form.setValue(`items.${idx}.customWidth`, val);
+                                  recalcCustomPrice(
+                                    idx,
+                                    val,
+                                    form.watch(`items.${idx}.customHeight`),
+                                    form.watch(`items.${idx}.customUnit`) || "ft",
+                                    form.watch(`items.${idx}.customRate`)
+                                  );
+                                }}
+                              />
+                            </div>
+
+                            <div>
+                              <Label className="text-[11px] text-muted-foreground">
+                                Rate / sq.{form.watch(`items.${idx}.customUnit`) || "ft"} (₹)
+                              </Label>
+                              <Input
+                                type="number"
+                                min="0"
+                                step="0.1"
+                                placeholder="Rate"
+                                className="h-8 text-xs bg-background mt-1"
+                                value={form.watch(`items.${idx}.customRate`) ?? ""}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  form.setValue(`items.${idx}.customRate`, val);
+                                  recalcCustomPrice(
+                                    idx,
+                                    form.watch(`items.${idx}.customWidth`),
+                                    form.watch(`items.${idx}.customHeight`),
+                                    form.watch(`items.${idx}.customUnit`) || "ft",
+                                    val
+                                  );
+                                }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Live Sq.Ft and Calculated Price Preview */}
+                          {(() => {
+                            const w = Number(form.watch(`items.${idx}.customWidth`)) || 0;
+                            const h = Number(form.watch(`items.${idx}.customHeight`)) || 0;
+                            const u = form.watch(`items.${idx}.customUnit`) || "ft";
+                            const r = Number(form.watch(`items.${idx}.customRate`)) || 0;
+                            if (w > 0 && h > 0) {
+                              const sqft =
+                                u === "inch"
+                                  ? Math.round(((w * h) / 144) * 100) / 100
+                                  : Math.round(w * h * 100) / 100;
+                              const calculatedPrice = r > 0 ? (sqft * r).toFixed(2) : 0;
+                              return (
+                                <div className="text-xs text-primary flex items-center justify-between font-medium bg-background px-3 py-1.5 rounded border border-primary/20">
+                                  <span>📐 Area: <strong>{sqft} sq.ft</strong> ({h} × {w} {u})</span>
+                                  {r > 0 ? (
+                                    <span>@ ₹{r}/sq.{u} = <strong>₹{calculatedPrice}</strong></span>
+                                  ) : (
+                                    <span>Enter rate to calculate unit price</span>
+                                  )}
+                                </div>
+                              );
+                            }
+                            return (
+                              <p className="text-[11px] text-muted-foreground italic">
+                                Enter length and width to calculate sq.ft area and pricing.
+                              </p>
+                            );
+                          })()}
                         </div>
                       )}
 
@@ -685,25 +1093,26 @@ function EventOrderForm({
 
             {/* Funding Allocation */}
             <div className="space-y-4">
-              <h3 className="text-base font-semibold text-primary">3. Financial Allocation & Sponsors</h3>
+              <h3 className="text-base font-semibold text-primary">3. Funding Allocation</h3>
+              <p className="text-xs text-muted-foreground">
+                Select whether this work order is funded through Department budget or Self Support. Whichever source is selected covers the full order amount.
+              </p>
 
               <FormField
                 control={form.control}
                 name="fundingMethod"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Primary Funding Source *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormLabel>Funding Source *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select primary funding method" />
+                          <SelectValue placeholder="Select funding source" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="management">Management Budget Only</SelectItem>
-                        <SelectItem value="self_support">Sponsors / Self-Supported Only</SelectItem>
-                        <SelectItem value="registration_fee">Registration Fees Only</SelectItem>
-                        <SelectItem value="combined">Combined Multi-Source Funding</SelectItem>
+                        <SelectItem value="department">Management </SelectItem>
+                        <SelectItem value="self_support">Self Support</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -711,143 +1120,49 @@ function EventOrderForm({
                 )}
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {(watchedFundingMethod === "management" || watchedFundingMethod === "combined") && (
-                  <FormField
-                    control={form.control}
-                    name="managementAmount"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Management Allocated Amount (₹)</FormLabel>
-                        <FormControl>
-                          <Input type="number" min="0" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-
-                {(watchedFundingMethod === "registration_fee" || watchedFundingMethod === "combined") && (
-                  <FormField
-                    control={form.control}
-                    name="registrationFeeAmount"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Estimated Registration Fee Pool (₹)</FormLabel>
-                        <FormControl>
-                          <Input type="number" min="0" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-              </div>
-
-              {/* Sponsor list if self_support or combined */}
-              {(watchedFundingMethod === "self_support" || watchedFundingMethod === "combined") && (
-                <div className="p-4 rounded-lg border bg-muted/10 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold">Sponsors & Self-Support Sources</span>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="gap-1 h-7 text-xs"
-                      onClick={() => appendSponsor({ name: "", amount: 0 })}
-                    >
-                      <IconPlus className="size-3.5" /> Add Sponsor
-                    </Button>
+              {watchedFundingMethod === "department" && (
+                <div className="p-4 rounded-lg border bg-muted/30 flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                      Management
+                    </span>
+                    <p className="text-xl font-bold text-primary mt-1">
+                      ₹{totalCost.toFixed(2)}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      100% full amount allocated from department budget.
+                    </p>
                   </div>
-
-                  {sponsorFields.map((field, idx) => (
-                    <div key={field.id} className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
-                      <div className="sm:col-span-2">
-                        <Input
-                          placeholder="Sponsor / Organization Name"
-                          className="text-xs"
-                          {...form.register(`self_supports.${idx}.name`)}
-                        />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          type="number"
-                          placeholder="Amount (₹)"
-                          className="text-xs"
-                          {...form.register(`self_supports.${idx}.amount`, { valueAsNumber: true })}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="text-destructive size-8 shrink-0"
-                          onClick={() => removeSponsor(idx)}
-                        >
-                          <IconTrash className="size-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                  <div className="text-right text-xs text-muted-foreground font-semibold">
-                    Total Sponsor Fund: ₹{totalSponsorFunds.toFixed(2)}
-                  </div>
+                  <Badge variant="secondary" className="text-xs font-medium">
+                    Full Department Coverage
+                  </Badge>
                 </div>
               )}
 
-              {/* Budget Balance Banner */}
-              <div
-                className={`p-3 rounded-lg border text-xs flex items-center justify-between ${isOverBudget
-                  ? "border-red-300 bg-red-50 text-red-900 dark:bg-red-950/20 dark:text-red-300"
-                  : "border-emerald-300 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/20 dark:text-emerald-300"
-                  }`}
-              >
-                <div className="flex items-center gap-2">
-                  {isOverBudget ? <IconAlertCircle className="size-4" /> : <IconCheck className="size-4" />}
-                  <span>
-                    Total Allocated Funding: <strong>₹{totalAvailableFunding.toFixed(2)}</strong> | Total Required:{" "}
-                    <strong>₹{totalCost.toFixed(2)}</strong>
-                  </span>
-                </div>
-                {isOverBudget && (
-                  <Badge variant="destructive" className="text-[10px]">
-                    Over Budget By ₹{(totalCost - totalAvailableFunding).toFixed(2)}
+              {watchedFundingMethod === "self_support" && (
+                <div className="p-4 rounded-lg border bg-muted/30 flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                      Self Support
+                    </span>
+                    <p className="text-xl font-bold text-primary mt-1">
+                      ₹{totalCost.toFixed(2)}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      100% full amount covered through self support.
+                    </p>
+                  </div>
+                  <Badge variant="secondary" className="text-xs font-medium">
+                    Full Self Support Coverage
                   </Badge>
-                )}
-              </div>
+                </div>
+              )}
+
+              
             </div>
 
             <Separator />
 
-            {/* Proof Documents */}
-            <div className="space-y-3">
-              <h3 className="text-base font-semibold text-primary">4. Sanction & Proof Attachments</h3>
-              <p className="text-xs text-muted-foreground">
-                Upload signed approval circulars, budget sanction documents, or authorization letters (PDF / Images).
-              </p>
-              <div className="p-4 rounded-lg border-2 border-dashed bg-muted/20 text-center space-y-2">
-                <IconUpload className="size-8 mx-auto text-muted-foreground" />
-                <Label htmlFor="event-proofs" className="cursor-pointer block text-xs font-semibold text-primary">
-                  Click to choose proof files
-                </Label>
-                <input
-                  id="event-proofs"
-                  type="file"
-                  multiple
-                  className="hidden"
-                  onChange={handleProofChange}
-                />
-                {proofFiles.length > 0 && (
-                  <div className="flex flex-wrap gap-2 justify-center mt-2">
-                    {proofFiles.map((file, i) => (
-                      <Badge key={i} variant="outline" className="text-xs py-1 px-2">
-                        {file.name} ({(file.size / 1024).toFixed(0)} KB)
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
 
             {/* Submit Action */}
             <div className="flex justify-end gap-3 pt-4 border-t">
@@ -889,10 +1204,10 @@ function XeroxOrderForm({
     defaultValues: {
       branch: userBranchId ? String(userBranchId) : "",
       department: userDeptId ? String(userDeptId) : "",
-      shop: "",
+      shop: null,
       purpose: "",
       attachmentEmail: user?.email || "",
-      fundingMethod: "management",
+      fundingMethod: "department",
       managementAmount: 0,
       self_supports: [],
       items: [
@@ -907,46 +1222,77 @@ function XeroxOrderForm({
     },
   });
 
+  useEffect(() => {
+    const bId =
+      user?.branch?._id ||
+      user?.branch?.id ||
+      (typeof user?.branch === "string" ? user.branch : "") ||
+      userBranchId ||
+      branches[0]?._id ||
+      branches[0]?.id;
+    if (bId && !form.getValues("branch")) {
+      form.setValue("branch", String(bId));
+    }
+    const dId =
+      user?.department?._id ||
+      user?.department?.id ||
+      (typeof user?.department === "string" ? user.department : "") ||
+      userDeptId ||
+      departments[0]?._id ||
+      departments[0]?.id;
+    if (dId && !form.getValues("department")) {
+      form.setValue("department", String(dId));
+    }
+  }, [user, userBranchId, userDeptId, branches, departments, form]);
+
+  const branchName =
+    user?.branch?.name ||
+    user?.branchObj?.name ||
+    user?.department?.branch?.name ||
+    user?.department?.branchObj?.name ||
+    branches.find((b) => String(b._id || b.id) === String(user?.branch?._id || user?.branch?.id || user?.branch || userBranchId))?.name ||
+    (typeof user?.branch === "string" && !user?.branch.match(/^[0-9a-fA-F]{24}$/) && user?.branch.trim() ? user.branch : "") ||
+    user?.branchName ||
+    (branches[0]?.name || "Main Campus");
+
+  const deptName =
+    user?.department?.name ||
+    user?.dept?.name ||
+    user?.departmentObj?.name ||
+    user?.department?.dept_name ||
+    departments.find((d) => String(d._id || d.id) === String(user?.department?._id || user?.department?.id || user?.department || userDeptId))?.name ||
+    (typeof user?.department === "string" && !user?.department.match(/^[0-9a-fA-F]{24}$/) && user?.department.trim() ? user.department : "") ||
+    user?.departmentName ||
+    user?.deptName ||
+    (departments[0]?.name || "Department Requisition");
+
   const { fields: itemFields, append: appendItem, remove: removeItem } = useFieldArray({
     control: form.control,
     name: "items",
   });
 
-  const { fields: sponsorFields, append: appendSponsor, remove: removeSponsor } = useFieldArray({
-    control: form.control,
-    name: "self_supports",
-  });
-
   const watchedItems = form.watch("items") || [];
-  const watchedSponsors = form.watch("self_supports") || [];
-  const watchedFundingMethod = form.watch("fundingMethod");
+  const watchedFundingMethod = form.watch("fundingMethod") || "department";
 
   const totalCost = watchedItems.reduce(
     (sum, i) => sum + (Number(i?.quantity) || 0) * (Number(i?.price) || 0),
     0
   );
 
-  const totalSponsorFunds = watchedSponsors.reduce(
-    (sum, s) => sum + (Number(s?.amount) || 0),
-    0
-  );
-
-  const isOverBudget =
-    watchedFundingMethod === "self_support" &&
-    totalCost > totalSponsorFunds &&
-    totalSponsorFunds > 0;
-
   const onSubmit = async (data) => {
     setSubmitting(true);
     try {
       const payload = { ...data };
-      if (payload.fundingMethod === "management") {
+      const isDept = payload.fundingMethod === "department" || payload.fundingMethod === "management";
+      if (isDept) {
         payload.managementAmount = totalCost;
         payload.self_supports = [];
       } else {
         payload.managementAmount = 0;
+        payload.self_supports = [{ name: "Self Support", amount: totalCost }];
       }
       delete payload.fundingMethod;
+      delete payload.shop;
 
       const formData = new FormData();
       Object.entries(payload).forEach(([key, val]) => {
@@ -990,78 +1336,27 @@ function XeroxOrderForm({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* General Info */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {isSuperAdmin && (
-                <>
-                  <FormField
-                    control={form.control}
-                    name="branch"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Branch / Campus</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select branch" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {branches.map((b) => (
-                              <SelectItem key={b._id} value={b._id}>{b.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              <div>
+                <Label className="text-xs mb-1.5 block font-medium">Branch / Campus</Label>
+                <Input
+                  readOnly
+                  disabled
+                  value={branchName}
+                  className="bg-muted/40 font-medium cursor-default focus-visible:ring-0 select-none text-foreground"
+                />
+                <Input type="hidden" {...form.register("branch")} />
+              </div>
 
-                  <FormField
-                    control={form.control}
-                    name="department"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Department</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select department" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {departments.map((d) => (
-                              <SelectItem key={d._id} value={d._id}>{d.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </>
-              )}
-
-              <FormField
-                control={form.control}
-                name="shop"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Target Xerox Shop *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select xerox shop" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {shops.map((s) => (
-                          <SelectItem key={s._id} value={s._id}>{s.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div>
+                <Label className="text-xs mb-1.5 block font-medium">Department</Label>
+                <Input
+                  readOnly
+                  disabled
+                  value={deptName}
+                  className="bg-muted/40 font-medium cursor-default focus-visible:ring-0 select-none text-foreground"
+                />
+                <Input type="hidden" {...form.register("department")} />
+              </div>
 
               <FormField
                 control={form.control}
@@ -1212,11 +1507,11 @@ function XeroxOrderForm({
 
             <Separator />
 
-            {/* Funding Allocation (Strictly Management or Self-Support, Static Management Amount) */}
+            {/* Funding Allocation (Department or Self-Support) */}
             <div className="space-y-4">
               <h3 className="text-base font-semibold text-primary">3. Funding Allocation</h3>
               <p className="text-xs text-muted-foreground">
-                Select whether this Xerox order is funded through departmental management funds or self-support sponsors.
+                Select whether this Xerox order is funded through Department budget or Self Support. Whichever source is selected covers the full order amount.
               </p>
 
               <FormField
@@ -1225,15 +1520,15 @@ function XeroxOrderForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Funding Source *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Choose funding source" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="management">Department Management Fund</SelectItem>
-                        <SelectItem value="self_support">Sponsor / Self-Supported</SelectItem>
+                        <SelectItem value="department">Department</SelectItem>
+                        <SelectItem value="self_support">Self Support</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -1241,93 +1536,56 @@ function XeroxOrderForm({
                 )}
               />
 
-              {watchedFundingMethod === "management" && (
+              {watchedFundingMethod === "department" && (
                 <div className="p-4 rounded-lg border bg-muted/30 flex items-center justify-between">
                   <div>
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
-                      Allocated Management Amount
+                      Department Allocation
                     </span>
                     <p className="text-xl font-bold text-primary mt-1">
                       ₹{totalCost.toFixed(2)}
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      Automatically calculated and statically allocated from department budget.
+                      100% full amount allocated from department budget.
                     </p>
                   </div>
                   <Badge variant="secondary" className="text-xs font-medium">
-                    Static Allocation
+                    Full Department Coverage
                   </Badge>
                 </div>
               )}
 
               {watchedFundingMethod === "self_support" && (
-                <div className="p-4 rounded-lg border bg-muted/10 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-xs font-semibold">Self-Support Sponsors</span>
-                      <p className="text-[11px] text-muted-foreground">Add individual sponsors funding this order</p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="gap-1 h-7 text-xs"
-                      onClick={() => appendSponsor({ name: "", amount: 0 })}
-                    >
-                      <IconPlus className="size-3.5" /> Add Sponsor
-                    </Button>
-                  </div>
-
-                  {sponsorFields.length === 0 && (
-                    <p className="text-xs text-muted-foreground italic py-2">
-                      No sponsors added yet. Click &apos;Add Sponsor&apos; to specify a funding sponsor.
+                <div className="p-4 rounded-lg border bg-muted/30 flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                      Self Support Allocation
+                    </span>
+                    <p className="text-xl font-bold text-primary mt-1">
+                      ₹{totalCost.toFixed(2)}
                     </p>
-                  )}
-
-                  {sponsorFields.map((field, idx) => (
-                    <div key={field.id} className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
-                      <div className="sm:col-span-2">
-                        <Input
-                          placeholder="Sponsor Name"
-                          className="text-xs"
-                          {...form.register(`self_supports.${idx}.name`)}
-                        />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          type="number"
-                          placeholder="Amount (₹)"
-                          className="text-xs"
-                          {...form.register(`self_supports.${idx}.amount`, { valueAsNumber: true })}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="text-destructive size-8 shrink-0"
-                          onClick={() => removeSponsor(idx)}
-                        >
-                          <IconTrash className="size-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-
-                  <div className="flex items-center justify-between text-xs pt-2 border-t font-semibold">
-                    <span>Total Sponsor Fund:</span>
-                    <span>₹{totalSponsorFunds.toFixed(2)}</span>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      100% full amount covered through self support.
+                    </p>
                   </div>
-
-                  {isOverBudget && (
-                    <div className="p-2.5 rounded border border-red-300 bg-red-50 text-red-900 dark:bg-red-950/20 dark:text-red-300 text-xs flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <IconAlertCircle className="size-4" />
-                        <span>Sponsor funding (₹{totalSponsorFunds.toFixed(2)}) is less than total cost (₹{totalCost.toFixed(2)}).</span>
-                      </div>
-                    </div>
-                  )}
+                  <Badge variant="secondary" className="text-xs font-medium">
+                    Full Self Support Coverage
+                  </Badge>
                 </div>
               )}
+
+              {/* Funding Balance Banner */}
+              <div className="p-3 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/20 dark:text-emerald-300 text-xs flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <IconCheck className="size-4" />
+                  <span>
+                    Total Funding: <strong>₹{totalCost.toFixed(2)}</strong> (Full amount covered by {watchedFundingMethod === "self_support" ? "Self Support" : "Department"})
+                  </span>
+                </div>
+                <Badge variant="outline" className="border-emerald-500 text-emerald-700 dark:text-emerald-400 text-[10px]">
+                  Fully Covered
+                </Badge>
+              </div>
             </div>
 
             {/* Submit Action */}

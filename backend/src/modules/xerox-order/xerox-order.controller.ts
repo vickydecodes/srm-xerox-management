@@ -268,7 +268,8 @@ const controllers = {
     res: Response
   ) => {
     const id = req.params.id as string;
-    const order = await service.markXeroxOrderInProgress(id);
+    const shopId = (req as any).user?.shop;
+    const order = await service.markXeroxOrderInProgress(id, shopId ? String(shopId) : undefined);
 
     if (!order) {
       return sendResponse.notFound(res, 'XeroxOrder');

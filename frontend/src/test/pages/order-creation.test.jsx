@@ -76,6 +76,22 @@ describe('OrderCreation Page', () => {
     expect(screen.getByText('Work Order Specifications')).toBeInTheDocument();
   });
 
+  it('only fetches and provides services with isWorkOrder: true to work order form', () => {
+    mockSearchParams = new URLSearchParams('tab=work-order');
+    render(<OrderCreation />);
+
+    expect(screen.getByText('Work Order Specifications')).toBeInTheDocument();
+    expect(screen.getByText('Search work order services...')).toBeInTheDocument();
+  });
+
+  it('renders size/variant dropdown for work order items with custom sizing support', () => {
+    mockSearchParams = new URLSearchParams('tab=work-order');
+    render(<OrderCreation />);
+
+    expect(screen.getByText('Size / Variant')).toBeInTheDocument();
+    expect(screen.getByText('Select size / variant')).toBeInTheDocument();
+  });
+
   it('switches tabs between Xerox Order and Work Order', async () => {
     render(<OrderCreation />);
 
@@ -110,12 +126,12 @@ describe('OrderCreation Page', () => {
       expect(screen.queryByText(/Click to select proof documents/i)).not.toBeInTheDocument();
     });
 
-    it('renders static management allocation without an input field for management amount', () => {
+    it('renders department allocation without an input field for management amount', () => {
       mockSearchParams = new URLSearchParams('tab=xerox');
       render(<OrderCreation />);
 
-      expect(screen.getByText('Allocated Management Amount')).toBeInTheDocument();
-      expect(screen.getByText('Static Allocation')).toBeInTheDocument();
+      expect(screen.getByText('Department Allocation')).toBeInTheDocument();
+      expect(screen.getByText('Full Department Coverage')).toBeInTheDocument();
       expect(screen.queryByLabelText(/Management Allocated Amount \(₹\)/i)).not.toBeInTheDocument();
     });
 
@@ -126,6 +142,15 @@ describe('OrderCreation Page', () => {
       expect(screen.getByText(/Search Product \/ Service/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/Quantity \*/i)).toBeInTheDocument();
       expect(screen.queryByText(/Attach document file for Xerox shop/i)).not.toBeInTheDocument();
+    });
+
+    it('preloads branch and department and does not mention sponsors', () => {
+      mockSearchParams = new URLSearchParams('tab=xerox');
+      render(<OrderCreation />);
+
+      expect(screen.getByText('Branch / Campus')).toBeInTheDocument();
+      expect(screen.getAllByText('Department').length).toBeGreaterThanOrEqual(1);
+      expect(screen.queryByText(/sponsor/i)).not.toBeInTheDocument();
     });
   });
 });

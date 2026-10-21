@@ -23,7 +23,11 @@ export const getAllServices = async (
     queries: Record<string, unknown>,
     role?: Role
 ) => {
-    return dynamicFilter(Service, serviceFilterConfig, queries, {
+    const normalizedQueries: Record<string, any> = { ...queries };
+    if (normalizedQueries.is_work_order !== undefined && normalizedQueries.isWorkOrder === undefined) {
+      normalizedQueries.isWorkOrder = normalizedQueries.is_work_order;
+    }
+    return dynamicFilter(Service, serviceFilterConfig, normalizedQueries, {
         visibility: getVisibility(role),
     });
 };

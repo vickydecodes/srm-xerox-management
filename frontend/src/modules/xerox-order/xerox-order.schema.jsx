@@ -11,7 +11,7 @@ export const xeroxOrderItemSchema = z.object({
 });
 
 export const selfSupportSchema = z.object({
-  name: z.string().min(1, { message: 'Self support sponsor name is required' }),
+  name: z.string().min(1, { message: 'Self support name is required' }),
   amount: z.coerce.number().min(0, { message: 'Amount cannot be negative' }),
 });
 
@@ -25,24 +25,16 @@ export const baseXeroxOrderSchema = z.object({
     .email({ message: 'Please enter a valid email address' })
     .optional()
     .or(z.literal('')),
-  fundingMethod: z.enum(['management', 'self_support'], {
-    errorMap: () => ({ message: 'Please choose either Management or Self Support' }),
-  }).default('management'),
+  fundingMethod: z.enum(['department', 'management', 'self_support'], {
+    errorMap: () => ({ message: 'Please choose either Department or Self Support' }),
+  }).default('department'),
   managementAmount: z.coerce.number().min(0).optional().default(0),
   self_supports: z.array(selfSupportSchema).default([]),
   items: z.array(xeroxOrderItemSchema).min(1, { message: 'Please add at least one item' }),
 });
 
-const validateXeroxOrder = (data, ctx) => {
-  if (data.fundingMethod === 'self_support') {
-    if (!data.self_supports || data.self_supports.length === 0 || Number(data.self_supports[0]?.amount) <= 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Self support sponsor amount must be greater than 0',
-        path: ['self_supports'],
-      });
-    }
-  }
+const validateXeroxOrder = () => {
+  // Department and Self Support automatically cover full order amount
 };
 
 export const xeroxOrderCreateSchema = baseXeroxOrderSchema.superRefine(validateXeroxOrder);

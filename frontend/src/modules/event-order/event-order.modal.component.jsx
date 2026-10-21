@@ -167,9 +167,9 @@ export const View = ({ order, exported, closeModal } = {}) => {
                   <tr key={idx}>
                     <td className="p-2 font-medium">{item.name}</td>
                     <td className="p-2 text-muted-foreground">
-                      {item.isCustomSize
-                        ? `${item.customWidth}x${item.customHeight} ${item.customUnit || "ft"}`
-                        : item.size || "Standard"}
+                      {item.customWidth && item.customHeight
+                        ? `${item.customHeight}×${item.customWidth} ${item.customUnit || "ft"}`
+                        : item.customSize || item.size || "Standard"}
                     </td>
                     <td className="p-2 text-center">{item.quantity}</td>
                     <td className="p-2 text-right">₹{Number(item.price || 0).toFixed(2)}</td>
@@ -565,3 +565,4 @@ export const Erase = ({ id, submitFn, closeModal } = {}) => (
     </DialogFooter>
   </DialogContent>
 );
+

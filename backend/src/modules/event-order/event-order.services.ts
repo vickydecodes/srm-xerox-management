@@ -308,7 +308,7 @@ export const superAdminApproveEventOrder = async (
   return enhanceEventOrder(order);
 };
 
-export const markEventOrderInProgress = async (id: string) => {
+export const markEventOrderInProgress = async (id: string, shopId?: string) => {
   const order = await EventOrder.findById(id);
 
   if (!order) return null;
@@ -318,6 +318,9 @@ export const markEventOrderInProgress = async (id: string) => {
   }
 
   order.status = 'in_progress';
+  if (shopId && !order.shop) {
+    order.shop = toObjectId(shopId) as any;
+  }
 
   await order.save();
 
