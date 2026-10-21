@@ -79,7 +79,7 @@ describe('EventOrderPage', () => {
   it('shows create action for department_admin and navigates to work-order creation tab', () => {
     setup({ role: 'department_admin' });
     expect(lastDataTableProps.create).toMatchObject({
-      label: 'Create Work Order',
+      label: 'Create Event Order',
       provision: true,
       permission: true,
     });
@@ -90,7 +90,7 @@ describe('EventOrderPage', () => {
   it('shows create action for super_admin and navigates to work-order creation tab', () => {
     setup({ role: 'super_admin' });
     expect(lastDataTableProps.create).toMatchObject({
-      label: 'Create Work Order',
+      label: 'Create Event Order',
       provision: true,
       permission: true,
     });

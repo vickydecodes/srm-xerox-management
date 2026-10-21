@@ -233,9 +233,9 @@ export default function ServiceForm({ form, isEdit = false, inventoryProducts = 
         render={({ field }) => (
           <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-xs bg-muted/10">
             <div className="space-y-0.5">
-              <FormLabel className="text-sm font-medium">Work Order Service</FormLabel>
+              <FormLabel className="text-sm font-medium">Event Order Service</FormLabel>
               <p className="text-xs text-muted-foreground">
-                Enable if this service is for Work Orders
+                Enable if this service is for Event Orders
               </p>
             </div>
             <FormControl>

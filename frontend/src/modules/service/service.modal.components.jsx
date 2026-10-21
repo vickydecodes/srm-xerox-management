@@ -289,7 +289,7 @@ export const View = ({ service } = {}) => {
           </Badge>
           {service?.isWorkOrder && (
             <Badge variant="outline" className="border-blue-500 text-blue-600 dark:text-blue-400">
-              Work Order
+              Event Order
             </Badge>
           )}
         </DialogTitle>

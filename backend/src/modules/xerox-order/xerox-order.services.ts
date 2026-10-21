@@ -30,8 +30,16 @@ export const createXeroxOrder = async (
     throw new Error('User not found');
   }
 
-  let branch = typeof userObj.branch === 'object' && userObj.branch !== null ? ((userObj.branch as any).id || (userObj.branch as any)._id) : userObj.branch;
-  let department = typeof userObj.department === 'object' && userObj.department !== null ? ((userObj.department as any).id || (userObj.department as any)._id) : userObj.department;
+  let branch =
+    (data as any).branch ||
+    (typeof userObj.branch === 'object' && userObj.branch !== null
+      ? (userObj.branch as any).id || (userObj.branch as any)._id
+      : userObj.branch);
+  let department =
+    (data as any).department ||
+    (typeof userObj.department === 'object' && userObj.department !== null
+      ? (userObj.department as any).id || (userObj.department as any)._id
+      : userObj.department);
 
   // Fallback for users without explicit branch/dept (like super_admin)
   if (!branch || !department) {
@@ -54,6 +62,7 @@ export const createXeroxOrder = async (
 
   const order = await new XeroxOrder({
     ...data,
+    status: (data as any).status || 'draft',
     branch: toObjectId(branch),
     department: toObjectId(department),
     createdBy: toObjectId(createdBy),

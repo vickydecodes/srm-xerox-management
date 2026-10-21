@@ -171,20 +171,16 @@ export default function OrderCreation() {
 const buildEventOrderItemRow = (selectedItem) => {
   const rawSizes = selectedItem.sizes || selectedItem.details?.sizes || [];
 
-  // Boolean check: custom size only if explicitly configured
   const itemIsCustom = Boolean(
-    selectedItem.isCustomSize ?? selectedItem.details?.isCustomSize ?? false
+    selectedItem.isCustomSize ?? selectedItem.details?.isCustomSize ?? true
   );
 
-  // Sizing only if configured in DB; do not inject dummy sizes
   let itemSizes = Array.isArray(rawSizes) ? [...rawSizes] : [];
-  if (itemIsCustom && itemSizes.length > 0) {
+  if (itemSizes.length > 0) {
     itemSizes = itemSizes.filter((s) =>
       typeof s === "object" ? s.size !== "Standard" : s !== "Standard"
     );
   }
-
-  const hasSizes = itemSizes.length > 0 || itemIsCustom;
 
   const firstSize = itemSizes.length > 0 ? itemSizes[0] : null;
   const initialSize = firstSize
@@ -193,7 +189,7 @@ const buildEventOrderItemRow = (selectedItem) => {
       : firstSize
     : itemIsCustom
       ? "Custom"
-      : "";
+      : "Standard";
 
   let initialPrice = Number(selectedItem.price) || 0;
   if (
@@ -239,7 +235,7 @@ const buildEventOrderItemRow = (selectedItem) => {
       (firstSize && typeof firstSize === "object" && Number(firstSize.price)) ||
       0,
     sizes: itemSizes,
-    hasSizes: Boolean(hasSizes),
+    hasSizes: true,
     isCustomSize: itemIsCustom,
     isWorkOrder: true,
     customPriceAdded: false,
@@ -430,34 +426,53 @@ function EventOrderForm({
     const row = form.getValues(`items.${index}`);
     if (!row || !row.name) return;
 
+    const currentSize = row.size;
+    const availableSizes = Array.isArray(row.sizes) ? row.sizes : [];
+    const altSizeObj = availableSizes.find(
+      (s) => (typeof s === "object" ? s.size : s) !== currentSize
+    );
+
+    let nextSize = "";
+    let nextPrice = Number(row.customRate) || Number(row.price) || 0;
+
+    if (altSizeObj) {
+      nextSize = typeof altSizeObj === "object" ? altSizeObj.size : altSizeObj;
+      if (typeof altSizeObj === "object" && altSizeObj.price !== undefined && altSizeObj.price !== null) {
+        nextPrice = Number(altSizeObj.price) || 0;
+      }
+    } else if (currentSize !== "Custom") {
+      nextSize = "Custom";
+      nextPrice = 0;
+    } else if (availableSizes.length > 0) {
+      const first = availableSizes[0];
+      nextSize = typeof first === "object" ? first.size : first;
+      nextPrice = typeof first === "object" && first.price !== undefined ? Number(first.price) || 0 : Number(row.price) || 0;
+    } else {
+      nextSize = "Standard";
+    }
+
     appendItem({
       type: "Service",
       item: row.item,
       name: row.name,
       quantity: 1,
-      price: row.price,
+      price: nextPrice,
       variant: row.variant || null,
-      size:
-        row.sizes && row.sizes.length > 0
-          ? typeof row.sizes[0] === "object"
-            ? row.sizes[0].size
-            : row.sizes[0]
-          : row.isCustomSize
-            ? "Custom"
-            : "",
+      size: nextSize,
       customSize: "",
       customWidth: "",
       customHeight: "",
       customUnit: row.customUnit || "ft",
       customRate: row.customRate || row.price || 0,
       sizes: row.sizes || [],
-      hasSizes: Boolean(row.hasSizes ?? ((row.sizes && row.sizes.length > 0) || row.isCustomSize)),
+      hasSizes: true,
       isCustomSize: Boolean(row.isCustomSize),
       isWorkOrder: true,
       customPriceAdded: false,
       attachment: null,
       attachmentFile: null,
     });
+    toast.info(`Added new item row for "${row.name}". Select different size as needed.`);
   };
 
   const handleServiceSelect = (index, service) => {
@@ -492,12 +507,14 @@ function EventOrderForm({
   };
 
   const handleItemFileChange = (index, file) => {
-    form.setValue(`items.${index}.attachmentFile`, file);
+    form.setValue(`items.${index}.attachmentFile`, file, { shouldValidate: true });
     if (file) {
       form.setValue(`items.${index}.attachment`, {
         filename: file.name,
         mimetype: file.type,
-      });
+      }, { shouldValidate: true });
+    } else {
+      form.setValue(`items.${index}.attachment`, null, { shouldValidate: true });
     }
   };
 
@@ -516,6 +533,9 @@ function EventOrderForm({
       delete rest.fundingMethod;
       delete rest.registrationFeeAmount;
       delete rest.shop;
+
+      // Ensure eventDate is present for backend API
+      rest.eventDate = rest.eventStartDate || rest.eventDate;
 
       const itemAttachmentFiles = [];
       if (Array.isArray(rest.items)) {
@@ -555,6 +575,28 @@ function EventOrderForm({
     }
   };
 
+  const onInvalid = (errors) => {
+    console.error("Event Order validation errors:", errors);
+    const msgs = [];
+    if (errors.eventName) msgs.push(errors.eventName.message || "Event Name is required");
+    if (errors.eventStartDate) msgs.push(errors.eventStartDate.message || "Event Start Date is required");
+    if (errors.approvedReferralNumber) msgs.push(errors.approvedReferralNumber.message || "Approved Referral Number is required");
+    if (errors.approvedDate) msgs.push(errors.approvedDate.message || "Approved Date is required");
+    if (errors.purpose) msgs.push(errors.purpose.message || "Purpose is required");
+    if (errors.attachmentEmail) msgs.push(errors.attachmentEmail.message || "Valid Email is required");
+    if (errors.items) {
+      if (typeof errors.items.message === "string") {
+        msgs.push(errors.items.message);
+      } else if (Array.isArray(errors.items)) {
+        errors.items.forEach((itemErr, idx) => {
+          if (itemErr?.attachment) msgs.push(`Item #${idx + 1}: ${itemErr.attachment.message || "Attachment is required"}`);
+          if (itemErr?.item) msgs.push(`Item #${idx + 1}: Please select a service`);
+        });
+      }
+    }
+    toast.error(msgs[0] || "Please check required fields in the form");
+  };
+
   return (
     <Card className="border shadow-sm">
       <CardHeader>
@@ -575,7 +617,7 @@ function EventOrderForm({
 
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-6">
             {/* General Info Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
@@ -762,17 +804,15 @@ function EventOrderForm({
                           )}
                         </div>
                         <div className="flex items-center gap-2">
-                          {form.watch(`items.${idx}.name`) &&
-                            ((form.watch(`items.${idx}.sizes`) || []).length > 0 ||
-                              Boolean(form.watch(`items.${idx}.isCustomSize`))) && (
+                          {form.watch(`items.${idx}.name`) && (
                             <Button
                               type="button"
-                              variant="ghost"
+                              variant="outline"
                               size="sm"
-                              className="h-7 text-xs text-primary px-2"
+                              className="h-7 text-xs text-primary border-primary/30 hover:bg-primary/5 px-2.5 gap-1"
                               onClick={() => handleAddAnother(idx)}
                             >
-                              <IconPlus className="size-3 mr-1" /> Add another size
+                              <IconPlus className="size-3.5" /> Add another size as separate item
                             </Button>
                           )}
                           {itemFields.length > 1 && (
@@ -792,12 +832,12 @@ function EventOrderForm({
                       {(() => {
                         const itemSizes = form.watch(`items.${idx}.sizes`) || [];
                         const isCustom = Boolean(form.watch(`items.${idx}.isCustomSize`));
-                        const hasSizes = itemSizes.length > 0 || isCustom;
+                        const hasSizes = true;
 
                         return (
                           <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-start">
                             {/* 1. Service Search Combobox */}
-                            <div className={hasSizes ? "md:col-span-5" : "md:col-span-8"}>
+                            <div className="md:col-span-5">
                               <Label className="text-xs mb-1.5 block">Search Service *</Label>
                               <BillingItemSearchCombobox
                                 value={form.watch(`items.${idx}.item`)}
@@ -810,98 +850,99 @@ function EventOrderForm({
                               />
                             </div>
 
-                            {/* 2. Size / Variant Selector (Only shown if sizes are available) */}
-                            {hasSizes && (
-                              <div className="md:col-span-3">
-                                <div className="flex items-center justify-between mb-1.5">
-                                  <Label className="text-xs block">Size / Variant</Label>
-                                  {form.watch(`items.${idx}.size`) === "Custom" && (
-                                    <span className="text-[10px] text-primary font-medium">Custom Specs</span>
-                                  )}
-                                </div>
-                                <Select
-                                  value={form.watch(`items.${idx}.size`) || undefined}
-                                  onValueChange={(val) => {
-                                    form.setValue(`items.${idx}.size`, val, { shouldValidate: true });
-                                    if (val !== "Custom") {
-                                      const dimMatch =
-                                        typeof val === "string"
-                                          ? val.match(/^(\d+(?:\.\d+)?)\s*[xX*×]\s*(\d+(?:\.\d+)?)$/)
-                                          : null;
-                                      if (dimMatch) {
-                                        const d1 = Number(dimMatch[1]);
-                                        const d2 = Number(dimMatch[2]);
-                                        const u = form.watch(`items.${idx}.customUnit`) || "ft";
-                                        const sqft = Math.round(d1 * d2 * 100) / 100;
-                                        form.setValue(`items.${idx}.customWidth`, d2, { shouldValidate: true });
-                                        form.setValue(`items.${idx}.customHeight`, d1, { shouldValidate: true });
-                                        form.setValue(
-                                          `items.${idx}.customSize`,
-                                          `${d1}×${d2} ${u}${sqft > 0 ? ` (${sqft} sq.ft)` : ""}`,
-                                          { shouldValidate: true }
-                                        );
-                                      } else {
-                                        form.setValue(`items.${idx}.customSize`, "");
-                                        form.setValue(`items.${idx}.customWidth`, "");
-                                        form.setValue(`items.${idx}.customHeight`, "");
-                                      }
-                                      form.setValue(`items.${idx}.customPriceAdded`, false);
-                                      
-                                      // Match with variant/size and set price
-                                      const allSizes = form.watch(`items.${idx}.sizes`) || [];
-                                      const matchedSize = allSizes.find((sz) =>
-                                        typeof sz === "object" ? sz.size === val : sz === val
-                                      );
-                                      if (
-                                        matchedSize &&
-                                        typeof matchedSize === "object" &&
-                                        matchedSize.price !== undefined &&
-                                        matchedSize.price !== null &&
-                                        Number(matchedSize.price) > 0
-                                      ) {
-                                        form.setValue(`items.${idx}.price`, Number(matchedSize.price) || 0, { shouldValidate: true });
-                                      } else if (form.watch(`items.${idx}.customRate`)) {
-                                        form.setValue(`items.${idx}.price`, Number(form.watch(`items.${idx}.customRate`)) || 0, { shouldValidate: true });
-                                      }
-                                    } else {
-                                      // Custom size selected: calculate from dimensions if already set
-                                      const w = form.watch(`items.${idx}.customWidth`);
-                                      const h = form.watch(`items.${idx}.customHeight`);
-                                      const u = form.watch(`items.${idx}.customUnit`) || "ft";
-                                      const r = Number(form.watch(`items.${idx}.customRate`)) || Number(form.watch(`items.${idx}.price`)) || 0;
-                                      form.setValue(`items.${idx}.customRate`, r);
-                                      recalcCustomPrice(idx, w, h, u, r);
-                                    }
-                                  }}
-                                >
-                                  <SelectTrigger className="h-9 text-xs bg-background">
-                                    <SelectValue placeholder="Select size / variant" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {(form.watch(`items.${idx}.sizes`) || []).map((sz) => {
-                                      const szPrice = typeof sz === "object" ? sz.price : undefined;
-                                      const szLabel =
-                                        typeof sz === "object"
-                                          ? szPrice !== undefined && szPrice !== null && Number(szPrice) > 0
-                                            ? `${sz.size} (₹${szPrice})`
-                                            : sz.size
-                                          : sz;
-                                      const szVal = typeof sz === "object" ? sz.size : sz;
-                                      return (
-                                        <SelectItem key={szVal} value={szVal} className="text-xs">
-                                          {szLabel}
-                                        </SelectItem>
-                                      );
-                                    })}
-                                    {isCustom && (
-                                      <SelectItem value="Custom" className="text-xs font-semibold text-primary">
-                                        Custom (Enter Dimensions)
-                                      </SelectItem>
-                                    )}
-                                  </SelectContent>
-                                </Select>
+                            {/* 2. Size / Variant Selector */}
+                            <div className="md:col-span-3">
+                              <div className="flex items-center justify-between mb-1.5">
+                                <Label className="text-xs block">Size / Variant</Label>
+                                {form.watch(`items.${idx}.size`) === "Custom" && (
+                                  <span className="text-[10px] text-primary font-medium">Custom Specs</span>
+                                )}
                               </div>
-                            )}
+                              <Select
+                                value={form.watch(`items.${idx}.size`) || undefined}
+                                onValueChange={(val) => {
+                                  form.setValue(`items.${idx}.size`, val, { shouldValidate: true });
+                                  if (val !== "Custom") {
+                                    const dimMatch =
+                                      typeof val === "string"
+                                        ? val.match(/^(\d+(?:\.\d+)?)\s*[xX*×]\s*(\d+(?:\.\d+)?)$/)
+                                        : null;
+                                    if (dimMatch) {
+                                      const d1 = Number(dimMatch[1]);
+                                      const d2 = Number(dimMatch[2]);
+                                      const u = form.watch(`items.${idx}.customUnit`) || "ft";
+                                      const sqft = Math.round(d1 * d2 * 100) / 100;
+                                      form.setValue(`items.${idx}.customWidth`, d2, { shouldValidate: true });
+                                      form.setValue(`items.${idx}.customHeight`, d1, { shouldValidate: true });
+                                      form.setValue(
+                                        `items.${idx}.customSize`,
+                                        `${d1}×${d2} ${u}${sqft > 0 ? ` (${sqft} sq.ft)` : ""}`,
+                                        { shouldValidate: true }
+                                      );
+                                    } else {
+                                      form.setValue(`items.${idx}.customSize`, "");
+                                      form.setValue(`items.${idx}.customWidth`, "");
+                                      form.setValue(`items.${idx}.customHeight`, "");
+                                    }
+                                    form.setValue(`items.${idx}.customPriceAdded`, false);
+                                    
+                                    // Match with variant/size and set price
+                                    const allSizes = form.watch(`items.${idx}.sizes`) || [];
+                                    const matchedSize = allSizes.find((sz) =>
+                                      typeof sz === "object" ? sz.size === val : sz === val
+                                    );
+                                    if (
+                                      matchedSize &&
+                                      typeof matchedSize === "object" &&
+                                      matchedSize.price !== undefined &&
+                                      matchedSize.price !== null &&
+                                      Number(matchedSize.price) > 0
+                                    ) {
+                                      form.setValue(`items.${idx}.price`, Number(matchedSize.price) || 0, { shouldValidate: true });
+                                    } else if (form.watch(`items.${idx}.customRate`)) {
+                                      form.setValue(`items.${idx}.price`, Number(form.watch(`items.${idx}.customRate`)) || 0, { shouldValidate: true });
+                                    }
+                                  } else {
+                                    // Custom size selected: calculate from dimensions if already set
+                                    const w = form.watch(`items.${idx}.customWidth`);
+                                    const h = form.watch(`items.${idx}.customHeight`);
+                                    const u = form.watch(`items.${idx}.customUnit`) || "ft";
+                                    const r = Number(form.watch(`items.${idx}.customRate`)) || Number(form.watch(`items.${idx}.price`)) || 0;
+                                    form.setValue(`items.${idx}.customRate`, r);
+                                    recalcCustomPrice(idx, w, h, u, r);
+                                  }
+                                }}
+                              >
+                                <SelectTrigger className="h-9 text-xs bg-background">
+                                  <SelectValue placeholder="Select size / variant" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {(form.watch(`items.${idx}.sizes`) || []).map((sz) => {
+                                    const szPrice = typeof sz === "object" ? sz.price : undefined;
+                                    const szLabel =
+                                      typeof sz === "object"
+                                        ? szPrice !== undefined && szPrice !== null && Number(szPrice) > 0
+                                          ? `${sz.size} (₹${szPrice})`
+                                          : sz.size
+                                        : sz;
+                                    const szVal = typeof sz === "object" ? sz.size : sz;
+                                    return (
+                                      <SelectItem key={szVal} value={szVal} className="text-xs">
+                                        {szLabel}
+                                      </SelectItem>
+                                    );
+                                  })}
+                                  {((form.watch(`items.${idx}.sizes`) || []).length === 0) && (
+                                    <SelectItem value="Standard" className="text-xs">
+                                      Standard {form.watch(`items.${idx}.customRate`) ? `(₹${form.watch(`items.${idx}.customRate`)})` : ""}
+                                    </SelectItem>
+                                  )}
+                                  <SelectItem value="Custom" className="text-xs font-semibold text-primary">
+                                    Custom (Enter Dimensions)
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
 
                             {/* 3. Quantity */}
                             <div className="md:col-span-2">
@@ -914,15 +955,16 @@ function EventOrderForm({
                               />
                             </div>
 
-                            {/* 4. Unit Price (₹) */}
+                            {/* 4. Unit Price (₹) - Strictly read-only */}
                             <div className="md:col-span-2">
                               <Label className="text-xs mb-1.5 block">Unit Price (₹) *</Label>
                               <Input
                                 type="number"
                                 min="0"
                                 step="0.01"
-                                className="h-9 text-xs bg-muted/40 font-medium"
-                                readOnly={hasSizes && form.watch(`items.${idx}.size`) === "Custom"}
+                                readOnly
+                                tabIndex={-1}
+                                className="h-9 text-xs bg-muted/40 font-semibold cursor-not-allowed select-none"
                                 {...form.register(`items.${idx}.price`, { valueAsNumber: true })}
                               />
                             </div>
@@ -930,8 +972,8 @@ function EventOrderForm({
                         );
                       })()}
 
-                      {/* Custom Size Details & Calculator when Custom is selected and service supports custom dimensions */}
-                      {Boolean(form.watch(`items.${idx}.isCustomSize`)) && form.watch(`items.${idx}.size`) === "Custom" && (
+                      {/* Custom Size Details & Calculator when Custom is selected */}
+                      {form.watch(`items.${idx}.size`) === "Custom" && (
                         <div className="rounded-md border p-3 bg-muted/30 space-y-2 mt-2">
                           <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
                             <span>📐 Custom Dimensions & Sizing</span>
@@ -1014,22 +1056,11 @@ function EventOrderForm({
                               </Label>
                               <Input
                                 type="number"
-                                min="0"
-                                step="0.1"
+                                readOnly
+                                tabIndex={-1}
                                 placeholder="Rate"
-                                className="h-8 text-xs bg-background mt-1"
+                                className="h-8 text-xs bg-muted/50 font-semibold cursor-not-allowed mt-1"
                                 value={form.watch(`items.${idx}.customRate`) ?? ""}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  form.setValue(`items.${idx}.customRate`, val);
-                                  recalcCustomPrice(
-                                    idx,
-                                    form.watch(`items.${idx}.customWidth`),
-                                    form.watch(`items.${idx}.customHeight`),
-                                    form.watch(`items.${idx}.customUnit`) || "ft",
-                                    val
-                                  );
-                                }}
                               />
                             </div>
                           </div>
@@ -1052,7 +1083,7 @@ function EventOrderForm({
                                   {r > 0 ? (
                                     <span>@ ₹{r}/sq.{u} = <strong>₹{calculatedPrice}</strong></span>
                                   ) : (
-                                    <span>Enter rate to calculate unit price</span>
+                                    <span>Base rate: ₹{r}</span>
                                   )}
                                 </div>
                               );
@@ -1068,9 +1099,16 @@ function EventOrderForm({
 
                       {/* File Attachment for item */}
                       <div className="pt-2 border-t flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                        <Label className="text-xs font-normal text-muted-foreground">
-                          Attach creative design / approved layout:
-                        </Label>
+                        <div>
+                          <Label className="text-xs font-normal text-muted-foreground block">
+                            Attach creative design / approved layout:
+                          </Label>
+                          {form.formState.errors?.items?.[idx]?.attachment && (
+                            <p className="text-xs text-destructive mt-0.5 font-medium">
+                              {form.formState.errors.items[idx].attachment.message}
+                            </p>
+                          )}
+                        </div>
                         <Input
                           type="file"
                           className="max-w-xs text-xs h-8"
@@ -1170,7 +1208,7 @@ function EventOrderForm({
                 Cancel
               </Button>
               <Button type="submit" disabled={submitting}>
-                {submitting ? "Submitting Work Order..." : "Create Work Order"}
+                {submitting ? "Submitting Event Order..." : "Create Event Order"}
               </Button>
             </div>
           </form>
@@ -1279,6 +1317,42 @@ function XeroxOrderForm({
     0
   );
 
+  const handleAddAnotherXerox = (index) => {
+    const row = form.getValues(`items.${index}`);
+    if (!row || !row.name) return;
+
+    const currentSize = row.size;
+    const availableSizes = Array.isArray(row.sizes) ? row.sizes : [];
+    const altSizeObj = availableSizes.find(
+      (s) => (typeof s === "object" ? s.size : s) !== currentSize
+    );
+
+    let nextSize = "";
+    let nextPrice = Number(row.price) || 0;
+
+    if (altSizeObj) {
+      nextSize = typeof altSizeObj === "object" ? altSizeObj.size : altSizeObj;
+      if (typeof altSizeObj === "object" && altSizeObj.price !== undefined && altSizeObj.price !== null) {
+        nextPrice = Number(altSizeObj.price) || 0;
+      }
+    } else if (availableSizes.length > 0) {
+      const first = availableSizes[0];
+      nextSize = typeof first === "object" ? first.size : first;
+      nextPrice = typeof first === "object" && first.price !== undefined ? Number(first.price) || 0 : Number(row.price) || 0;
+    }
+
+    appendItem({
+      type: row.type || "InventoryProduct",
+      item: row.item,
+      name: row.name,
+      price: nextPrice,
+      quantity: 1,
+      size: nextSize,
+      sizes: row.sizes || [],
+    });
+    toast.info(`Added new item row for "${row.name}". Select different size as needed.`);
+  };
+
   const onSubmit = async (data) => {
     setSubmitting(true);
     try {
@@ -1313,6 +1387,23 @@ function XeroxOrderForm({
     }
   };
 
+  const onInvalid = (errors) => {
+    console.error("Xerox Order validation errors:", errors);
+    const msgs = [];
+    if (errors.purpose) msgs.push(errors.purpose.message || "Work Title / Purpose is required");
+    if (errors.attachmentEmail) msgs.push(errors.attachmentEmail.message || "Valid email is required");
+    if (errors.items) {
+      if (typeof errors.items.message === "string") {
+        msgs.push(errors.items.message);
+      } else if (Array.isArray(errors.items)) {
+        errors.items.forEach((itemErr, idx) => {
+          if (itemErr?.item) msgs.push(`Item #${idx + 1}: Please select a product or service`);
+        });
+      }
+    }
+    toast.error(msgs[0] || "Please check required fields in the form");
+  };
+
   return (
     <Card className="border shadow-sm">
       <CardHeader>
@@ -1333,7 +1424,7 @@ function XeroxOrderForm({
 
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-6">
             {/* General Info */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
@@ -1432,67 +1523,142 @@ function XeroxOrderForm({
                   return (
                     <div key={field.id} className="p-4 rounded-lg border bg-muted/20 space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="font-semibold text-xs text-primary">Item #{idx + 1}</span>
-                        {itemFields.length > 1 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="text-destructive size-7"
-                            onClick={() => removeItem(idx)}
-                          >
-                            <IconTrash className="size-4" />
-                          </Button>
-                        )}
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
-                        <div className="md:col-span-6">
-                          <Label className="text-xs mb-1.5 block">Search Product / Service *</Label>
-                          <BillingItemSearchCombobox
-                            value={form.watch(`items.${idx}.item`)}
-                            currentItemName={form.watch(`items.${idx}.name`)}
-                            searchProducts={searchProducts}
-                            queryParams={{ isWorkOrder: false, orderType: "XEROX_ORDER" }}
-                            onSelect={(selected) => {
-                              form.setValue(`items.${idx}.item`, selected._id, { shouldValidate: true });
-                              form.setValue(`items.${idx}.name`, selected.name, { shouldValidate: true });
-                              form.setValue(`items.${idx}.type`, selected.type || "InventoryProduct", { shouldValidate: true });
-                              form.setValue(`items.${idx}.price`, Number(selected.price) || 0, { shouldValidate: true });
-                            }}
-                          />
-                          {form.formState.errors?.items?.[idx]?.item && (
-                            <p className="text-xs text-destructive mt-1">
-                              {form.formState.errors.items[idx].item.message}
-                            </p>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-xs text-primary">Item #{idx + 1}</span>
+                          {form.watch(`items.${idx}.name`) && (
+                            <span className="text-xs font-medium text-foreground truncate max-w-[200px]">
+                              — {form.watch(`items.${idx}.name`)}
+                            </span>
                           )}
                         </div>
-
-                        <div className="md:col-span-2">
-                          <Label className="text-xs mb-1.5 block">Unit Price</Label>
-                          <div className="h-9 px-3 py-2 rounded-md border bg-muted/40 text-xs font-semibold flex items-center">
-                            ₹{currentPrice.toFixed(2)}
-                          </div>
-                        </div>
-
-                        <div className="md:col-span-2">
-                          <Label htmlFor={`item-qty-${idx}`} className="text-xs mb-1.5 block">Quantity *</Label>
-                          <Input
-                            id={`item-qty-${idx}`}
-                            type="number"
-                            min="1"
-                            className="h-9 text-xs"
-                            {...form.register(`items.${idx}.quantity`, { valueAsNumber: true })}
-                          />
-                        </div>
-
-                        <div className="md:col-span-2">
-                          <Label className="text-xs mb-1.5 block">Subtotal</Label>
-                          <div className="h-9 px-3 py-2 rounded-md border bg-muted/40 text-xs font-bold text-primary flex items-center justify-between">
-                            <span>₹{itemSubtotal.toFixed(2)}</span>
-                          </div>
+                        <div className="flex items-center gap-2">
+                          {form.watch(`items.${idx}.name`) && (form.watch(`items.${idx}.sizes`) || []).length > 0 && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-xs text-primary border-primary/30 hover:bg-primary/5 px-2.5 gap-1"
+                              onClick={() => handleAddAnotherXerox(idx)}
+                            >
+                              <IconPlus className="size-3.5" /> Add another size as separate item
+                            </Button>
+                          )}
+                          {itemFields.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive size-7"
+                              onClick={() => removeItem(idx)}
+                            >
+                              <IconTrash className="size-4" />
+                            </Button>
+                          )}
                         </div>
                       </div>
+
+                      {(() => {
+                        const itemSizes = form.watch(`items.${idx}.sizes`) || [];
+                        const hasSizes = itemSizes.length > 0;
+
+                        return (
+                          <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                            <div className={hasSizes ? "md:col-span-4" : "md:col-span-6"}>
+                              <Label className="text-xs mb-1.5 block">Search Product / Service *</Label>
+                              <BillingItemSearchCombobox
+                                value={form.watch(`items.${idx}.item`)}
+                                currentItemName={form.watch(`items.${idx}.name`)}
+                                searchProducts={searchProducts}
+                                queryParams={{ isWorkOrder: false, orderType: "XEROX_ORDER" }}
+                                onSelect={(selected) => {
+                                  const rawSizes = selected.sizes || selected.details?.sizes || [];
+                                  const itemSizes = Array.isArray(rawSizes) ? rawSizes : [];
+                                  let initialPrice = Number(selected.price) || 0;
+                                  let initialSize = "";
+                                  if (itemSizes.length > 0) {
+                                    const first = itemSizes[0];
+                                    initialSize = typeof first === "object" ? first.size : first;
+                                    if (typeof first === "object" && first.price !== undefined && first.price !== null) {
+                                      initialPrice = Number(first.price) || 0;
+                                    }
+                                  }
+
+                                  form.setValue(`items.${idx}.item`, selected._id || selected.id, { shouldValidate: true });
+                                  form.setValue(`items.${idx}.name`, selected.name, { shouldValidate: true });
+                                  form.setValue(`items.${idx}.type`, selected.type || "InventoryProduct", { shouldValidate: true });
+                                  form.setValue(`items.${idx}.price`, initialPrice, { shouldValidate: true });
+                                  form.setValue(`items.${idx}.size`, initialSize, { shouldValidate: true });
+                                  form.setValue(`items.${idx}.sizes`, itemSizes, { shouldValidate: true });
+                                }}
+                              />
+                              {form.formState.errors?.items?.[idx]?.item && (
+                                <p className="text-xs text-destructive mt-1">
+                                  {form.formState.errors.items[idx].item.message}
+                                </p>
+                              )}
+                            </div>
+
+                            {hasSizes && (
+                              <div className="md:col-span-3">
+                                <Label className="text-xs mb-1.5 block">Size / Option</Label>
+                                <Select
+                                  value={form.watch(`items.${idx}.size`) || undefined}
+                                  onValueChange={(val) => {
+                                    form.setValue(`items.${idx}.size`, val, { shouldValidate: true });
+                                    const allSizes = form.watch(`items.${idx}.sizes`) || [];
+                                    const matched = allSizes.find((sz) =>
+                                      typeof sz === "object" ? sz.size === val : sz === val
+                                    );
+                                    if (matched && typeof matched === "object" && matched.price !== undefined && matched.price !== null) {
+                                      form.setValue(`items.${idx}.price`, Number(matched.price) || 0, { shouldValidate: true });
+                                    }
+                                  }}
+                                >
+                                  <SelectTrigger className="h-9 text-xs bg-background">
+                                    <SelectValue placeholder="Select size" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {(form.watch(`items.${idx}.sizes`) || []).map((sz) => {
+                                      const szVal = typeof sz === "object" ? sz.size : sz;
+                                      const szPrice = typeof sz === "object" ? sz.price : undefined;
+                                      return (
+                                        <SelectItem key={szVal} value={szVal} className="text-xs">
+                                          {szVal} {szPrice !== undefined && szPrice !== null ? `(₹${szPrice})` : ""}
+                                        </SelectItem>
+                                      );
+                                    })}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
+
+                            <div className={hasSizes ? "md:col-span-2" : "md:col-span-2"}>
+                              <Label className="text-xs mb-1.5 block">Unit Price</Label>
+                              <div className="h-9 px-3 py-2 rounded-md border bg-muted/40 text-xs font-semibold flex items-center select-none cursor-not-allowed">
+                                ₹{currentPrice.toFixed(2)}
+                              </div>
+                            </div>
+
+                            <div className={hasSizes ? "md:col-span-1" : "md:col-span-2"}>
+                              <Label htmlFor={`item-qty-${idx}`} className="text-xs mb-1.5 block">Quantity *</Label>
+                              <Input
+                                id={`item-qty-${idx}`}
+                                type="number"
+                                min="1"
+                                className="h-9 text-xs"
+                                {...form.register(`items.${idx}.quantity`, { valueAsNumber: true })}
+                              />
+                            </div>
+
+                            <div className="md:col-span-2">
+                              <Label className="text-xs mb-1.5 block">Subtotal</Label>
+                              <div className="h-9 px-3 py-2 rounded-md border bg-muted/40 text-xs font-bold text-primary flex items-center justify-between select-none">
+                                <span>₹{itemSubtotal.toFixed(2)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   );
                 })}

@@ -33,11 +33,11 @@ export const useServiceColumns = (services) => {
     },
     {
       accessorKey: "isWorkOrder",
-      header: () => Hint("Work Order", "Whether this service is designated for work orders"),
+      header: () => Hint("Event Order", "Whether this service is designated for event orders"),
       cell: ({ row }) =>
         row.getValue("isWorkOrder") ? (
           <span className="text-[10px] bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 font-semibold px-2 py-0.5 rounded-full inline-flex items-center">
-            Work Order
+            Event Order
           </span>
         ) : (
           <span className="text-muted-foreground text-xs">—</span>

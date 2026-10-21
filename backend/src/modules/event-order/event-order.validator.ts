@@ -33,7 +33,9 @@ export const verifyProofSchema = z.object({
   verified: z.coerce.boolean(),
 });
 
-export const createEventOrderSchema = z.object({
+export const baseCreateEventOrderSchema = z.object({
+  branch: objectId.optional(),
+  department: objectId.optional(),
   shop: objectId.optional(),
 
   purpose: z.string().trim().optional(),
@@ -42,15 +44,17 @@ export const createEventOrderSchema = z.object({
 
   eventDate: z.preprocess(
     (value) => (value === '' || value === null ? undefined : value),
-    z.coerce.date().refine(
-      (date) => {
-        if (!date) return false;
-        const minDateStr = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString().slice(0, 10);
-        const dateStr = date.toISOString().slice(0, 10);
-        return dateStr >= minDateStr;
-      },
-      { message: 'Event date must be at least 72 hours in advance' }
-    )
+    z.coerce.date().optional()
+  ),
+
+  eventStartDate: z.preprocess(
+    (value) => (value === '' || value === null ? undefined : value),
+    z.coerce.date().optional()
+  ),
+
+  eventEndDate: z.preprocess(
+    (value) => (value === '' || value === null ? undefined : value),
+    z.coerce.date().optional()
   ),
 
   approvedReferralNumber: z.string().trim().min(1, 'Approved referral number is required'),
@@ -126,4 +130,25 @@ export const createEventOrderSchema = z.object({
     .optional(),
 });
 
-export const updateEventOrderSchema = createEventOrderSchema.partial();
+export const createEventOrderSchema = baseCreateEventOrderSchema
+  .transform((data) => {
+    const effectiveDate = data.eventDate || data.eventStartDate;
+    return {
+      ...data,
+      eventDate: effectiveDate,
+    };
+  })
+  .refine(
+    (data) => {
+      if (!data.eventDate) return false;
+      const minDateStr = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      const dateStr = data.eventDate.toISOString().slice(0, 10);
+      return dateStr >= minDateStr;
+    },
+    {
+      message: 'Event date must be at least 72 hours in advance',
+      path: ['eventDate'],
+    }
+  );
+
+export const updateEventOrderSchema = baseCreateEventOrderSchema.partial();

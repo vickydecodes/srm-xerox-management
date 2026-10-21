@@ -134,7 +134,7 @@ export function BillingItemSearchCombobox({
                         )}
                         {item.type === 'Service' && (item.isWorkOrder || item.details?.isWorkOrder) && (
                           <span className="text-[10px] bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 font-semibold px-1.5 py-0.5 rounded">
-                            Work Order
+                            Event Order
                           </span>
                         )}
                       </div>

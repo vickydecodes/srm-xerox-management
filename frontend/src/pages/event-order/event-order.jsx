@@ -68,7 +68,7 @@ export default function EventOrderPage() {
         searchPlaceholder="Search event orders by title..."
         create={
           canCreate
-            ? createbtn("Create Work Order", () => navigate(`/${role}/order-creation?tab=work-order`), true)
+            ? createbtn("Create Event Order", () => navigate(`/${role}/order-creation?tab=work-order`), true)
             : null
         }
         manualPagination={true}

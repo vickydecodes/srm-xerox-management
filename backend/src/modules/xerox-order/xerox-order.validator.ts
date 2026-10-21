@@ -34,6 +34,8 @@ export const verifyProofSchema = z.object({
 });
 
 export const createXeroxOrderSchema = z.object({
+  branch: objectId.optional(),
+  department: objectId.optional(),
   shop: objectId.optional(),
 
   purpose: z.string().trim().min(1, 'Purpose is required'),
@@ -75,6 +77,7 @@ export const createXeroxOrderSchema = z.object({
           name: z.string().trim().min(1, 'Item name is required'),
           quantity: z.coerce.number().min(0, 'Quantity cannot be negative'),
           price: z.coerce.number().min(0, 'Price cannot be negative'),
+          size: z.string().trim().optional(),
           pages: z.coerce.number().min(1).optional(),
           copies: z.coerce.number().min(1).optional(),
           paperSize: z.string().trim().optional(),
