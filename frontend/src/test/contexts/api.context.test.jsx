@@ -43,6 +43,12 @@ vi.mock('@/modules/department-admin', () => ({
 vi.mock('@/modules/order/order.module', () => ({
   useOrderModule: () => ({ list: vi.fn() }),
 }));
+vi.mock('@/modules/event-order', () => ({
+  useEventOrderModule: () => ({ list: vi.fn() }),
+}));
+vi.mock('@/modules/xerox-order', () => ({
+  useXeroxOrderModule: () => ({ list: vi.fn() }),
+}));
 vi.mock('@/modules/credits', () => ({
   useCreditModule: () => ({ list: vi.fn() }),
 }));
@@ -86,6 +92,8 @@ describe('ApiContext', () => {
       'staffs',
       'departmentAdmins',
       'orders',
+      'eventOrders',
+      'xeroxOrders',
       'credits',
       'settings',
       'dashboard',

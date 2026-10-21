@@ -37,9 +37,9 @@ export class UserDocument {
     this._originalPassword = this.password;
     if (this.active === undefined) this.active = true;
     if (this.deleted === undefined) this.deleted = false;
-    this.branch = data.branchObj || data.branch;
-    this.department = data.departmentObj || data.department;
-    this.shop = data.shopObj || data.shop;
+    this.branch = typeof data.branch === 'string' ? data.branch : (data.branch?.id || data.branch?._id || data.branchObj?.id || data.branchObj?._id || data.branch);
+    this.department = typeof data.department === 'string' ? data.department : (data.department?.id || data.department?._id || data.departmentObj?.id || data.departmentObj?._id || data.department);
+    this.shop = typeof data.shop === 'string' ? data.shop : (data.shop?.id || data.shop?._id || data.shopObj?.id || data.shopObj?._id || data.shop);
   }
 
   async runPreSaveHooks() {

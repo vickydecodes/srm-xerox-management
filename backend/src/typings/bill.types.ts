@@ -18,6 +18,8 @@ export interface CreateBillPayload {
   branch?: string;
   department?: string;
   order?: string;
+  eventOrder?: string;
+  xeroxOrder?: string;
 }
 
 export interface UpdateBillPayload {
@@ -28,5 +30,7 @@ export interface UpdateBillPayload {
   branch?: string;
   department?: string;
   order?: string;
+  eventOrder?: string;
+  xeroxOrder?: string;
   status?: 'UNPAID' | 'PAID' | 'CANCELLED';
 }

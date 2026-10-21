@@ -6,5 +6,5 @@ export const billFilterConfig = {
   sortable: ['createdAt', 'total', 'status', 'code', 'paymentMethod'],
   defaultSort: 'createdAt',
   hasActive: false,
-  enhanceRefs: ['branch', 'department', 'order', 'createdBy', 'approvedBy'],
+  enhanceRefs: ['branch', 'department', 'order', 'eventOrder', 'xeroxOrder', 'createdBy', 'approvedBy'],
 };

@@ -19,6 +19,9 @@ import {
   IconShoppingCart,
   IconTools,
   IconMapPin,
+  IconCalendarEvent,
+  IconPrinter,
+  IconPlus,
 } from "@tabler/icons-react";
 
 import Department from "@/pages/department/department";
@@ -36,7 +39,9 @@ import DepartmentAdmin from "@/pages/department-admin/department-admin";
 import ChangePassword from "@/pages/changepassword/changepassword";
 import Profile from "@/pages/profile/profile";
 import Dashboard from "@/pages/dashboard/dashboard";
-import Order from "@/pages/order/order";
+import EventOrder from "@/pages/event-order/event-order";
+import XeroxOrder from "@/pages/xerox-order/xerox-order";
+import OrderCreation from "@/pages/order-creation/order-creation";
 import Credits from "@/pages/credits/credits";
 import Settings from "@/pages/settings/settings";
 import Shop from "@/pages/shop/shop";
@@ -164,12 +169,36 @@ export const adminRoutes = {
     // },
 
     {
+      path: "/super_admin/order-creation",
+      label: "Create Order",
+      title: "Create Requisition Order",
+      description: "Create a Xerox Order or Work Order",
+      icon: <IconPlus className="h-5 w-5 shrink-0" />,
+      element: <OrderCreation />,
+    },
+    {
+      path: "/super_admin/event-order",
+      label: "Event Orders",
+      title: "Event Orders",
+      description: "View and manage department event and work orders",
+      icon: <IconCalendarEvent className="h-5 w-5 shrink-0" />,
+      element: <EventOrder />,
+    },
+    {
+      path: "/super_admin/xerox-order",
+      label: "Xerox Orders",
+      title: "Xerox Orders",
+      description: "View and manage department xerox printing orders",
+      icon: <IconPrinter className="h-5 w-5 shrink-0" />,
+      element: <XeroxOrder />,
+    },
+    {
       path: "/super_admin/order",
-      label: "Order",
-      title: "Order Management",
-      description: "View and manage department orders.",
-      icon: <IconShoppingCart className="h-5 w-5 shrink-0" />,
-      element: <Order />,
+      label: "Orders",
+      title: "Orders",
+      description: "View department orders",
+      element: <EventOrder />,
+      hidden: true,
     },
     // {
     //   path: "/super_admin/credits",

@@ -2,7 +2,7 @@
 
 import { createContext, useContext } from 'react';
 import { useDepartmentModule } from '@/modules/department';
-import { useServiceModule } from '@/modules/service';   
+import { useServiceModule } from '@/modules/service';
 import { useProductModule } from '@/modules/products';
 import { useBillModule } from '@/modules/bill';
 import { useBranchModule } from '@/modules/branch';
@@ -14,6 +14,8 @@ import { useShopAdminModule } from "@/modules/shop-admin";
 import { useStaffModule } from "@/modules/staff-admin";
 import { useDepartmentAdminModule } from "@/modules/department-admin";
 import { useOrderModule } from "@/modules/order/order.module";
+import { useEventOrderModule } from "@/modules/event-order";
+import { useXeroxOrderModule } from "@/modules/xerox-order";
 import { useCreditModule } from "@/modules/credits";
 import { useSettingModule } from "@/modules/setting";
 import { useDashboardModule } from "@/modules/dashboard";
@@ -35,9 +37,8 @@ export const useApi = () => {
 export const ApiProvider = ({ children }) => {
     const exported = {};
 
-
     const departmentModule = useDepartmentModule(exported);
-    const serviceModule = useServiceModule(exported);  
+    const serviceModule = useServiceModule(exported);
     const productModule = useProductModule(exported);
     const billModule = useBillModule(exported);
     const branchModule = useBranchModule(exported);
@@ -49,11 +50,12 @@ export const ApiProvider = ({ children }) => {
     const staffModule = useStaffModule(exported);
     const departmentAdminModule = useDepartmentAdminModule(exported);
     const orderModule = useOrderModule(exported);
+    const eventOrderModule = useEventOrderModule(exported);
+    const xeroxOrderModule = useXeroxOrderModule(exported);
     const creditModule = useCreditModule(exported);
     const settingModule = useSettingModule(exported);
     const dashboardModule = useDashboardModule(exported);
     const shopModule = useShopModule(exported);
-
 
     Object.assign(exported, {
         departments: departmentModule,
@@ -69,13 +71,15 @@ export const ApiProvider = ({ children }) => {
         staffs: staffModule,
         departmentAdmins: departmentAdminModule,
         orders: orderModule,
+        eventOrders: eventOrderModule,
+        xeroxOrders: xeroxOrderModule,
         credits: creditModule,
         settings: settingModule,
         dashboard: dashboardModule,
         shops: shopModule
     });
 
-    
+
 
 
 

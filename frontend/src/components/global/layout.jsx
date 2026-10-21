@@ -76,7 +76,7 @@ export default function Layout({ routes, logoutComponent }) {
                         {sidebarOpen ? <Logo role={role} /> : <LogoIcon />}
 
                         <div className="mt-8 flex flex-col gap-2">
-                            {routes.map((route) => (
+                            {routes.filter((route) => !route.hidden).map((route) => (
                                 <SidebarLink key={route.path} link={route} />
                             ))}
 

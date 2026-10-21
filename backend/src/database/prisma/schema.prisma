@@ -85,6 +85,7 @@ model Order {
 
   // JSON fields for complex nested docs
   self_supports       Json @default("[]")
+  sponsors            Json? @default("[]")
   items               Json @default("[]")
   proofs              Json @default("[]")
   branchAdminApproval Json @default("{}")
@@ -95,6 +96,66 @@ model Order {
   updatedAt DateTime @updatedAt
 
   bills Bill[]
+}
+
+model EventOrder {
+  id                     String    @id @default(uuid()) @map("_id")
+  code                   String?   @unique
+  department             String
+  branch                 String
+  shop                   String?
+  purpose                String?
+  eventName              String
+  eventDate              DateTime
+  approvedReferralNumber String
+  approvedDate           DateTime
+  attachmentEmail        String?
+  managementAmount       Float?
+  status                 String    @default("draft")
+  deleted                Boolean   @default(false)
+  deletedAt              DateTime?
+  createdBy              String
+  bill                   String?
+
+  self_supports          Json      @default("[]")
+  items                  Json      @default("[]")
+  proofs                 Json      @default("[]")
+  branchAdminApproval    Json      @default("{}")
+  superAdminApproval     Json      @default("{}")
+  approvalHistory        Json      @default("[]")
+
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  bills                  Bill[]
+}
+
+model XeroxOrder {
+  id                  String    @id @default(uuid()) @map("_id")
+  code                String?   @unique
+  department          String
+  branch              String
+  shop                String?
+  purpose             String?
+  attachmentEmail     String?
+  managementAmount    Float?
+  status              String    @default("draft")
+  deleted             Boolean   @default(false)
+  deletedAt           DateTime?
+  createdBy           String
+  bill                String?
+
+  self_supports       Json      @default("[]")
+  items               Json      @default("[]")
+  proofs              Json      @default("[]")
+  branchAdminApproval Json      @default("{}")
+  superAdminApproval  Json      @default("{}")
+  approvalHistory     Json      @default("[]")
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  bills               Bill[]
 }
 
 model Service {
@@ -168,13 +229,17 @@ model Bill {
   branch        String?
   department    String?
   order         String?
+  eventOrder    String?
+  xeroxOrder    String?
   createdBy     String
   approvedBy    String?
-  branchObj     Branch?     @relation(fields: [branch], references: [id])
-  departmentObj Department? @relation(fields: [department], references: [id])
-  orderObj      Order?      @relation(fields: [order], references: [id])
-  createdByObj  User        @relation("BillCreator", fields: [createdBy], references: [id])
-  approvedByObj User?       @relation("BillApprover", fields: [approvedBy], references: [id])
+  branchObj     Branch?      @relation(fields: [branch], references: [id])
+  departmentObj Department?  @relation(fields: [department], references: [id])
+  orderObj      Order?       @relation(fields: [order], references: [id])
+  eventOrderObj EventOrder?  @relation(fields: [eventOrder], references: [id])
+  xeroxOrderObj XeroxOrder?  @relation(fields: [xeroxOrder], references: [id])
+  createdByObj  User         @relation("BillCreator", fields: [createdBy], references: [id])
+  approvedByObj User?        @relation("BillApprover", fields: [approvedBy], references: [id])
 
   approvedAt DateTime?
   createdAt  DateTime  @default(now())

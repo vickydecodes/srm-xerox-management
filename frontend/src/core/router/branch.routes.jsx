@@ -7,6 +7,9 @@ import {
     IconClipboardList,
     IconCreditCard,
     IconReceipt,
+    IconCalendarEvent,
+    IconPrinter,
+    IconPlus,
 } from '@tabler/icons-react';
 
 import Department from "@/pages/department/department";
@@ -14,7 +17,9 @@ import DepartmentAdmin from "@/pages/department-admin/department-admin";
 import ChangePassword from "@/pages/changepassword/changepassword";
 import Profile from "@/pages/profile/profile";
 import Dashboard from "@/pages/dashboard/dashboard";
-import Order from "@/pages/order/order";
+import EventOrder from "@/pages/event-order/event-order";
+import XeroxOrder from "@/pages/xerox-order/xerox-order";
+import OrderCreation from "@/pages/order-creation/order-creation";
 import Credits from "@/pages/credits/credits";
 import Bill from "@/pages/bill/bill";
 
@@ -63,12 +68,37 @@ export const branchAdminRoutes = {
               icon: <IconUser className="h-5 w-5 shrink-0" />,
             },
             {
+              path: "/branch_admin/event-order",
+              label: "Event Orders",
+              title: "Event Orders",
+              description: "Review and approve department event and work orders",
+              element: <EventOrder />,
+              icon: <IconCalendarEvent className="h-5 w-5 shrink-0" />,
+            },
+            {
+              path: "/branch_admin/xerox-order",
+              label: "Xerox Orders",
+              title: "Xerox Orders",
+              description: "Review and approve department xerox printing orders",
+              element: <XeroxOrder />,
+              icon: <IconPrinter className="h-5 w-5 shrink-0" />,
+            },
+            {
+              path: "/branch_admin/order-creation",
+              label: "Create Order",
+              title: "Create Requisition Order",
+              description: "Create an Event Order or Xerox Order",
+              element: <OrderCreation />,
+              icon: <IconPlus className="h-5 w-5 shrink-0" />,
+              hidden: true,
+            },
+            {
               path: "/branch_admin/order",
               label: "Orders",
-              title: "Requisition Orders",
+              title: "Orders",
               description: "Review and approve department orders",
-              element: <Order />,
-              icon: <IconClipboardList className="h-5 w-5 shrink-0" />,
+              element: <EventOrder />,
+              hidden: true,
             },
             {
               path: "/branch_admin/credits",

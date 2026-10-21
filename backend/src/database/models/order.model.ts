@@ -197,11 +197,11 @@ export class OrderDocument {
       deleted: this.deleted,
       deletedAt: this.deletedAt,
       // References
-      department: this.department,
-      branch: this.branch,
-      shop: this.shop,
-      createdBy: this.createdBy,
-      bill: this.bill,
+      department: typeof this.department === 'object' && this.department !== null ? ((this.department as any).id || (this.department as any)._id || String(this.department)) : this.department,
+      branch: typeof this.branch === 'object' && this.branch !== null ? ((this.branch as any).id || (this.branch as any)._id || String(this.branch)) : this.branch,
+      shop: typeof this.shop === 'object' && this.shop !== null ? ((this.shop as any).id || (this.shop as any)._id || String(this.shop)) : this.shop,
+      createdBy: typeof this.createdBy === 'object' && this.createdBy !== null ? ((this.createdBy as any).id || (this.createdBy as any)._id || String(this.createdBy)) : this.createdBy,
+      bill: typeof this.bill === 'object' && this.bill !== null ? ((this.bill as any).id || (this.bill as any)._id || String(this.bill)) : this.bill,
       // Complex json types
       self_supports: this.self_supports as any,
       items: this.items as any,

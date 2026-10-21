@@ -20,6 +20,8 @@ export const createCrud = ({ entity, urls, store, getRole }) => {
     readyForPickup: () => "Order marked as ready for pickup",
     deliver: () => "Order marked as delivered",
     inProgress: () => "Order processing started",
+    uploadProofs: () => "Proofs uploaded successfully",
+    verifyProof: () => "Proof verification updated",
   };
 
   const defaultMessages = {
@@ -34,7 +36,7 @@ export const createCrud = ({ entity, urls, store, getRole }) => {
   const DOWNLOAD_KEYS = ['download', 'exportCsv', 'exportXlsx', 'exportPdf', 'exportMarksheetCsv'];
   const SET_KEYS = ['getAll'];
   const ADD_KEYS = ['create'];
-  const UPDATE_KEYS = ['edit', 'setActiveStatus', 'toggleStatus', 'branchApprove', 'branchAdminApprove', 'superAdminApprove', 'submit', 'readyForPickup', 'deliver', 'inProgress'];
+  const UPDATE_KEYS = ['edit', 'setActiveStatus', 'toggleStatus', 'branchApprove', 'branchAdminApprove', 'superAdminApprove', 'submit', 'readyForPickup', 'deliver', 'inProgress', 'uploadProofs', 'verifyProof'];
   const DELETE_KEYS = ['delete'];
   const RETRIEVE_KEYS = ['retrieve'];
   const ERASE_KEYS = ['erase'];

@@ -1,0 +1,129 @@
+import { z } from 'zod';
+
+const objectId = z.string().refine((val) => true, {
+  message: 'Invalid ObjectId',
+});
+
+const approvalSchema = z.object({
+  status: z.enum(['pending', 'approved', 'rejected']),
+  remarks: z.string().trim().optional(),
+});
+
+const parseJsonIfNeeded = (val: unknown) => {
+  if (typeof val === 'string') {
+    try {
+      return JSON.parse(val);
+    } catch {
+      return val;
+    }
+  }
+  return val;
+};
+
+export const proofSchema = z.object({
+  proof: z.string().trim().min(1, 'Proof data is required'),
+  filename: z.string().trim().optional(),
+  mimetype: z.string().trim().optional(),
+  verified: z.coerce.boolean().optional().default(false),
+});
+
+export const verifyProofSchema = z.object({
+  proofIndex: z.coerce.number().int().min(0).optional(),
+  proofUrl: z.string().trim().optional(),
+  verified: z.coerce.boolean(),
+});
+
+export const createEventOrderSchema = z.object({
+  shop: objectId.optional(),
+
+  purpose: z.string().trim().optional(),
+
+  eventName: z.string().trim().min(1, 'Event name is required'),
+
+  eventDate: z.preprocess(
+    (value) => (value === '' || value === null ? undefined : value),
+    z.coerce.date().refine(
+      (date) => {
+        if (!date) return false;
+        const minDateStr = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        const dateStr = date.toISOString().slice(0, 10);
+        return dateStr >= minDateStr;
+      },
+      { message: 'Event date must be at least 72 hours in advance' }
+    )
+  ),
+
+  approvedReferralNumber: z.string().trim().min(1, 'Approved referral number is required'),
+
+  approvedDate: z.preprocess(
+    (value) => (value === '' || value === null ? undefined : value),
+    z.coerce.date()
+  ),
+
+  attachmentEmail: z
+    .string()
+    .trim()
+    .email('Invalid email address'),
+
+  managementAmount: z
+    .preprocess(parseJsonIfNeeded, z.coerce.number().min(0, 'Management amount cannot be negative'))
+    .optional(),
+
+  self_supports: z.preprocess(
+    parseJsonIfNeeded,
+    z
+      .array(
+        z.object({
+          name: z
+            .string()
+            .trim()
+            .min(1, 'Self support name is required'),
+          amount: z.coerce.number().min(0, 'Self support amount cannot be negative'),
+        })
+      )
+      .optional()
+      .default([])
+  ),
+
+  items: z.preprocess(
+    parseJsonIfNeeded,
+    z
+      .array(
+        z.object({
+          type: z.enum(['InventoryProduct', 'Service']),
+          item: z.string().trim().min(1, 'Item is required'),
+          name: z.string().trim().min(1, 'Item name is required'),
+          quantity: z.coerce.number().min(0, 'Quantity cannot be negative'),
+          price: z.coerce.number().min(0, 'Price cannot be negative'),
+          size: z.string().trim().optional(),
+          customSize: z.string().trim().optional(),
+          customPriceAdded: z.coerce.boolean().optional().default(false),
+          customWidth: z.coerce.number().optional(),
+          customHeight: z.coerce.number().optional(),
+          customUnit: z.string().trim().optional(),
+          customRate: z.coerce.number().optional(),
+          attachment: z.any().optional(),
+        })
+      )
+      .optional()
+      .default([])
+  ),
+
+  proofs: z.preprocess(parseJsonIfNeeded, z.array(proofSchema).optional().default([])),
+
+  branchAdminApproval: approvalSchema.optional(),
+  superAdminApproval: approvalSchema.optional(),
+
+  status: z
+    .enum([
+      'draft',
+      'pending',
+      'in_progress',
+      'ready_for_pickup',
+      'delivered',
+      'rejected',
+    ])
+    .optional(),
+});
+
+export const updateEventOrderSchema = createEventOrderSchema.partial();

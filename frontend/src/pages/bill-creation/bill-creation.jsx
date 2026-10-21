@@ -44,13 +44,15 @@ export default function BillCreation() {
 
   const queryParams = new URLSearchParams(search);
   const orderId = queryParams.get("orderId");
+  const eventOrderId = queryParams.get("eventOrderId");
+  const xeroxOrderId = queryParams.get("xeroxOrderId");
 
   usePageAction({
     edit: (bill) => {
       setEditingBill(bill);
       setOrderContext({
-        code: bill.order?.code || "",
-        purpose: bill.order?.purpose || "",
+        code: bill.order?.code || bill.eventOrder?.code || bill.xeroxOrder?.code || "",
+        purpose: bill.order?.purpose || bill.eventOrder?.eventName || bill.xeroxOrder?.purpose || "",
         branchName: typeof bill.branch === "object" ? bill.branch?.name : "",
         departmentName: typeof bill.department === "object" ? bill.department?.name : "",
       });
@@ -72,18 +74,20 @@ export default function BillCreation() {
         department: typeof currentEntity.department === "object" ? currentEntity.department?._id : currentEntity.department || "",
         discount: 0,
         tax: 0,
-        order: currentEntity._id,
-        items: currentEntity.items.map((item) => ({
-          type: item.type,
-          item: typeof item.item === "object" ? item.item?._id : item.item,
+        order: currentEntity.order || (!currentEntity.eventOrder && !currentEntity.xeroxOrder ? currentEntity._id : undefined),
+        eventOrder: currentEntity.eventOrder || (eventOrderId ? eventOrderId : undefined),
+        xeroxOrder: currentEntity.xeroxOrder || (xeroxOrderId ? xeroxOrderId : undefined),
+        items: (currentEntity.items || []).map((item) => ({
+          type: item.type || "Service",
+          item: typeof item.item === "object" ? item.item?._id : item.item || item._id,
           name: item.name,
-          quantity: item.quantity,
-          price: item.price,
+          quantity: item.quantity || 1,
+          price: item.price || 0,
         })),
       });
       setOrderContext({
         code: currentEntity.code || "",
-        purpose: currentEntity.purpose || "",
+        purpose: currentEntity.purpose || currentEntity.eventName || "",
         branchName: typeof currentEntity.branch === "object" ? currentEntity.branch?.name : "",
         departmentName: typeof currentEntity.department === "object" ? currentEntity.department?.name : "",
       });
@@ -125,7 +129,7 @@ export default function BillCreation() {
       };
       fetchOrder();
     }
-  }, [currentEntity, orderId, editingBill]);
+  }, [currentEntity, orderId, eventOrderId, xeroxOrderId, editingBill]);
 
   const handleSubmit = async (data) => {
     try {
@@ -138,6 +142,14 @@ export default function BillCreation() {
       const targetOrderId = prefilledValues?.order || orderId;
       if (targetOrderId) {
         payload.order = targetOrderId;
+      }
+      const targetEventOrderId = prefilledValues?.eventOrder || eventOrderId;
+      if (targetEventOrderId) {
+        payload.eventOrder = targetEventOrderId;
+      }
+      const targetXeroxOrderId = prefilledValues?.xeroxOrder || xeroxOrderId;
+      if (targetXeroxOrderId) {
+        payload.xeroxOrder = targetXeroxOrderId;
       }
 
       if (editingBill) {

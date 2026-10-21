@@ -7,6 +7,9 @@ import {
   IconLayoutDashboard,
   IconClipboardList,
   IconSettings,
+  IconCalendarEvent,
+  IconPrinter,
+  IconPackages,
 } from "@tabler/icons-react";
 
 import Bill from "@/pages/bill/bill";
@@ -14,7 +17,9 @@ import BillCreation from "@/pages/bill-creation/bill-creation";
 import ChangePassword from "@/pages/changepassword/changepassword";
 import Profile from "@/pages/profile/profile";
 import Dashboard from "@/pages/dashboard/dashboard";
-import Order from "@/pages/order/order";
+import EventOrder from "@/pages/event-order/event-order";
+import XeroxOrder from "@/pages/xerox-order/xerox-order";
+import InventoryProduct from "@/pages/inventory-product/inventory-product";
 import Settings from "@/pages/settings/settings"; 
 
 
@@ -47,12 +52,36 @@ export const shopAdminRoutes = {
       element: <Bill />,
     },
     {
+      path: "/shop_admin/inventory",
+      label: "Inventory",
+      title: "Inventory Management",
+      description: "Manage inventory items, stock levels, and product availability.",
+      icon: <IconPackages className="h-5 w-5 shrink-0" />,
+      element: <InventoryProduct />,
+    },
+    {
+      path: "/shop_admin/event-order",
+      label: "Event Orders",
+      title: "Event Orders",
+      description: "View and fulfill approved department event and work orders",
+      element: <EventOrder />,
+      icon: <IconCalendarEvent className="h-5 w-5 shrink-0" />,
+    },
+    {
+      path: "/shop_admin/xerox-order",
+      label: "Xerox Orders",
+      title: "Xerox Orders",
+      description: "View and fulfill approved department xerox printing orders",
+      element: <XeroxOrder />,
+      icon: <IconPrinter className="h-5 w-5 shrink-0" />,
+    },
+    {
       path: "/shop_admin/order",
       label: "Orders",
-      title: "Requisition Orders",
+      title: "Orders",
       description: "View and fulfill approved department orders",
-      element: <Order />,
-      icon: <IconClipboardList className="h-5 w-5 shrink-0" />,
+      element: <EventOrder />,
+      hidden: true,
     },
     {
       path: "/shop_admin/changepassword",

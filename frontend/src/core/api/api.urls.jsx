@@ -241,6 +241,100 @@ const apiurls = {
       url: (id) => `${base_url}/orders/${id}/in-progress`,
     },
   },
+  eventOrders: {
+    create: { method: "post", url: () => `${base_url}/event-orders` },
+    getAll: { method: "get", url: () => `${base_url}/event-orders` },
+    getOne: { method: "get", url: (id) => `${base_url}/event-orders/${id}` },
+    edit: { method: "put", url: (id) => `${base_url}/event-orders/${id}` },
+    delete: { method: "delete", url: (id) => `${base_url}/event-orders/${id}` },
+    retrieve: {
+      method: "put",
+      url: (id) => `${base_url}/event-orders/${id}/retrieve`,
+    },
+    erase: {
+      method: "delete",
+      url: (id) => `${base_url}/event-orders/${id}/erase`,
+    },
+    submit: {
+      method: "patch",
+      url: (id) => `${base_url}/event-orders/${id}/submit`,
+    },
+    branchApprove: {
+      method: "patch",
+      url: (id) => `${base_url}/event-orders/${id}/branch-approve`,
+    },
+    superAdminApprove: {
+      method: "patch",
+      url: (id) => `${base_url}/event-orders/${id}/super-admin-approve`,
+    },
+    readyForPickup: {
+      method: "patch",
+      url: (id) => `${base_url}/event-orders/${id}/ready-for-pickup`,
+    },
+    deliver: {
+      method: "patch",
+      url: (id) => `${base_url}/event-orders/${id}/delivered`,
+    },
+    inProgress: {
+      method: "patch",
+      url: (id) => `${base_url}/event-orders/${id}/in-progress`,
+    },
+    uploadProofs: {
+      method: "post",
+      url: (id) => `${base_url}/event-orders/${id}/proofs`,
+    },
+    verifyProof: {
+      method: "patch",
+      url: (id) => `${base_url}/event-orders/${id}/proofs/verify`,
+    },
+  },
+  xeroxOrders: {
+    create: { method: "post", url: () => `${base_url}/xerox-orders` },
+    getAll: { method: "get", url: () => `${base_url}/xerox-orders` },
+    getOne: { method: "get", url: (id) => `${base_url}/xerox-orders/${id}` },
+    edit: { method: "put", url: (id) => `${base_url}/xerox-orders/${id}` },
+    delete: { method: "delete", url: (id) => `${base_url}/xerox-orders/${id}` },
+    retrieve: {
+      method: "put",
+      url: (id) => `${base_url}/xerox-orders/${id}/retrieve`,
+    },
+    erase: {
+      method: "delete",
+      url: (id) => `${base_url}/xerox-orders/${id}/erase`,
+    },
+    submit: {
+      method: "patch",
+      url: (id) => `${base_url}/xerox-orders/${id}/submit`,
+    },
+    branchApprove: {
+      method: "patch",
+      url: (id) => `${base_url}/xerox-orders/${id}/branch-approve`,
+    },
+    superAdminApprove: {
+      method: "patch",
+      url: (id) => `${base_url}/xerox-orders/${id}/super-admin-approve`,
+    },
+    readyForPickup: {
+      method: "patch",
+      url: (id) => `${base_url}/xerox-orders/${id}/ready-for-pickup`,
+    },
+    deliver: {
+      method: "patch",
+      url: (id) => `${base_url}/xerox-orders/${id}/delivered`,
+    },
+    inProgress: {
+      method: "patch",
+      url: (id) => `${base_url}/xerox-orders/${id}/in-progress`,
+    },
+    uploadProofs: {
+      method: "post",
+      url: (id) => `${base_url}/xerox-orders/${id}/proofs`,
+    },
+    verifyProof: {
+      method: "patch",
+      url: (id) => `${base_url}/xerox-orders/${id}/proofs/verify`,
+    },
+  },
   settings: {
     get: { method: "get", url: () => `${base_url}/settings` },
     update: { method: "put", url: () => `${base_url}/settings` },

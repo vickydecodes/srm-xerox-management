@@ -6,7 +6,9 @@ import {
   IconKey,
   IconUser,
   IconLayoutDashboard,
-  IconPackages
+  IconPackages,
+  IconCalendarEvent,
+  IconPrinter,
 } from "@tabler/icons-react";
 import Service from "@/pages/service/service";
 import ChangePassword from "@/pages/changepassword/changepassword";
@@ -14,7 +16,8 @@ import Profile from "@/pages/profile/profile";
 import Product from "@/pages/product/product";
 import Bill from "@/pages/bill/bill";
 import Dashboard from "@/pages/dashboard/dashboard";
-import Order from "@/pages/order/order";
+import EventOrder from "@/pages/event-order/event-order";
+import XeroxOrder from "@/pages/xerox-order/xerox-order";
 import InventoryProduct from "@/pages/inventory-product/inventory-product";
 
 export const staffRoutes = {
@@ -62,14 +65,30 @@ export const staffRoutes = {
     //   icon: <IconReceipt className="h-5 w-5 shrink-0" />,
     //   element: <Bill />,
     // },
-    // {
-    //   path: "/staff/order",
-    //   label: "Orders",
-    //   title: "Orders",
-    //   description: "View and fulfill approved department orders",
-    //   element: <Order />,
-    //   icon: <IconClipboardList className="h-5 w-5 shrink-0" />,
-    // },
+    {
+      path: "/staff/event-order",
+      label: "Event Orders",
+      title: "Event Orders",
+      description: "View and fulfill approved department event and work orders",
+      element: <EventOrder />,
+      icon: <IconCalendarEvent className="h-5 w-5 shrink-0" />,
+    },
+    {
+      path: "/staff/xerox-order",
+      label: "Xerox Orders",
+      title: "Xerox Orders",
+      description: "View and fulfill approved department xerox printing orders",
+      element: <XeroxOrder />,
+      icon: <IconPrinter className="h-5 w-5 shrink-0" />,
+    },
+    {
+      path: "/staff/order",
+      label: "Orders",
+      title: "Orders",
+      description: "View and fulfill approved department orders",
+      element: <EventOrder />,
+      hidden: true,
+    },
     {
       path: "/staff/changepassword",
       label: "Change Password",

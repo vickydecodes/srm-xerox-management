@@ -14,6 +14,13 @@ export interface IBillItem {
   total?: number;
 }
 
+const toId = (val: any): string | null => {
+  if (!val) return null;
+  if (typeof val === 'string') return val;
+  if (typeof val === 'object') return val.id || val._id || null;
+  return String(val);
+};
+
 export class BillDocument {
   _id!: string;
   code!: string;
@@ -23,15 +30,17 @@ export class BillDocument {
   tax!: number;
   total!: number;
   paymentMethod!: string;
-  branch?: string;
-  department?: string;
-  order?: string;
+  branch?: any;
+  department?: any;
+  order?: any;
+  eventOrder?: any;
+  xeroxOrder?: any;
   status!: string;
   approvalStatus!: string;
   approvedBy?: string;
   approvedAt?: Date;
   remarks?: string;
-  createdBy!: string;
+  createdBy!: any;
   createdAt!: Date;
   updatedAt!: Date;
   deleted!: boolean;
@@ -67,6 +76,14 @@ export class BillDocument {
       this.total = this.subtotal - (this.discount || 0) + (this.tax || 0);
     }
 
+    const branchId = toId(this.branch);
+    const departmentId = toId(this.department);
+    const orderId = toId(this.order);
+    const eventOrderId = toId(this.eventOrder);
+    const xeroxOrderId = toId(this.xeroxOrder);
+    const createdById = toId(this.createdBy) || this.createdBy;
+    const approvedById = toId(this.approvedBy);
+
     if (this.isNew) {
       const created = await prisma.bill.create({
         data: {
@@ -79,10 +96,12 @@ export class BillDocument {
           status: this.status || 'UNPAID',
           approvalStatus: this.approvalStatus || 'approved',
           remarks: this.remarks,
-          branch: this.branch || null,
-          department: this.department || null,
-          order: this.order || null,
-          createdBy: this.createdBy,
+          branch: branchId,
+          department: departmentId,
+          order: orderId,
+          eventOrder: eventOrderId,
+          xeroxOrder: xeroxOrderId,
+          createdBy: createdById,
           items: {
             create: (this.items || []).map(i => ({
               type: i.type,
@@ -126,9 +145,14 @@ export class BillDocument {
           paymentMethod: this.paymentMethod,
           status: this.status,
           approvalStatus: this.approvalStatus,
-          approvedBy: this.approvedBy,
+          approvedBy: approvedById,
           approvedAt: this.approvedAt,
           remarks: this.remarks,
+          branch: branchId,
+          department: departmentId,
+          order: orderId,
+          eventOrder: eventOrderId,
+          xeroxOrder: xeroxOrderId,
           deleted: this.deleted,
           deletedAt: this.deletedAt,
           ...itemsUpdate
@@ -145,7 +169,15 @@ export class BillModel {
     if (!id) return null;
     const doc = await prisma.bill.findUnique({
       where: { id: id.toString() },
-      include: { items: true, branchObj: true, departmentObj: true, orderObj: true, createdByObj: true }
+      include: {
+        items: true,
+        branchObj: true,
+        departmentObj: true,
+        orderObj: true,
+        eventOrderObj: true,
+        xeroxOrderObj: true,
+        createdByObj: true
+      }
     });
     if (!doc) return null;
     
@@ -156,6 +188,8 @@ export class BillModel {
       branch: doc.branchObj,
       department: doc.departmentObj,
       order: doc.orderObj,
+      eventOrder: doc.eventOrderObj,
+      xeroxOrder: doc.xeroxOrderObj,
       createdBy: doc.createdByObj,
       items: doc.items.map((i: any) => ({ ...i, item: i.item }))
     };
@@ -221,7 +255,15 @@ export class BillModel {
   static async find(query: any) {
     const docs = await prisma.bill.findMany({
       where: query as any,
-      include: { items: true, branchObj: true, departmentObj: true, orderObj: true, createdByObj: true }
+      include: {
+        items: true,
+        branchObj: true,
+        departmentObj: true,
+        orderObj: true,
+        eventOrderObj: true,
+        xeroxOrderObj: true,
+        createdByObj: true
+      }
     });
     return docs.map((doc: any) => new BillDocument({
       ...doc,
@@ -229,6 +271,8 @@ export class BillModel {
       branch: doc.branchObj,
       department: doc.departmentObj,
       order: doc.orderObj,
+      eventOrder: doc.eventOrderObj,
+      xeroxOrder: doc.xeroxOrderObj,
       createdBy: doc.createdByObj,
       items: doc.items.map((i: any) => ({ ...i, item: i.item }))
     }));

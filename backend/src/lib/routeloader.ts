@@ -11,6 +11,8 @@ import serviceRoute from '../modules/service/service.route.ts';
 import searchRoute from '../modules/search/search.route.ts';
 import productRoute from '../modules/product/product.route.ts';
 import orderRoute from '../modules/order/order.route.ts';
+import eventOrderRoute from '../modules/event-order/event-order.route.ts';
+import xeroxOrderRoute from '../modules/xerox-order/xerox-order.route.ts';
 import inventoryProductRoute from '../modules/inventory-product/inventory-product.route.ts';
 import departmentRoute from '../modules/department/department.route.ts';
 import creditRoute from '../modules/credit/credit.route.ts';
@@ -34,6 +36,8 @@ export const loadRoutes = async (app: Application): Promise<void> => {
     { name: 'search', router: searchRoute },
     { name: 'product', router: productRoute },
     { name: 'order', router: orderRoute },
+    { name: 'event-order', router: eventOrderRoute },
+    { name: 'xerox-order', router: xeroxOrderRoute },
     { name: 'inventory-product', router: inventoryProductRoute },
     { name: 'department', router: departmentRoute },
     { name: 'credit', router: creditRoute },

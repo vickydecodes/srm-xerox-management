@@ -3,6 +3,8 @@ import InventoryProduct from '@db/models/inventory-product.model.ts';
 import Service from '@db/models/service.model.ts';
 import Department from '@db/models/department.model.ts';
 import Order from '@db/models/order.model.ts';
+import EventOrder from '@db/models/event-order.model.ts';
+import XeroxOrder from '@db/models/xerox-order.model.ts';
 import User from '@db/models/user.model.ts';
 import mongoose from 'mongoose';
 import { dynamicFilter } from '@core/constants/dynamicfilter.constant.ts';
@@ -91,6 +93,18 @@ export const createBill = async (data: CreateBillPayload, createdBy: string) => 
     if (!order) throw new Error('Order not found');
     if (order.bill) throw new Error('Order is already billed');
   }
+  if (data.eventOrder) {
+    const eventOrder = await EventOrder.findById(data.eventOrder);
+    if (!eventOrder) throw new Error('Event order not found');
+    if (eventOrder.bill) throw new Error('Event order is already billed');
+  }
+  if (data.xeroxOrder) {
+    const xeroxOrder = await XeroxOrder.findById(data.xeroxOrder);
+    if (!xeroxOrder) throw new Error('Xerox order not found');
+    if (xeroxOrder.bill) throw new Error('Xerox order is already billed');
+  }
+
+  const isLinkedToOrder = Boolean(data.order || data.eventOrder || data.xeroxOrder);
 
   await adjustStockForBill([], data.items as any);
 
@@ -100,7 +114,7 @@ export const createBill = async (data: CreateBillPayload, createdBy: string) => 
 
   if (data.paymentMethod === 'CREDIT') {
     status = 'UNPAID';
-    if (data.order) {
+    if (isLinkedToOrder) {
       // Linked to order
       approvalStatus = 'approved';
     } else {
@@ -139,7 +153,7 @@ export const createBill = async (data: CreateBillPayload, createdBy: string) => 
 
   // If this is a direct CREDIT bill, apply the credit now.
   // Otherwise (linked to order), apply it when the order is marked delivered.
-  if (data.paymentMethod === 'CREDIT' && data.department && !data.order) {
+  if (data.paymentMethod === 'CREDIT' && data.department && !isLinkedToOrder) {
     const dept = await Department.findById(data.department);
     if (!dept) throw new Error('Department not found');
 
@@ -166,6 +180,38 @@ export const createBill = async (data: CreateBillPayload, createdBy: string) => 
     }
   }
 
+  if (data.eventOrder) {
+    const eventOrder = await EventOrder.findById(data.eventOrder);
+    if (eventOrder) {
+      const creatorUser = await User.findById(createdBy);
+      if (creatorUser && creatorUser.role !== 'super_admin') {
+        if (eventOrder.shop && creatorUser.shop && eventOrder.shop.toString() !== creatorUser.shop.toString()) {
+          throw new Error('This order belongs to another shop');
+        }
+      }
+      eventOrder.bill = bill._id as any;
+      eventOrder.status = 'ready_for_pickup';
+
+      await eventOrder.save();
+    }
+  }
+
+  if (data.xeroxOrder) {
+    const xeroxOrder = await XeroxOrder.findById(data.xeroxOrder);
+    if (xeroxOrder) {
+      const creatorUser = await User.findById(createdBy);
+      if (creatorUser && creatorUser.role !== 'super_admin') {
+        if (xeroxOrder.shop && creatorUser.shop && xeroxOrder.shop.toString() !== creatorUser.shop.toString()) {
+          throw new Error('This order belongs to another shop');
+        }
+      }
+      xeroxOrder.bill = bill._id as any;
+      xeroxOrder.status = 'ready_for_pickup';
+
+      await xeroxOrder.save();
+    }
+  }
+
   const updatedBill = await Bill.findById(bill._id);
   return enhanceBill(updatedBill!);
 };
@@ -185,7 +231,7 @@ export const approveCreditBill = async (id: string, userId: string, remarks?: st
   await bill.save();
 
   // Only apply credit on approval if this is a direct bill (not linked to an order)
-  if (bill.department && !bill.order) {
+  if (bill.department && !bill.order && !bill.eventOrder && !bill.xeroxOrder) {
     const deptId = typeof bill.department === 'object' ? (bill.department as any).id || (bill.department as any)._id : bill.department;
     const dept = await Department.findById(deptId);
     if (!dept) throw new Error('Department not found');
