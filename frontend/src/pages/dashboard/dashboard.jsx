@@ -113,7 +113,7 @@ export default function Dashboard() {
       <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 pb-4 border-b border-border/60">
         <div className="space-y-1 text-left">
           <h1 className="text-xl font-semibold text-foreground tracking-tight">
-            Hey, {user.name}
+            Hello, {user.role === "super_admin" ? "Chairman" : user.name}
           </h1>
           <p className="text-sm text-muted-foreground">
             {getRoleLabel(user.role)} Dashboard
