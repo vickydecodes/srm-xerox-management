@@ -7,6 +7,7 @@ type ENVTYPE = {
   DEBUG: string;
   PORT: number | string;
   MONGO_URI: string | undefined;
+  DATABASE_URL: string | undefined;
   CLIENT_URL: string;
   MAINTENANCE_MODE: string | undefined;
   MAINTENANCE_BYPASS_KEY: string | undefined;
@@ -17,6 +18,7 @@ export const ENV: ENVTYPE = {
   DEBUG: process.env.DEBUG || 'true',
   PORT: process.env.PORT || 3000,
   MONGO_URI: process.env.MONGO_URI,
+  DATABASE_URL: process.env.DATABASE_URL,
   CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:3000',
   MAINTENANCE_MODE: process.env.MAINTENANCE_MODE || 'false',
   MAINTENANCE_BYPASS_KEY: process.env.MAINTENANCE_BYPASS_KEY || '',
