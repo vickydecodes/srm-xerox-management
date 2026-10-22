@@ -103,6 +103,14 @@ describe('Search API Endpoint Suite', () => {
     expect(res.body.data.some((item: any) => item.name.includes(uniqueProductKeyword))).to.be.true;
   });
 
+  it('should return no products when the query matches no product names', async () => {
+    const unmatchedKeyword = `NoSearchMatch${Date.now()}`;
+    const res = await tester.get(`${baseRoute}/products?q=${unmatchedKeyword}`, token);
+
+    tester.assertFetched(res, 'products');
+    expect(res.body.data).toEqual([]);
+  });
+
   it('should find matching service by query', async () => {
     const res = await tester.get(`${baseRoute}/products?q=${uniqueServiceKeyword}`, token);
 

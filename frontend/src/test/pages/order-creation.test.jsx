@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 const mockNavigate = vi.fn();
 let mockSearchParams = new URLSearchParams();
@@ -18,9 +18,32 @@ import { useLoader } from '@/core/hooks/useLoader';
 vi.mock('@/core/contexts/api.context');
 vi.mock('@/core/contexts/auth.context');
 vi.mock('@/core/hooks/useLoader');
+vi.mock('@/modules/search/search.combobox', () => ({
+  BillingItemSearchCombobox: ({ onSelect, placeholder, searchPlaceholder }) => (
+    <>
+      <span>{placeholder}</span>
+      <span>{searchPlaceholder}</span>
+      <button
+        type="button"
+        onClick={() =>
+          onSelect({
+            _id: 'product-1',
+            type: 'InventoryProduct',
+            name: 'A4 sheet',
+            price: 1,
+            sizes: [],
+          })
+        }
+      >
+        Select test product
+      </button>
+    </>
+  ),
+}));
 
 describe('OrderCreation Page', () => {
   let loadResources;
+  let xeroxOrders;
 
   beforeEach(() => {
     mockNavigate.mockClear();
@@ -38,9 +61,25 @@ describe('OrderCreation Page', () => {
       role: 'department_admin',
     });
 
+    xeroxOrders = {
+      crud: {
+        create: vi.fn().mockResolvedValue({
+          _id: 'draft-1',
+          status: 'draft',
+          purpose: 'Exam papers',
+          department: { name: 'CSE' },
+          branch: { name: 'KTR Campus' },
+          items: [
+            { item: 'product-1', name: 'A4 sheet', quantity: 10, price: 1 },
+          ],
+        }),
+      },
+      submit: vi.fn().mockResolvedValue({ _id: 'draft-1', status: 'pending' }),
+    };
+
     useApi.mockReturnValue({
       eventOrders: { crud: { create: vi.fn() } },
-      xeroxOrders: { crud: { create: vi.fn() } },
+      xeroxOrders,
       services: { state: [{ _id: 's1', name: 'Color Poster', price: 150 }] },
       shops: { state: [{ _id: 'sh1', name: 'Main Campus Xerox' }] },
       branches: { state: [{ _id: 'b1', name: 'KTR Campus' }] },
@@ -151,6 +190,31 @@ describe('OrderCreation Page', () => {
       expect(screen.getByText('Branch / Campus')).toBeInTheDocument();
       expect(screen.getAllByText('Department').length).toBeGreaterThanOrEqual(1);
       expect(screen.queryByText(/sponsor/i)).not.toBeInTheDocument();
+    });
+
+    it('creates a draft, shows its details, then submits it for approval', async () => {
+      mockSearchParams = new URLSearchParams('tab=xerox');
+      render(<OrderCreation />);
+
+      fireEvent.change(screen.getByLabelText('Purpose of the Order'), {
+        target: { value: 'Exam papers' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: 'Select test product' }));
+      fireEvent.change(screen.getByLabelText(/Quantity \*/i), {
+        target: { value: '10' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: 'Create Xerox Order' }));
+
+      expect(await screen.findByRole('dialog')).toBeInTheDocument();
+      expect(screen.getByText('Draft Xerox Order')).toBeInTheDocument();
+      expect(screen.getByText('All Shops')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Submit for Approval' }));
+
+      await waitFor(() => {
+        expect(xeroxOrders.submit).toHaveBeenCalledWith('draft-1');
+        expect(mockNavigate).toHaveBeenCalledWith('/department_admin/xerox-order');
+      });
     });
   });
 });

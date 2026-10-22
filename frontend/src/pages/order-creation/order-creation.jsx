@@ -26,6 +26,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -100,7 +108,7 @@ export default function OrderCreation() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Create Requisition Order</h1>
           <p className="text-sm text-muted-foreground">
-            Generate standard departmental xerox orders or campus event work orders.
+            Generate standard departmental Xerox orders or campus Event Orders.
           </p>
         </div>
       </div>
@@ -114,7 +122,7 @@ export default function OrderCreation() {
           </TabsTrigger>
           <TabsTrigger value="work-order" className="flex items-center gap-2 py-2">
             <IconCalendarEvent className="size-4 text-primary" />
-            <span className="font-semibold">Work Order</span>
+            <span className="font-semibold">Event Order</span>
           </TabsTrigger>
         </TabsList>
 
@@ -135,7 +143,7 @@ export default function OrderCreation() {
           />
         </TabsContent>
 
-        {/* Work Order (Event Order) Form */}
+        {/* Event Order Form */}
         <TabsContent value="work-order">
           <EventOrderForm
             user={user}
@@ -166,7 +174,7 @@ export default function OrderCreation() {
 // ==========================================
 // EVENT ORDER FORM COMPONENT
 // ==========================================
-// Work Order (Event Order) Item Row Builder
+// Event Order Item Row Builder
 // ==========================================
 const buildEventOrderItemRow = (selectedItem) => {
   const rawSizes = selectedItem.sizes || selectedItem.details?.sizes || [];
@@ -260,6 +268,7 @@ function EventOrderForm({
 }) {
   const [submitting, setSubmitting] = useState(false);
   const [proofFiles, setProofFiles] = useState([]);
+  const [draftOrder, setDraftOrder] = useState(null);
 
   const defaultMinDate = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
@@ -268,7 +277,6 @@ function EventOrderForm({
     defaultValues: {
       branch: userBranchId ? String(userBranchId) : "",
       department: userDeptId ? String(userDeptId) : "",
-      shop: null,
       eventName: "",
       eventStartDate: defaultMinDate,
       eventEndDate: defaultMinDate,
@@ -278,7 +286,7 @@ function EventOrderForm({
       approvedReferralNumber: "",
       approvedDate: new Date().toISOString().slice(0, 10),
       purpose: "",
-      attachmentEmail: user?.email || "",
+      attachmentEmail:"",
       fundingMethod: "department",
       managementAmount: 0,
       self_supports: [],
@@ -563,11 +571,36 @@ function EventOrderForm({
         formData.append(`item_attachment_${index}`, file);
       });
 
-      const res = await eventOrders.crud.create(formData);
-      if (res) {
-        toast.success("Event Order created successfully!");
+      const createdDraft = await eventOrders.crud.create(formData);
+      if (createdDraft) {
+        setDraftOrder(createdDraft);
+      } else {
+        toast.error("The draft was created but its details could not be loaded. Check the Event Orders list.");
         onSubmitSuccess();
       }
+    } catch (err) {
+      // Error handled by CRUD layer
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const closeDraftDialog = () => {
+    setDraftOrder(null);
+    onSubmitSuccess();
+  };
+
+  const submitDraft = async () => {
+    const draftOrderId = draftOrder?._id || draftOrder?.id;
+    if (!draftOrderId) {
+      toast.error("The draft order could not be submitted because its ID is missing.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await eventOrders.submit(draftOrderId);
+      closeDraftDialog();
     } catch (err) {
       // Error handled by CRUD layer
     } finally {
@@ -603,10 +636,10 @@ function EventOrderForm({
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-xl font-bold flex items-center gap-2">
-              <IconCalendarEvent className="size-5 text-primary" /> Work Order Specifications
+              <IconCalendarEvent className="size-5 text-primary" /> Event Order Specifications
             </CardTitle>
             <CardDescription>
-              For seminars, conferences, symposiums, departmental celebrations, and custom work order printing.
+              For seminars, conferences, symposiums, departmental celebrations, and custom event printing.
             </CardDescription>
           </div>
           <Badge variant="secondary" className="text-xs">
@@ -647,7 +680,7 @@ function EventOrderForm({
                 name="attachmentEmail"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Notification & Creative Email *</FormLabel>
+                    <FormLabel>Enter Your E mail</FormLabel>
                     <FormControl>
                       <Input placeholder="name@srmist.edu.in" {...field} />
                     </FormControl>
@@ -661,14 +694,14 @@ function EventOrderForm({
 
             {/* Event Specifics */}
             <div className="space-y-4">
-              <h3 className="text-base font-semibold text-primary">1. Event Schedule & Identity</h3>
+              <h3 className="text-base font-semibold text-primary">1. Event Details</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormField
                   control={form.control}
                   name="eventName"
                   render={({ field }) => (
                     <FormItem className="md:col-span-2">
-                      <FormLabel>Official Event Title *</FormLabel>
+                      <FormLabel>Event name *</FormLabel>
                       <FormControl>
                         <Input placeholder="e.g. International Conference on Computational Intelligence 2026" {...field} />
                       </FormControl>
@@ -682,7 +715,7 @@ function EventOrderForm({
                   name="eventStartDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Event Start Date *</FormLabel>
+                      <FormLabel>Event Date *</FormLabel>
                       <FormControl>
                         <Input type="date" min={defaultMinDate} {...field} />
                       </FormControl>
@@ -693,19 +726,7 @@ function EventOrderForm({
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <FormField
-                  control={form.control}
-                  name="eventEndDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Event End Date (Optional)</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                
 
                 <FormField
                   control={form.control}
@@ -741,7 +762,7 @@ function EventOrderForm({
                 name="purpose"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Event Purpose & Summary *</FormLabel>
+                    <FormLabel>Event Purpose</FormLabel>
                     <FormControl>
                       <Textarea placeholder="Explain event scope, intended audience, and publicity requirements..." {...field} />
                     </FormControl>
@@ -757,36 +778,9 @@ function EventOrderForm({
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-base font-semibold text-primary">2. Required Services & Items</h3>
-                  <p className="text-xs text-muted-foreground">Select required printing, signage, mementos or event publicity services.</p>
+                  <h3 className="text-base font-semibold text-primary">2. Select Services & Items</h3>
+                  <p className="text-xs text-muted-foreground">Select required Service & Items</p>
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={() =>
-                    appendItem({
-                      type: "Service",
-                      item: "",
-                      name: "",
-                      quantity: 1,
-                      price: 0,
-                      size: "",
-                      customSize: "",
-                      isCustomSize: false,
-                      customWidth: 0,
-                      customHeight: 0,
-                      customUnit: "ft",
-                      customRate: 0,
-                      sizes: [],
-                      attachment: null,
-                      attachmentFile: null,
-                    })
-                  }
-                >
-                  <IconPlus className="size-4" /> Add Item
-                </Button>
               </div>
 
               <div className="space-y-3">
@@ -812,7 +806,7 @@ function EventOrderForm({
                               className="h-7 text-xs text-primary border-primary/30 hover:bg-primary/5 px-2.5 gap-1"
                               onClick={() => handleAddAnother(idx)}
                             >
-                              <IconPlus className="size-3.5" /> Add another size as separate item
+                              <IconPlus className="size-3.5" /> Add another item
                             </Button>
                           )}
                           {itemFields.length > 1 && (
@@ -845,7 +839,7 @@ function EventOrderForm({
                                 searchProducts={effectiveSearchProducts}
                                 queryParams={{ isWorkOrder: true, orderType: "WORK_ORDER" }}
                                 onSelect={(selected) => handleServiceSelect(idx, selected)}
-                                placeholder="Search work order services..."
+                                placeholder="Search event order services..."
                                 searchPlaceholder="Type service name (e.g., banner, binding)..."
                               />
                             </div>
@@ -1120,6 +1114,36 @@ function EventOrderForm({
                 })}
               </div>
 
+              <div className="flex justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() =>
+                    appendItem({
+                      type: "Service",
+                      item: "",
+                      name: "",
+                      quantity: 1,
+                      price: 0,
+                      size: "",
+                      customSize: "",
+                      isCustomSize: false,
+                      customWidth: 0,
+                      customHeight: 0,
+                      customUnit: "ft",
+                      customRate: 0,
+                      sizes: [],
+                      attachment: null,
+                      attachmentFile: null,
+                    })
+                  }
+                >
+                  <IconPlus className="size-4" /> Add Item
+                </Button>
+              </div>
+
               <div className="flex justify-end p-2 bg-muted/40 rounded border">
                 <span className="text-sm font-bold">
                   Estimated Items Total: ₹{totalCost.toFixed(2)}
@@ -1133,7 +1157,7 @@ function EventOrderForm({
             <div className="space-y-4">
               <h3 className="text-base font-semibold text-primary">3. Funding Allocation</h3>
               <p className="text-xs text-muted-foreground">
-                Select whether this work order is funded through Department budget or Self Support. Whichever source is selected covers the full order amount.
+                Select whether this Event Order is funded through Department budget or Self Support. Whichever source is selected covers the full order amount.
               </p>
 
               <FormField
@@ -1214,6 +1238,101 @@ function EventOrderForm({
           </form>
         </Form>
       </CardContent>
+      <Dialog
+        open={Boolean(draftOrder)}
+        onOpenChange={(open) => {
+          if (!open) closeDraftDialog();
+        }}
+      >
+        <DialogContent className="max-w-lg" showCloseButton={!submitting}>
+          <DialogHeader>
+            <div className="flex items-center justify-between gap-3">
+              <DialogTitle>Draft Event Order</DialogTitle>
+              <Badge variant="outline">
+                {(draftOrder?.status || "draft").replace(/_/g, " ").toUpperCase()}
+              </Badge>
+            </div>
+            <DialogDescription>
+              Your Event Order has been saved as a draft. Review it below, then submit it for approval.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 text-sm">
+            <div className="grid grid-cols-2 gap-3 rounded-md border bg-muted/20 p-3">
+              <div>
+                <span className="block text-xs text-muted-foreground">Event</span>
+                <span className="font-medium">{draftOrder?.eventName || "-"}</span>
+              </div>
+              <div>
+                <span className="block text-xs text-muted-foreground">Event Dates</span>
+                <span className="font-medium">
+                  {draftOrder?.eventStartDate || "-"}
+                  {draftOrder?.eventEndDate ? ` to ${draftOrder.eventEndDate}` : ""}
+                </span>
+              </div>
+              <div>
+                <span className="block text-xs text-muted-foreground">Department</span>
+                <span className="font-medium">{draftOrder?.department?.name || deptName}</span>
+              </div>
+              <div>
+                <span className="block text-xs text-muted-foreground">Branch / Campus</span>
+                <span className="font-medium">{draftOrder?.branch?.name || branchName}</span>
+              </div>
+              <div>
+                <span className="block text-xs text-muted-foreground">Assigned Shops</span>
+                <span className="font-medium">{draftOrder?.shop?.name || "All Shops"}</span>
+              </div>
+              <div>
+                <span className="block text-xs text-muted-foreground">Venue</span>
+                <span className="font-medium">
+                  {Array.isArray(draftOrder?.eventVenues) && draftOrder.eventVenues.length
+                    ? draftOrder.eventVenues.join(", ")
+                    : "-"}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between font-medium">
+                <span>Services & Items</span>
+                <span>
+                  Total: ₹
+                  {(draftOrder?.items || [])
+                    .reduce(
+                      (sum, item) =>
+                        sum + (Number(item?.quantity) || 0) * (Number(item?.price) || 0),
+                      0
+                    )
+                    .toFixed(2)}
+                </span>
+              </div>
+              <div className="max-h-48 space-y-2 overflow-y-auto rounded-md border p-3">
+                {(draftOrder?.items || []).map((item, index) => (
+                  <div key={`${item.item || item.name}-${index}`} className="flex justify-between gap-3">
+                    <span>
+                      {item.name || "Order item"}
+                      {item.size || item.customSize ? ` (${item.customSize || item.size})` : ""}
+                      {" "}× {item.quantity || 1}
+                    </span>
+                    <span className="shrink-0">
+                      ₹{((Number(item.price) || 0) * (Number(item.quantity) || 1)).toFixed(2)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={closeDraftDialog} disabled={submitting}>
+              Keep as Draft
+            </Button>
+            <Button type="button" onClick={submitDraft} disabled={submitting}>
+              {submitting ? "Submitting..." : "Submit for Approval"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
@@ -1236,15 +1355,15 @@ function XeroxOrderForm({
 }) {
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
+  const [draftOrder, setDraftOrder] = useState(null);
 
   const form = useForm({
     resolver: zodResolver(xeroxOrderCreateSchema),
     defaultValues: {
       branch: userBranchId ? String(userBranchId) : "",
       department: userDeptId ? String(userDeptId) : "",
-      shop: null,
       purpose: "",
-      attachmentEmail: user?.email || "",
+      attachmentEmail: "",
       fundingMethod: "department",
       managementAmount: 0,
       self_supports: [],
@@ -1375,11 +1494,36 @@ function XeroxOrderForm({
         }
       });
 
-      const res = await xeroxOrders.crud.create(formData);
-      if (res) {
-        toast.success("Xerox Order created successfully!");
+      const createdDraft = await xeroxOrders.crud.create(formData);
+      if (createdDraft) {
+        setDraftOrder(createdDraft);
+      } else {
+        toast.error("The draft was created but its details could not be loaded. Check the Xerox orders list.");
         onSubmitSuccess();
       }
+    } catch (err) {
+      // Error handled by CRUD layer
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const closeDraftDialog = () => {
+    setDraftOrder(null);
+    onSubmitSuccess();
+  };
+
+  const submitDraft = async () => {
+    const draftOrderId = draftOrder?._id || draftOrder?.id;
+    if (!draftOrderId) {
+      toast.error("The draft order could not be submitted because its ID is missing.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await xeroxOrders.submit(draftOrderId);
+      closeDraftDialog();
     } catch (err) {
       // Error handled by CRUD layer
     } finally {
@@ -1410,10 +1554,10 @@ function XeroxOrderForm({
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-xl font-bold flex items-center gap-2">
-              <IconPrinter className="size-5 text-primary" /> Xerox Order Specifications
+              <IconPrinter className="size-5 text-primary" /> Xerox Order 
             </CardTitle>
             <CardDescription>
-              For standard xerox requisition, print services, lab manuals, notes, and department materials.
+              For standard xerox, print services, lab manuals, notes, and department materials.
             </CardDescription>
           </div>
           <Badge variant="outline" className="text-xs">
@@ -1454,9 +1598,9 @@ function XeroxOrderForm({
                 name="attachmentEmail"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Notification & Delivery Email</FormLabel>
+                    <FormLabel>Enter your E-mail</FormLabel>
                     <FormControl>
-                      <Input placeholder="name@srmist.edu.in" {...field} />
+                      <Input placeholder="Enter your E-mail" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -1468,15 +1612,15 @@ function XeroxOrderForm({
 
             {/* Request Details (No Referral Number, No Approved Date) */}
             <div className="space-y-4">
-              <h3 className="text-base font-semibold text-primary">1. Request Details</h3>
+              <h3 className="text-base font-semibold text-primary">1.Purpose</h3>
               <FormField
                 control={form.control}
                 name="purpose"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Work Title / Purpose *</FormLabel>
+                    <FormLabel>Purpose of the Order</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. End Semester Exam Question Paper Booklets / Lab Manual Printing" {...field} />
+                      <Input placeholder="e.g. Exam Question Paper Printing" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -1490,28 +1634,11 @@ function XeroxOrderForm({
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-base font-semibold text-primary">2. Products & Services</h3>
+                  <h3 className="text-base font-semibold text-primary">2. Select Service</h3>
                   <p className="text-xs text-muted-foreground">
-                    Search and select non-event products or services and specify quantities.
+                    Search and select services and specify quantities.
                   </p>
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={() =>
-                    appendItem({
-                      type: "InventoryProduct",
-                      item: "",
-                      name: "",
-                      price: 0,
-                      quantity: 1,
-                    })
-                  }
-                >
-                  <IconPlus className="size-4" /> Add Item
-                </Button>
               </div>
 
               <div className="space-y-3">
@@ -1664,6 +1791,26 @@ function XeroxOrderForm({
                 })}
               </div>
 
+              <div className="flex justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() =>
+                    appendItem({
+                      type: "InventoryProduct",
+                      item: "",
+                      name: "",
+                      price: 0,
+                      quantity: 1,
+                    })
+                  }
+                >
+                  <IconPlus className="size-4" /> Add Item
+                </Button>
+              </div>
+
               <div className="flex justify-end p-3 bg-muted/40 rounded-lg border">
                 <span className="text-sm font-bold">
                   Total Order Amount: ₹{totalCost.toFixed(2)}
@@ -1677,7 +1824,7 @@ function XeroxOrderForm({
             <div className="space-y-4">
               <h3 className="text-base font-semibold text-primary">3. Funding Allocation</h3>
               <p className="text-xs text-muted-foreground">
-                Select whether this Xerox order is funded through Department budget or Self Support. Whichever source is selected covers the full order amount.
+                Select whether this Xerox order is funded through Management budget or Self Support. Whichever source is selected covers the full order amount.
               </p>
 
               <FormField
@@ -1693,7 +1840,7 @@ function XeroxOrderForm({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="department">Department</SelectItem>
+                        <SelectItem value="department">Management</SelectItem>
                         <SelectItem value="self_support">Self Support</SelectItem>
                       </SelectContent>
                     </Select>
@@ -1766,6 +1913,82 @@ function XeroxOrderForm({
           </form>
         </Form>
       </CardContent>
+      <Dialog
+        open={Boolean(draftOrder)}
+        onOpenChange={(open) => {
+          if (!open) closeDraftDialog();
+        }}
+      >
+        <DialogContent className="max-w-lg" showCloseButton={!submitting}>
+          <DialogHeader>
+            <div className="flex items-center justify-between gap-3">
+              <DialogTitle>Draft Xerox Order</DialogTitle>
+              <Badge variant="outline">
+                {(draftOrder?.status || "draft").replace(/_/g, " ").toUpperCase()}
+              </Badge>
+            </div>
+            <DialogDescription>
+              Your order has been saved as a draft. Review it below, then submit it for approval.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 text-sm">
+            <div className="grid grid-cols-2 gap-3 rounded-md border bg-muted/20 p-3">
+              <div>
+                <span className="block text-xs text-muted-foreground">Purpose</span>
+                <span className="font-medium">{draftOrder?.purpose || "-"}</span>
+              </div>
+              <div>
+                <span className="block text-xs text-muted-foreground">Department</span>
+                <span className="font-medium">{draftOrder?.department?.name || deptName}</span>
+              </div>
+              <div>
+                <span className="block text-xs text-muted-foreground">Branch / Campus</span>
+                <span className="font-medium">{draftOrder?.branch?.name || branchName}</span>
+              </div>
+              <div>
+                <span className="block text-xs text-muted-foreground">Assigned Shops</span>
+                <span className="font-medium">{draftOrder?.shop?.name || "All Shops"}</span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between font-medium">
+                <span>Items</span>
+                <span>
+                  Total: ₹
+                  {(draftOrder?.items || [])
+                    .reduce(
+                      (sum, item) =>
+                        sum + (Number(item?.quantity) || 0) * (Number(item?.price) || 0),
+                      0
+                    )
+                    .toFixed(2)}
+                </span>
+              </div>
+              <div className="max-h-48 space-y-2 overflow-y-auto rounded-md border p-3">
+                {(draftOrder?.items || []).map((item, index) => (
+                  <div key={`${item.item || item.name}-${index}`} className="flex justify-between gap-3">
+                    <span>{item.name || "Order item"} × {item.quantity || 1}</span>
+                    <span className="shrink-0">
+                      ₹{((Number(item.price) || 0) * (Number(item.quantity) || 1)).toFixed(2)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={closeDraftDialog} disabled={submitting}>
+              Keep as Draft
+            </Button>
+            <Button type="button" onClick={submitDraft} disabled={submitting}>
+              {submitting ? "Submitting..." : "Submit for Approval"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

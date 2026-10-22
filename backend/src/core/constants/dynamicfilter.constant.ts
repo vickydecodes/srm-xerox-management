@@ -154,13 +154,11 @@ export async function dynamicFilter<T extends Record<string, any>>(
       }
     }
 
-    if (orConditions.length) {
-      if (where.OR) {
-        where.AND = [...(where.AND || []), { OR: where.OR }, { OR: orConditions }];
-        delete where.OR;
-      } else {
-        where.OR = orConditions;
-      }
+    if (where.OR) {
+      where.AND = [...(where.AND || []), { OR: where.OR }, { OR: orConditions }];
+      delete where.OR;
+    } else {
+      where.OR = orConditions;
     }
   }
 
@@ -252,6 +250,8 @@ function buildRawWhere(where: Record<string, any>): Prisma.Sql {
       const orParts = value.map((cond) => buildRawWhere(cond)).filter((s) => s.sql !== '');
       if (orParts.length) {
         clauses.push(Prisma.sql`(${Prisma.join(orParts.map(stripWherePrefix), ' OR ')})`);
+      } else {
+        clauses.push(Prisma.sql`FALSE`);
       }
       continue;
     }
