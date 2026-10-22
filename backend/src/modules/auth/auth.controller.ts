@@ -12,12 +12,14 @@ import {
 import { COOKIE, LOG, ENTITY, ERROR, SHORT_AGE, LONG_AGE } from './auth.constants.js';
 import { AccessRequest } from '@core/middlewares/access.middleware.ts';
 
-const IS_PROD = ENVCONFIG.prod;
+const IS_PROD = ENVCONFIG.prod || process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
 
-const cookieOptions = {
+const cookieOptions: any = {
   ...COOKIE.OPTIONS,
+  httpOnly: true,
   secure: IS_PROD,
   sameSite: (IS_PROD ? 'none' : 'lax') as 'none' | 'lax',
+  ...(IS_PROD ? { partitioned: true } : {}),
 };
 
 const controllers = {
@@ -40,11 +42,14 @@ const controllers = {
       maxAge: rememberMe ? LONG_AGE : SHORT_AGE,
     });
 
-    return sendResponse.fetched(res, ENTITY.USER, user);
+    return sendResponse.fetched(res, ENTITY.USER, { ...user, token });
   },
 
   getCurrentUser: async (req: Request, res: Response, next: NextFunction) => {
-    const token = req.cookies?.access_token;
+    const bearerToken = req.headers?.authorization?.startsWith('Bearer ')
+      ? req.headers.authorization.split(' ')[1]
+      : undefined;
+    const token = req.cookies?.access_token || (req.query?.token as string) || bearerToken;
 
     if (!token) {
       log('error', LOG.CURRENT_USER.NO_TOKEN);

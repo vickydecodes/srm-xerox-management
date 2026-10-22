@@ -50,6 +50,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     setupInterceptors((message) => {
+      localStorage.removeItem("access_token");
       uiRef.clearModals();
       flushSync(() => {
         setUser(null);
@@ -103,15 +104,25 @@ export const AuthProvider = ({ children }) => {
       const res = await crud.login(data, { __options: { toast: false } });
       if (!res) return;
 
-      const me = await crud.me({ __options: { toast: false } });
+      if (res.token) {
+        localStorage.setItem("access_token", res.token);
+      }
+
+      let activeUser = res;
+      try {
+        const me = await crud.me({ __options: { toast: false } });
+        if (me) activeUser = me;
+      } catch {
+        // Fall back to login payload if third-party cookies or me request lagged
+      }
 
       flushSync(() => {
-        setUser(me);
-        setRole(me.role);
+        setUser(activeUser);
+        setRole(activeUser.role);
       });
 
       toast.success("Login successful");
-      navigate(`/${me.role}/`);
+      navigate(`/${activeUser.role}/`);
     } catch (err) {
       return err;
     } finally {
@@ -125,6 +136,8 @@ export const AuthProvider = ({ children }) => {
     } catch {
       toast.error("Error during logout");
     }
+
+    localStorage.removeItem("access_token");
 
     uiRef.clearModals();
     flushSync(() => {
