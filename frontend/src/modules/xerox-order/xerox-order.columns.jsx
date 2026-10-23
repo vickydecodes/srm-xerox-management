@@ -115,7 +115,7 @@ export const useXeroxOrderColumns = (xeroxOrders) => {
 
         const isSuperAdmin = user?.role === "super_admin";
         const isDeptAdmin = user?.role === "department_admin";
-        const isBranchAdmin = user?.role === "branch_admin" || user?.role === "manager";
+        const isBranchAdmin = user?.role === "manager";
         const isShopOrStaff = user?.role === "shop_admin" || user?.role === "staff";
 
         const branchStatus = order.branchAdminApproval?.status || "pending";
@@ -182,7 +182,7 @@ export const useXeroxOrderColumns = (xeroxOrders) => {
                 <DropdownMenuItem
                   onClick={() => xeroxOrders.openApprovalDialog(order, "branch")}
                 >
-                  Branch Admin Approval
+                  {user?.role === "manager" ? "Manager Approval" : "Branch Approval"}
                 </DropdownMenuItem>
               )}
 

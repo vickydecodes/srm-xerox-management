@@ -126,7 +126,7 @@ export const useEventOrderColumns = (eventOrders) => {
 
         const isSuperAdmin = user?.role === "super_admin";
         const isDeptAdmin = user?.role === "department_admin";
-        const isBranchAdmin = user?.role === "branch_admin" || user?.role === "manager";
+        const isBranchAdmin = user?.role === "branch_admin";
         const isShopOrStaff = user?.role === "shop_admin" || user?.role === "staff";
 
         const branchStatus = order.branchAdminApproval?.status || "pending";

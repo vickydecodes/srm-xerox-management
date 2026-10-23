@@ -43,7 +43,7 @@ export const View = ({ order, exported, closeModal } = {}) => {
   const { user } = useAuth();
   const { eventOrders } = exported || {};
   const isSuperAdmin = user?.role === "super_admin";
-  const isBranchAdmin = user?.role === "branch_admin" || user?.role === "manager";
+  const isBranchAdmin = user?.role === "branch_admin";
   const isDeptAdmin = user?.role === "department_admin";
   const isShopOrStaff = user?.role === "shop_admin" || user?.role === "staff";
 

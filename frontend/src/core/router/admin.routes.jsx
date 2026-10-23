@@ -39,8 +39,10 @@ import DepartmentAdmin from "@/pages/department-admin/department-admin";
 import ChangePassword from "@/pages/changepassword/changepassword";
 import Profile from "@/pages/profile/profile";
 import Dashboard from "@/pages/dashboard/dashboard";
+import Redirect from "./redirect";
 import EventOrder from "@/pages/event-order/event-order";
 import XeroxOrder from "@/pages/xerox-order/xerox-order";
+import OrdersPage from "@/pages/order/orders";
 import OrderCreation from "@/pages/order-creation/order-creation";
 import Credits from "@/pages/credits/credits";
 import Settings from "@/pages/settings/settings";
@@ -177,27 +179,32 @@ export const adminRoutes = {
       element: <OrderCreation />,
     },
     {
+      path: "/super_admin/order",
+      label: "Orders",
+      title: "Orders",
+      description: "View and manage all department Event and Xerox printing orders",
+      icon: <IconClipboardList className="h-5 w-5 shrink-0" />,
+      element: (
+        <OrdersPage
+          title="Orders"
+          description="View and manage all department Event and Xerox printing orders"
+        />
+      ),
+    },
+    {
       path: "/super_admin/event-order",
       label: "Event Orders",
       title: "Event Orders",
-      description: "View and manage department event and work orders",
-      icon: <IconCalendarEvent className="h-5 w-5 shrink-0" />,
-      element: <EventOrder />,
+      description: "Redirect to Orders",
+      element: <Redirect to="/super_admin/order?tab=event" />,
+      hidden: true,
     },
     {
       path: "/super_admin/xerox-order",
       label: "Xerox Orders",
       title: "Xerox Orders",
-      description: "View and manage department xerox printing orders",
-      icon: <IconPrinter className="h-5 w-5 shrink-0" />,
-      element: <XeroxOrder />,
-    },
-    {
-      path: "/super_admin/order",
-      label: "Orders",
-      title: "Orders",
-      description: "View department orders",
-      element: <EventOrder />,
+      description: "Redirect to Orders",
+      element: <Redirect to="/super_admin/order?tab=xerox" />,
       hidden: true,
     },
     // {

@@ -8,7 +8,7 @@ import {
   IconPlus,
   IconClipboardList,
 } from "@tabler/icons-react";
-import { Navigate } from "react-router-dom";
+import Redirect from "./redirect";
 import ChangePassword from "@/pages/changepassword/changepassword";
 import Profile from "@/pages/profile/profile";
 import Dashboard from "@/pages/dashboard/dashboard";
@@ -49,7 +49,7 @@ export const departmentAdminRoutes = {
       label: "Event Orders",
       title: "Event Orders",
       description: "Redirect to Orders",
-      element: <Navigate to="/department_admin/order?tab=event" replace />,
+      element: <Redirect to="/department_admin/order?tab=event" />,
       hidden: true,
     },
     {
@@ -57,7 +57,7 @@ export const departmentAdminRoutes = {
       label: "Xerox Orders",
       title: "Xerox Orders",
       description: "Redirect to Orders",
-      element: <Navigate to="/department_admin/order?tab=xerox" replace />,
+      element: <Redirect to="/department_admin/order?tab=xerox" />,
       hidden: true,
     },
     {

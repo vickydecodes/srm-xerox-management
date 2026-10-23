@@ -17,6 +17,7 @@ import DepartmentAdmin from "@/pages/department-admin/department-admin";
 import ChangePassword from "@/pages/changepassword/changepassword";
 import Profile from "@/pages/profile/profile";
 import Dashboard from "@/pages/dashboard/dashboard";
+import Redirect from "./redirect";
 import EventOrder from "@/pages/event-order/event-order";
 import XeroxOrder from "@/pages/xerox-order/xerox-order";
 import OrderCreation from "@/pages/order-creation/order-creation";
@@ -79,9 +80,9 @@ export const branchAdminRoutes = {
               path: "/branch_admin/xerox-order",
               label: "Xerox Orders",
               title: "Xerox Orders",
-              description: "Review and approve department xerox printing orders",
-              element: <XeroxOrder />,
-              icon: <IconPrinter className="h-5 w-5 shrink-0" />,
+              description: "Redirect to Event Orders",
+              element: <Redirect to="/branch_admin/event-order" />,
+              hidden: true,
             },
             {
               path: "/branch_admin/order-creation",
@@ -96,8 +97,8 @@ export const branchAdminRoutes = {
               path: "/branch_admin/order",
               label: "Orders",
               title: "Orders",
-              description: "Review and approve department orders",
-              element: <EventOrder />,
+              description: "Redirect to Event Orders",
+              element: <Redirect to="/branch_admin/event-order" />,
               hidden: true,
             },
             {

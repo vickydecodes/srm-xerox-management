@@ -17,8 +17,10 @@ import BillCreation from "@/pages/bill-creation/bill-creation";
 import ChangePassword from "@/pages/changepassword/changepassword";
 import Profile from "@/pages/profile/profile";
 import Dashboard from "@/pages/dashboard/dashboard";
+import Redirect from "./redirect";
 import EventOrder from "@/pages/event-order/event-order";
 import XeroxOrder from "@/pages/xerox-order/xerox-order";
+import OrdersPage from "@/pages/order/orders";
 import InventoryProduct from "@/pages/inventory-product/inventory-product";
 import Settings from "@/pages/settings/settings"; 
 
@@ -60,27 +62,32 @@ export const shopAdminRoutes = {
       element: <InventoryProduct />,
     },
     {
+      path: "/shop_admin/order",
+      label: "Orders",
+      title: "Shop Orders",
+      description: "View and fulfill approved department Event and Xerox printing orders",
+      element: (
+        <OrdersPage
+          title="Orders"
+          description="View and fulfill approved department Event and Xerox printing orders"
+        />
+      ),
+      icon: <IconClipboardList className="h-5 w-5 shrink-0" />,
+    },
+    {
       path: "/shop_admin/event-order",
       label: "Event Orders",
       title: "Event Orders",
-      description: "View and fulfill approved department event and work orders",
-      element: <EventOrder />,
-      icon: <IconCalendarEvent className="h-5 w-5 shrink-0" />,
+      description: "Redirect to Orders",
+      element: <Redirect to="/shop_admin/order?tab=event" />,
+      hidden: true,
     },
     {
       path: "/shop_admin/xerox-order",
       label: "Xerox Orders",
       title: "Xerox Orders",
-      description: "View and fulfill approved department xerox printing orders",
-      element: <XeroxOrder />,
-      icon: <IconPrinter className="h-5 w-5 shrink-0" />,
-    },
-    {
-      path: "/shop_admin/order",
-      label: "Orders",
-      title: "Orders",
-      description: "View and fulfill approved department orders",
-      element: <EventOrder />,
+      description: "Redirect to Orders",
+      element: <Redirect to="/shop_admin/order?tab=xerox" />,
       hidden: true,
     },
     {

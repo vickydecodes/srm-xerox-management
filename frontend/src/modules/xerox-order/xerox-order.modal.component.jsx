@@ -39,7 +39,7 @@ export const View = ({ order, exported, closeModal } = {}) => {
   const { user } = useAuth();
   const { xeroxOrders } = exported || {};
   const isSuperAdmin = user?.role === "super_admin";
-  const isBranchAdmin = user?.role === "branch_admin" || user?.role === "manager";
+  const isBranchAdmin = user?.role === "manager";
   const isDeptAdmin = user?.role === "department_admin";
   const isShopOrStaff = user?.role === "shop_admin" || user?.role === "staff";
 
@@ -278,7 +278,7 @@ export const View = ({ order, exported, closeModal } = {}) => {
                 xeroxOrders?.openApprovalDialog(order, "branch");
               }}
             >
-              Branch Admin Approval
+              {user?.role === "manager" ? "Manager Approval" : "Branch Approval"}
             </Button>
           )}
           {canSuperAdminApprove && (
@@ -348,7 +348,7 @@ export const BranchAdminApproval = ({ id, order, submitFn, closeModal } = {}) =>
   return (
     <DialogContent className="max-w-md">
       <DialogHeader>
-        <DialogTitle>Branch Admin Approval</DialogTitle>
+        <DialogTitle>Branch / Manager Approval</DialogTitle>
         <DialogDescription>
           Approve or reject Xerox Order {order?.code || ""}.
         </DialogDescription>
