@@ -132,10 +132,11 @@ describe('OrderCreation Page', () => {
     const requiredCheckbox = screen.getByRole('checkbox', { name: /^Required for/i });
     fireEvent.click(requiredCheckbox);
 
-    expect(screen.getByText('3. Configured Service Items & Approved Drafts')).toBeInTheDocument();
+    expect(screen.getByText('Color Poster Specifications')).toBeInTheDocument();
     expect(screen.getByText('Size / Variant')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Attach approved draft/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Add Color Poster/i })).toBeInTheDocument();
+    expect(screen.getByText('3. Funding Allocation')).toBeInTheDocument();
   });
 
   it('switches tabs between Xerox Order and Work Order', async () => {
