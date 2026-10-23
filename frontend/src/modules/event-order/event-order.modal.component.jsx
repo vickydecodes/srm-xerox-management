@@ -134,10 +134,6 @@ export const View = ({ order, exported, closeModal } = {}) => {
                 {order?.approvedReferralNumber || "-"} ({order?.approvedDate ? formatdate(order.approvedDate) : "-"})
               </span>
             </div>
-            <div>
-              <span className="text-muted-foreground block">Purpose / Summary</span>
-              <span className="font-medium text-foreground">{order?.purpose || "-"}</span>
-            </div>
           </div>
         </div>
 
@@ -565,4 +561,3 @@ export const Erase = ({ id, submitFn, closeModal } = {}) => (
     </DialogFooter>
   </DialogContent>
 );
-

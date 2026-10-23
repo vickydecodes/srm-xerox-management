@@ -43,7 +43,6 @@ export const baseEventOrderSchema = z.object({
   coordinators: z.array(z.string()).default([]),
   approvedReferralNumber: z.string().min(1, { message: 'Approved referral number is required' }),
   approvedDate: z.string().min(1, { message: 'Approved date is required' }),
-  purpose: z.string().min(1, { message: 'Purpose is required' }),
   attachmentEmail: z
     .string()
     .email({ message: 'Please enter a valid email address' })

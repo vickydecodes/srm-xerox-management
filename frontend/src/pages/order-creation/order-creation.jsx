@@ -8,7 +8,6 @@ import { useLoader } from "@/core/hooks/useLoader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -285,8 +284,7 @@ function EventOrderForm({
       coordinators: [],
       approvedReferralNumber: "",
       approvedDate: new Date().toISOString().slice(0, 10),
-      purpose: "",
-      attachmentEmail:"",
+      attachmentEmail: "",
       fundingMethod: "department",
       managementAmount: 0,
       self_supports: [],
@@ -615,7 +613,6 @@ function EventOrderForm({
     if (errors.eventStartDate) msgs.push(errors.eventStartDate.message || "Event Start Date is required");
     if (errors.approvedReferralNumber) msgs.push(errors.approvedReferralNumber.message || "Approved Referral Number is required");
     if (errors.approvedDate) msgs.push(errors.approvedDate.message || "Approved Date is required");
-    if (errors.purpose) msgs.push(errors.purpose.message || "Purpose is required");
     if (errors.attachmentEmail) msgs.push(errors.attachmentEmail.message || "Valid Email is required");
     if (errors.items) {
       if (typeof errors.items.message === "string") {
@@ -756,20 +753,6 @@ function EventOrderForm({
                   )}
                 />
               </div>
-
-              <FormField
-                control={form.control}
-                name="purpose"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Event Purpose</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Explain event scope, intended audience, and publicity requirements..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </div>
 
             <Separator />
@@ -1092,9 +1075,9 @@ function EventOrderForm({
                       )}
 
                       {/* File Attachment for item */}
-                      <div className="pt-2 border-t flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                        <div>
-                          <Label className="text-xs font-normal text-muted-foreground block">
+                      <div className="pt-2 border-t flex flex-col items-start gap-2">
+                        <div className="w-full">
+                          <Label htmlFor={`item-attachment-${idx}`} className="text-xs font-normal text-muted-foreground block">
                             Attach creative design / approved layout:
                           </Label>
                           {form.formState.errors?.items?.[idx]?.attachment && (
@@ -1104,6 +1087,7 @@ function EventOrderForm({
                           )}
                         </div>
                         <Input
+                          id={`item-attachment-${idx}`}
                           type="file"
                           className="max-w-xs text-xs h-8"
                           onChange={(e) => handleItemFileChange(idx, e.target.files?.[0] || null)}

@@ -123,6 +123,14 @@ describe('OrderCreation Page', () => {
     expect(screen.getByText('Search work order services...')).toBeInTheDocument();
   });
 
+  it('omits the purpose field and associates the attachment label with its file input for event orders', () => {
+    mockSearchParams = new URLSearchParams('tab=work-order');
+    render(<OrderCreation />);
+
+    expect(screen.queryByLabelText(/Event Purpose/i)).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Attach creative design / approved layout:')).toHaveAttribute('type', 'file');
+  });
+
   it('renders size/variant dropdown for work order items with custom sizing support', () => {
     mockSearchParams = new URLSearchParams('tab=work-order');
     render(<OrderCreation />);
