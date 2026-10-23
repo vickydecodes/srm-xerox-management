@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { cn } from "@/lib/utils";
 import { useApi } from "@/core/contexts/api.context";
 import { useAuth } from "@/core/contexts/auth.context";
 import { useLoader } from "@/core/hooks/useLoader";
@@ -9,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -45,6 +47,7 @@ import {
   IconUpload,
   IconAlertCircle,
   IconCheck,
+  IconLoader2,
 } from "@tabler/icons-react";
 import { eventOrderCreateSchema } from "@/modules/event-order/event-order.schema";
 import { xeroxOrderCreateSchema } from "@/modules/xerox-order/xerox-order.schema";
@@ -53,6 +56,7 @@ import { useBranchStore } from "@/modules/branch/branch.store";
 import { useDepartmentStore } from "@/modules/department/department.store";
 import { useServiceStore } from "@/modules/service/service.store";
 import { useShopStore } from "@/modules/shop/shop.store";
+import formatdate from "@/core/utils/formatdate.util";
 
 export default function OrderCreation() {
   const navigate = useNavigate();
@@ -61,10 +65,12 @@ export default function OrderCreation() {
   const { eventOrders, xeroxOrders, services, shops, branches, departments, search } = useApi();
   const { createPreset } = useLoader();
 
-  const branchList = useBranchStore((s) => s.list) || [];
-  const deptList = useDepartmentStore((s) => s.list) || [];
-  const serviceList = useServiceStore((s) => s.list) || [];
-  const shopList = useShopStore((s) => s.list) || [];
+  const branchList = useBranchStore((s) => s.list) || branches?.state || [];
+  const deptList = useDepartmentStore((s) => s.list) || departments?.state || [];
+  const storeServices = useServiceStore((s) => s.list);
+  const servicesLoading = useServiceStore((s) => s.loading?.getAll || s.loading?.global || false);
+  const serviceList = storeServices && storeServices.length > 0 ? storeServices : services?.state || [];
+  const shopList = useShopStore((s) => s.list) || shops?.state || [];
 
   const tabParam = searchParams.get("tab");
   const getNormalizedTab = (t) => {
@@ -81,7 +87,7 @@ export default function OrderCreation() {
   }, [tabParam]);
 
   const loadResources = createPreset(
-    { module: services, query: { full: true, isWorkOrder: true, is_work_order: true } },
+    services,
     shops,
     branches,
     departments
@@ -136,8 +142,8 @@ export default function OrderCreation() {
             departments={deptList}
             shops={shopList}
             searchProducts={search?.searchProducts}
-            onSubmitSuccess={() => navigate(`/${user?.role}/xerox-order`)}
-            onCancel={() => navigate(`/${user?.role}/xerox-order`)}
+            onSubmitSuccess={() => navigate(user?.role === "department_admin" ? "/department_admin/" : `/${user?.role}/xerox-order`)}
+            onCancel={() => navigate(user?.role === "department_admin" ? "/department_admin/" : `/${user?.role}/xerox-order`)}
             xeroxOrders={xeroxOrders}
           />
         </TabsContent>
@@ -152,16 +158,20 @@ export default function OrderCreation() {
             branches={branchList}
             departments={deptList}
             shops={shopList}
-            services={serviceList.filter(
+            services={(serviceList || []).filter(
               (s) =>
-                s.isWorkOrder === true ||
+                s &&
+                (s.isWorkOrder === true ||
                 s.is_work_order === true ||
+                s.details?.isWorkOrder === true ||
                 String(s.isWorkOrder) === "true" ||
-                String(s.is_work_order) === "true"
+                String(s.is_work_order) === "true" ||
+                String(s.details?.isWorkOrder) === "true")
             )}
+            servicesLoading={servicesLoading}
             searchProducts={search?.searchProducts}
-            onSubmitSuccess={() => navigate(`/${user?.role}/event-order`)}
-            onCancel={() => navigate(`/${user?.role}/event-order`)}
+            onSubmitSuccess={() => navigate(user?.role === "department_admin" ? "/department_admin/" : `/${user?.role}/event-order`)}
+            onCancel={() => navigate(user?.role === "department_admin" ? "/department_admin/" : `/${user?.role}/event-order`)}
             eventOrders={eventOrders}
           />
         </TabsContent>
@@ -260,6 +270,7 @@ function EventOrderForm({
   departments,
   shops,
   services,
+  servicesLoading = false,
   searchProducts,
   onSubmitSuccess,
   onCancel,
@@ -268,6 +279,9 @@ function EventOrderForm({
   const [submitting, setSubmitting] = useState(false);
   const [proofFiles, setProofFiles] = useState([]);
   const [draftOrder, setDraftOrder] = useState(null);
+  const [serviceRequirements, setServiceRequirements] = useState({});
+  const [attemptedSubmit, setAttemptedSubmit] = useState(false);
+  const [serviceSearch, setServiceSearch] = useState("");
 
   const defaultMinDate = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
@@ -289,25 +303,7 @@ function EventOrderForm({
       managementAmount: 0,
       self_supports: [],
       registrationFeeAmount: 0,
-      items: [
-        {
-          type: "Service",
-          item: "",
-          name: "",
-          quantity: 1,
-          price: 0,
-          size: "",
-          customSize: "",
-          isCustomSize: false,
-          customWidth: 0,
-          customHeight: 0,
-          customUnit: "ft",
-          customRate: 0,
-          sizes: [],
-          attachment: null,
-          attachmentFile: null,
-        },
-      ],
+      items: [],
     },
   });
 
@@ -355,7 +351,7 @@ function EventOrderForm({
     user?.deptName ||
     (departments[0]?.name || "Department Requisition");
 
-  const { fields: itemFields, append: appendItem, remove: removeItem } = useFieldArray({
+  const { fields: itemFields, append: appendItem, remove: removeItem, replace: replaceItems } = useFieldArray({
     control: form.control,
     name: "items",
   });
@@ -368,26 +364,49 @@ function EventOrderForm({
     0
   );
 
-  const workOrderServices = (services || []).filter(
-    (s) =>
-      s.isWorkOrder === true ||
-      s.is_work_order === true ||
-      String(s.isWorkOrder) === "true" ||
-      String(s.is_work_order) === "true"
-  );
+  const workOrderServices = useMemo(() => {
+    return (services || []).filter(
+      (s) =>
+        s &&
+        (s.isWorkOrder === true ||
+        s.is_work_order === true ||
+        s.details?.isWorkOrder === true ||
+        String(s.isWorkOrder) === "true" ||
+        String(s.is_work_order) === "true" ||
+        String(s.details?.isWorkOrder) === "true")
+    );
+  }, [services]);
 
-  const effectiveSearchProducts =
-    searchProducts ||
-    (async (query = "") => {
-      const q = query.toLowerCase().trim();
-      if (!q) return workOrderServices;
-      return workOrderServices.filter(
-        (s) =>
-          s.name?.toLowerCase().includes(q) ||
-          s.code?.toLowerCase().includes(q) ||
-          s.description?.toLowerCase().includes(q)
-      );
+  const unselectedCount = useMemo(() => {
+    return workOrderServices.filter(
+      (s) => !serviceRequirements[String(s._id || s.id || "")]
+    ).length;
+  }, [workOrderServices, serviceRequirements]);
+
+  const filteredServices = useMemo(() => {
+    if (!serviceSearch.trim()) return workOrderServices;
+    const q = serviceSearch.toLowerCase().trim();
+    return workOrderServices.filter(
+      (s) =>
+        s?.name?.toLowerCase().includes(q) ||
+        s?.code?.toLowerCase().includes(q) ||
+        s?.description?.toLowerCase().includes(q)
+    );
+  }, [workOrderServices, serviceSearch]);
+
+  const handleMarkRemainingNotRequired = () => {
+    setServiceRequirements((prev) => {
+      const updated = { ...prev };
+      workOrderServices.forEach((s) => {
+        const sId = String(s._id || s.id || "");
+        if (sId && !updated[sId]) {
+          updated[sId] = "not_required";
+        }
+      });
+      return updated;
     });
+    toast.info("All remaining services marked as Not Required.");
+  };
 
   const recalcCustomPrice = (index, width, height, unit = "ft", rate) => {
     const w = Number(width) || 0;
@@ -428,82 +447,80 @@ function EventOrderForm({
     }
   };
 
-  const handleAddAnother = (index) => {
-    const row = form.getValues(`items.${index}`);
-    if (!row || !row.name) return;
+  const handleServiceRequirementChange = (service, requirement) => {
+    if (!service) return;
+    const sId = String(service._id || service.id || "");
+    if (!sId) return;
 
-    const currentSize = row.size;
-    const availableSizes = Array.isArray(row.sizes) ? row.sizes : [];
-    const altSizeObj = availableSizes.find(
-      (s) => (typeof s === "object" ? s.size : s) !== currentSize
-    );
-
-    let nextSize = "";
-    let nextPrice = Number(row.customRate) || Number(row.price) || 0;
-
-    if (altSizeObj) {
-      nextSize = typeof altSizeObj === "object" ? altSizeObj.size : altSizeObj;
-      if (typeof altSizeObj === "object" && altSizeObj.price !== undefined && altSizeObj.price !== null) {
-        nextPrice = Number(altSizeObj.price) || 0;
+    setServiceRequirements((prev) => {
+      const updated = { ...prev };
+      if (!requirement) {
+        delete updated[sId];
+      } else {
+        updated[sId] = requirement;
       }
-    } else if (currentSize !== "Custom") {
-      nextSize = "Custom";
-      nextPrice = 0;
-    } else if (availableSizes.length > 0) {
-      const first = availableSizes[0];
-      nextSize = typeof first === "object" ? first.size : first;
-      nextPrice = typeof first === "object" && first.price !== undefined ? Number(first.price) || 0 : Number(row.price) || 0;
-    } else {
-      nextSize = "Standard";
-    }
-
-    appendItem({
-      type: "Service",
-      item: row.item,
-      name: row.name,
-      quantity: 1,
-      price: nextPrice,
-      variant: row.variant || null,
-      size: nextSize,
-      customSize: "",
-      customWidth: "",
-      customHeight: "",
-      customUnit: row.customUnit || "ft",
-      customRate: row.customRate || row.price || 0,
-      sizes: row.sizes || [],
-      hasSizes: true,
-      isCustomSize: Boolean(row.isCustomSize),
-      isWorkOrder: true,
-      customPriceAdded: false,
-      attachment: null,
-      attachmentFile: null,
+      return updated;
     });
-    toast.info(`Added new item row for "${row.name}". Select different size as needed.`);
+
+    const currentItems = form.getValues("items") || [];
+
+    if (requirement === "required") {
+      const exists = currentItems.some((i) => String(i.item) === sId);
+      if (!exists) {
+        const newRow = buildEventOrderItemRow(service);
+        if (newRow) appendItem(newRow, { shouldFocus: false });
+      }
+    } else {
+      const remainingItems = currentItems.filter((i) => String(i.item) !== sId);
+      replaceItems(remainingItems);
+    }
   };
 
-  const handleServiceSelect = (index, service) => {
-    const s =
-      typeof service === "object" && service !== null
-        ? service
-        : workOrderServices.find((srv) => String(srv._id || srv.id) === String(service)) ||
-          services.find((srv) => String(srv._id || srv.id) === String(service));
-    if (!s) return;
+  const handleAddServiceInstance = (serviceName, serviceItemId) => {
+    const parentService = workOrderServices.find(
+      (s) => String(s._id || s.id) === String(serviceItemId)
+    );
+    if (parentService) {
+      appendItem(buildEventOrderItemRow(parentService), { shouldFocus: false });
+      toast.info(`Added another item row for "${parentService.name}".`);
+    } else {
+      appendItem({
+        type: "Service",
+        item: serviceItemId,
+        name: serviceName,
+        quantity: 1,
+        price: 0,
+        size: "Standard",
+        customSize: "",
+        customWidth: 0,
+        customHeight: 0,
+        customUnit: "ft",
+        customRate: 0,
+        sizes: [],
+        hasSizes: true,
+        isCustomSize: false,
+        isWorkOrder: true,
+        customPriceAdded: false,
+        attachment: null,
+        attachmentFile: null,
+      }, { shouldFocus: false });
+      toast.info(`Added another item row for "${serviceName}".`);
+    }
+  };
 
-    const row = buildEventOrderItemRow(s);
-    form.setValue(`items.${index}.type`, "Service", { shouldValidate: true });
-    form.setValue(`items.${index}.item`, row.item, { shouldValidate: true });
-    form.setValue(`items.${index}.name`, row.name, { shouldValidate: true });
-    form.setValue(`items.${index}.price`, row.price, { shouldValidate: true });
-    form.setValue(`items.${index}.size`, row.size, { shouldValidate: true });
-    form.setValue(`items.${index}.sizes`, row.sizes, { shouldValidate: true });
-    form.setValue(`items.${index}.hasSizes`, row.hasSizes, { shouldValidate: true });
-    form.setValue(`items.${index}.isCustomSize`, row.isCustomSize, { shouldValidate: true });
-    form.setValue(`items.${index}.customRate`, row.customRate, { shouldValidate: true });
-    form.setValue(`items.${index}.customUnit`, row.customUnit, { shouldValidate: true });
-    form.setValue(`items.${index}.customWidth`, row.customWidth ?? "", { shouldValidate: true });
-    form.setValue(`items.${index}.customHeight`, row.customHeight ?? "", { shouldValidate: true });
-    form.setValue(`items.${index}.customSize`, row.customSize ?? "", { shouldValidate: true });
-    form.setValue(`items.${index}.customPriceAdded`, false, { shouldValidate: true });
+  const handleRemoveItemRow = (idx, serviceItemId) => {
+    const currentItems = form.getValues("items") || [];
+    removeItem(idx);
+
+    const remainingForService = currentItems.filter(
+      (item, i) => i !== idx && String(item.item) === String(serviceItemId)
+    );
+    if (remainingForService.length === 0) {
+      setServiceRequirements((prev) => ({
+        ...prev,
+        [String(serviceItemId)]: "not_required",
+      }));
+    }
   };
 
   const handleProofChange = (e) => {
@@ -606,6 +623,41 @@ function EventOrderForm({
     }
   };
 
+  const handleFormSubmit = (e) => {
+    setAttemptedSubmit(true);
+
+    if (workOrderServices.length > 0) {
+      const unselectedServices = workOrderServices.filter(
+        (s) => !serviceRequirements[String(s._id || s.id)]
+      );
+      if (unselectedServices.length > 0) {
+        e.preventDefault();
+        toast.error(
+          `Please mark each service as either Required or Not Required ("${unselectedServices[0].name}" is pending).`
+        );
+        return;
+      }
+
+      const hasRequired = Object.values(serviceRequirements).some(
+        (v) => v === "required"
+      );
+      if (!hasRequired) {
+        e.preventDefault();
+        toast.error("Please mark at least one service as Required.");
+        return;
+      }
+    }
+
+    const currentItems = form.getValues("items") || [];
+    if (currentItems.length === 0) {
+      e.preventDefault();
+      toast.error("Please configure at least one required service item.");
+      return;
+    }
+
+    form.handleSubmit(onSubmit, onInvalid)(e);
+  };
+
   const onInvalid = (errors) => {
     console.error("Event Order validation errors:", errors);
     const msgs = [];
@@ -619,7 +671,7 @@ function EventOrderForm({
         msgs.push(errors.items.message);
       } else if (Array.isArray(errors.items)) {
         errors.items.forEach((itemErr, idx) => {
-          if (itemErr?.attachment) msgs.push(`Item #${idx + 1}: ${itemErr.attachment.message || "Attachment is required"}`);
+          if (itemErr?.attachment) msgs.push(`Item #${idx + 1}: ${itemErr.attachment.message || "Attach approved draft is required"}`);
           if (itemErr?.item) msgs.push(`Item #${idx + 1}: Please select a service`);
         });
       }
@@ -647,7 +699,7 @@ function EventOrderForm({
 
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-6">
+          <form onSubmit={handleFormSubmit} className="space-y-6">
             {/* General Info Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
@@ -757,389 +809,578 @@ function EventOrderForm({
 
             <Separator />
 
-            {/* Services / Line Items */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
+            {/* Section 2: Event Order Services Checklist */}
+            <div id="section-event-services-checklist" className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
-                  <h3 className="text-base font-semibold text-primary">2. Select Services & Items</h3>
-                  <p className="text-xs text-muted-foreground">Select required Service & Items</p>
+                  <h3 className="text-base font-semibold text-primary">2. Event Order Services</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Please mark each service as either <span className="font-semibold text-foreground">Required</span> or <span className="font-semibold text-foreground">Not Required</span> (mandatory for all services).
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs font-medium">
+                    {Object.values(serviceRequirements).filter((v) => v === "required").length} Required
+                  </Badge>
+                  {workOrderServices.length > 0 && (
+                    <Badge variant="secondary" className="text-xs">
+                      {Object.keys(serviceRequirements).length} of {workOrderServices.length} Selected
+                    </Badge>
+                  )}
                 </div>
               </div>
 
-              <div className="space-y-3">
-                {itemFields.map((field, idx) => {
-                  const isCustom = form.watch(`items.${idx}.isCustomSize`);
-                  return (
-                    <div key={field.id} className="p-4 rounded-lg border bg-muted/20 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-xs text-primary">Item #{idx + 1}</span>
-                          {form.watch(`items.${idx}.name`) && (
-                            <span className="text-xs font-medium text-foreground truncate max-w-[200px]">
-                              — {form.watch(`items.${idx}.name`)}
-                            </span>
-                          )}
+              {/* Search & Quick Action Toolbar */}
+              {workOrderServices.length > 0 && (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                  <div className="relative max-w-xs w-full">
+                    <Input
+                      placeholder="Search event services..."
+                      value={serviceSearch}
+                      onChange={(e) => setServiceSearch(e.target.value)}
+                      className="h-8 text-xs bg-background pr-7"
+                    />
+                    {serviceSearch && (
+                      <button
+                        type="button"
+                        onClick={() => setServiceSearch("")}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground hover:text-foreground p-0.5"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+
+                  {unselectedCount > 0 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs self-start sm:self-auto cursor-pointer"
+                      onClick={handleMarkRemainingNotRequired}
+                    >
+                      Mark {unselectedCount} Remaining as Not Required
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              {servicesLoading && workOrderServices.length === 0 ? (
+                <div className="p-6 text-center text-sm text-muted-foreground border rounded-lg bg-muted/10 flex items-center justify-center gap-2">
+                  <IconLoader2 className="size-4 animate-spin text-primary" /> Loading event order services...
+                </div>
+              ) : workOrderServices.length === 0 ? (
+                <div className="p-6 text-center text-sm text-muted-foreground border rounded-lg bg-muted/10">
+                  No event order services configured. Please contact administrator.
+                </div>
+              ) : filteredServices.length === 0 ? (
+                <div className="p-6 text-center text-xs text-muted-foreground border rounded-lg bg-muted/10">
+                  No services match &ldquo;{serviceSearch}&rdquo;.
+                </div>
+              ) : (
+                <div className="border rounded-lg overflow-hidden bg-card divide-y">
+                  {filteredServices.map((service) => {
+                    if (!service) return null;
+                    const sId = String(service._id || service.id || "");
+                    if (!sId) return null;
+                    const currentReq = serviceRequirements[sId];
+                    const isUnselected = attemptedSubmit && !currentReq;
+
+                    return (
+                      <div
+                        key={sId}
+                        className={cn(
+                          "p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors",
+                          currentReq === "required" ? "bg-primary/5" : "hover:bg-muted/30",
+                          isUnselected ? "border-2 border-destructive/60 bg-destructive/5 rounded-md m-1" : ""
+                        )}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={cn(
+                              "w-2.5 h-2.5 rounded-full shrink-0",
+                              currentReq === "required"
+                                ? "bg-emerald-500 ring-2 ring-emerald-500/20"
+                                : currentReq === "not_required"
+                                  ? "bg-muted-foreground/30"
+                                  : "bg-amber-400"
+                            )}
+                          />
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-sm text-foreground">{service.name}</span>
+                              {service.code && (
+                                <span className="text-[10px] text-muted-foreground uppercase bg-muted px-1.5 py-0.5 rounded font-mono">
+                                  {service.code}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {service.description || (service.unit ? `Unit: ${service.unit}` : "Standard Event Service")}
+                              {service.price ? ` • Base rate: ₹${service.price}` : ""}
+                            </p>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          {form.watch(`items.${idx}.name`) && (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="h-7 text-xs text-primary border-primary/30 hover:bg-primary/5 px-2.5 gap-1"
-                              onClick={() => handleAddAnother(idx)}
-                            >
-                              <IconPlus className="size-3.5" /> Add another item
-                            </Button>
-                          )}
+
+                        <div className="flex items-center gap-3 shrink-0">
+                          <label
+                            htmlFor={`req-required-${sId}`}
+                            className={cn(
+                              "flex items-center gap-2 px-3 py-1.5 rounded-md border text-xs font-medium cursor-pointer transition-colors select-none",
+                              currentReq === "required"
+                                ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-semibold shadow-2xs"
+                                : "border-border/60 hover:bg-muted/40 text-foreground"
+                            )}
+                          >
+                            <Checkbox
+                              id={`req-required-${sId}`}
+                              aria-label={`Required for ${service.name}`}
+                              checked={currentReq === "required"}
+                              onCheckedChange={(checked) => {
+                                handleServiceRequirementChange(service, checked ? "required" : null);
+                              }}
+                              className={cn(
+                                currentReq === "required" && "data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600 text-white"
+                              )}
+                            />
+                            <span>Required</span>
+                          </label>
+
+                          <label
+                            htmlFor={`req-not-required-${sId}`}
+                            className={cn(
+                              "flex items-center gap-2 px-3 py-1.5 rounded-md border text-xs font-medium cursor-pointer transition-colors select-none",
+                              currentReq === "not_required"
+                                ? "border-neutral-500/50 bg-neutral-500/10 text-neutral-800 dark:text-neutral-200 font-semibold shadow-2xs"
+                                : "border-border/60 hover:bg-muted/40 text-muted-foreground"
+                            )}
+                          >
+                            <Checkbox
+                              id={`req-not-required-${sId}`}
+                              aria-label={`Not Required for ${service.name}`}
+                              checked={currentReq === "not_required"}
+                              onCheckedChange={(checked) => {
+                                handleServiceRequirementChange(service, checked ? "not_required" : null);
+                              }}
+                              className={cn(
+                                currentReq === "not_required" && "data-[state=checked]:bg-neutral-700 data-[state=checked]:border-neutral-700 text-white"
+                              )}
+                            />
+                            <span>Not Required</span>
+                          </label>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+            </div>
+
+            <Separator />
+
+            {/* Section 3: Configured Service Items & Approved Drafts */}
+            <div id="section-configured-specifications" className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-semibold text-primary">3. Configured Service Items & Approved Drafts</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Specify sizes, quantities, and attach approved drafts for your required services below.
+                  </p>
+                </div>
+              </div>
+
+              {itemFields.length === 0 ? (
+                <div className="p-8 rounded-lg border-2 border-dashed border-muted text-center space-y-2 bg-muted/10">
+                  <div className="inline-flex p-3 rounded-full bg-primary/10 text-primary">
+                    <IconCalendarEvent className="size-6" />
+                  </div>
+                  <h4 className="text-sm font-semibold text-foreground">No Required Services Selected Yet</h4>
+                  <p className="text-xs text-muted-foreground max-w-md mx-auto">
+                    Mark at least one service above as <strong>Required</strong> to configure size specifications, quantities, and attach approved drafts.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {itemFields.map((field, idx) => {
+                    const isCustom = form.watch(`items.${idx}.isCustomSize`);
+                    const itemName = form.watch(`items.${idx}.name`);
+                    const itemServiceId = form.watch(`items.${idx}.item`);
+                    const currentAttachment = form.watch(`items.${idx}.attachment`);
+
+                    return (
+                      <div key={field.id} className="p-4 rounded-lg border bg-muted/20 space-y-3.5">
+                        {/* Header: Service Name & Actions */}
+                        <div className="flex items-center justify-between pb-2 border-b border-border/60">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-xs font-semibold bg-background">
+                              Item #{idx + 1}
+                            </Badge>
+                            <span className="text-sm font-semibold text-foreground">
+                              {itemName || "Event Service"}
+                            </span>
+                          </div>
                           {itemFields.length > 1 && (
                             <Button
                               type="button"
                               variant="ghost"
                               size="icon"
-                              className="text-destructive size-7"
-                              onClick={() => removeItem(idx)}
+                              className="text-destructive size-7 hover:bg-destructive/10"
+                              title="Remove this item row"
+                              onClick={() => handleRemoveItemRow(idx, itemServiceId)}
                             >
                               <IconTrash className="size-4" />
                             </Button>
                           )}
                         </div>
-                      </div>
 
-                      {(() => {
-                        const itemSizes = form.watch(`items.${idx}.sizes`) || [];
-                        const isCustom = Boolean(form.watch(`items.${idx}.isCustomSize`));
-                        const hasSizes = true;
-
-                        return (
-                          <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-start">
-                            {/* 1. Service Search Combobox */}
-                            <div className="md:col-span-5">
-                              <Label className="text-xs mb-1.5 block">Search Service *</Label>
-                              <BillingItemSearchCombobox
-                                value={form.watch(`items.${idx}.item`)}
-                                currentItemName={form.watch(`items.${idx}.name`)}
-                                searchProducts={effectiveSearchProducts}
-                                queryParams={{ isWorkOrder: true, orderType: "WORK_ORDER" }}
-                                onSelect={(selected) => handleServiceSelect(idx, selected)}
-                                placeholder="Search event order services..."
-                                searchPlaceholder="Type service name (e.g., banner, binding)..."
-                              />
+                        {/* Main Specifications Row with File Upload in the SAME row */}
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                          {/* 1. Size / Variant Selector */}
+                          <div className="md:col-span-3">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <Label className="text-xs block font-medium">Size / Variant</Label>
+                              {form.watch(`items.${idx}.size`) === "Custom" && (
+                                <span className="text-[10px] text-primary font-medium">Custom Specs</span>
+                              )}
                             </div>
-
-                            {/* 2. Size / Variant Selector */}
-                            <div className="md:col-span-3">
-                              <div className="flex items-center justify-between mb-1.5">
-                                <Label className="text-xs block">Size / Variant</Label>
-                                {form.watch(`items.${idx}.size`) === "Custom" && (
-                                  <span className="text-[10px] text-primary font-medium">Custom Specs</span>
-                                )}
-                              </div>
-                              <Select
-                                value={form.watch(`items.${idx}.size`) || undefined}
-                                onValueChange={(val) => {
-                                  form.setValue(`items.${idx}.size`, val, { shouldValidate: true });
-                                  if (val !== "Custom") {
-                                    const dimMatch =
-                                      typeof val === "string"
-                                        ? val.match(/^(\d+(?:\.\d+)?)\s*[xX*×]\s*(\d+(?:\.\d+)?)$/)
-                                        : null;
-                                    if (dimMatch) {
-                                      const d1 = Number(dimMatch[1]);
-                                      const d2 = Number(dimMatch[2]);
-                                      const u = form.watch(`items.${idx}.customUnit`) || "ft";
-                                      const sqft = Math.round(d1 * d2 * 100) / 100;
-                                      form.setValue(`items.${idx}.customWidth`, d2, { shouldValidate: true });
-                                      form.setValue(`items.${idx}.customHeight`, d1, { shouldValidate: true });
-                                      form.setValue(
-                                        `items.${idx}.customSize`,
-                                        `${d1}×${d2} ${u}${sqft > 0 ? ` (${sqft} sq.ft)` : ""}`,
-                                        { shouldValidate: true }
-                                      );
-                                    } else {
-                                      form.setValue(`items.${idx}.customSize`, "");
-                                      form.setValue(`items.${idx}.customWidth`, "");
-                                      form.setValue(`items.${idx}.customHeight`, "");
-                                    }
-                                    form.setValue(`items.${idx}.customPriceAdded`, false);
-                                    
-                                    // Match with variant/size and set price
-                                    const allSizes = form.watch(`items.${idx}.sizes`) || [];
-                                    const matchedSize = allSizes.find((sz) =>
-                                      typeof sz === "object" ? sz.size === val : sz === val
-                                    );
-                                    if (
-                                      matchedSize &&
-                                      typeof matchedSize === "object" &&
-                                      matchedSize.price !== undefined &&
-                                      matchedSize.price !== null &&
-                                      Number(matchedSize.price) > 0
-                                    ) {
-                                      form.setValue(`items.${idx}.price`, Number(matchedSize.price) || 0, { shouldValidate: true });
-                                    } else if (form.watch(`items.${idx}.customRate`)) {
-                                      form.setValue(`items.${idx}.price`, Number(form.watch(`items.${idx}.customRate`)) || 0, { shouldValidate: true });
-                                    }
-                                  } else {
-                                    // Custom size selected: calculate from dimensions if already set
-                                    const w = form.watch(`items.${idx}.customWidth`);
-                                    const h = form.watch(`items.${idx}.customHeight`);
+                            <Select
+                              value={form.watch(`items.${idx}.size`) || undefined}
+                              onValueChange={(val) => {
+                                form.setValue(`items.${idx}.size`, val, { shouldValidate: true });
+                                if (val !== "Custom") {
+                                  const dimMatch =
+                                    typeof val === "string"
+                                      ? val.match(/^(\d+(?:\.\d+)?)\s*[xX*×]\s*(\d+(?:\.\d+)?)$/)
+                                      : null;
+                                  if (dimMatch) {
+                                    const d1 = Number(dimMatch[1]);
+                                    const d2 = Number(dimMatch[2]);
                                     const u = form.watch(`items.${idx}.customUnit`) || "ft";
-                                    const r = Number(form.watch(`items.${idx}.customRate`)) || Number(form.watch(`items.${idx}.price`)) || 0;
-                                    form.setValue(`items.${idx}.customRate`, r);
-                                    recalcCustomPrice(idx, w, h, u, r);
-                                  }
-                                }}
-                              >
-                                <SelectTrigger className="h-9 text-xs bg-background">
-                                  <SelectValue placeholder="Select size / variant" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {(form.watch(`items.${idx}.sizes`) || []).map((sz) => {
-                                    const szPrice = typeof sz === "object" ? sz.price : undefined;
-                                    const szLabel =
-                                      typeof sz === "object"
-                                        ? szPrice !== undefined && szPrice !== null && Number(szPrice) > 0
-                                          ? `${sz.size} (₹${szPrice})`
-                                          : sz.size
-                                        : sz;
-                                    const szVal = typeof sz === "object" ? sz.size : sz;
-                                    return (
-                                      <SelectItem key={szVal} value={szVal} className="text-xs">
-                                        {szLabel}
-                                      </SelectItem>
+                                    const sqft = Math.round(d1 * d2 * 100) / 100;
+                                    form.setValue(`items.${idx}.customWidth`, d2, { shouldValidate: true });
+                                    form.setValue(`items.${idx}.customHeight`, d1, { shouldValidate: true });
+                                    form.setValue(
+                                      `items.${idx}.customSize`,
+                                      `${d1}×${d2} ${u}${sqft > 0 ? ` (${sqft} sq.ft)` : ""}`,
+                                      { shouldValidate: true }
                                     );
-                                  })}
-                                  {((form.watch(`items.${idx}.sizes`) || []).length === 0) && (
-                                    <SelectItem value="Standard" className="text-xs">
-                                      Standard {form.watch(`items.${idx}.customRate`) ? `(₹${form.watch(`items.${idx}.customRate`)})` : ""}
-                                    </SelectItem>
-                                  )}
-                                  <SelectItem value="Custom" className="text-xs font-semibold text-primary">
-                                    Custom (Enter Dimensions)
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
+                                  } else {
+                                    form.setValue(`items.${idx}.customSize`, "");
+                                    form.setValue(`items.${idx}.customWidth`, "");
+                                    form.setValue(`items.${idx}.customHeight`, "");
+                                  }
+                                  form.setValue(`items.${idx}.customPriceAdded`, false);
 
-                            {/* 3. Quantity */}
-                            <div className="md:col-span-2">
-                              <Label className="text-xs mb-1.5 block">Quantity *</Label>
-                              <Input
-                                type="number"
-                                min="1"
-                                className="h-9 text-xs"
-                                {...form.register(`items.${idx}.quantity`, { valueAsNumber: true })}
-                              />
-                            </div>
-
-                            {/* 4. Unit Price (₹) - Strictly read-only */}
-                            <div className="md:col-span-2">
-                              <Label className="text-xs mb-1.5 block">Unit Price (₹) *</Label>
-                              <Input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                readOnly
-                                tabIndex={-1}
-                                className="h-9 text-xs bg-muted/40 font-semibold cursor-not-allowed select-none"
-                                {...form.register(`items.${idx}.price`, { valueAsNumber: true })}
-                              />
-                            </div>
-                          </div>
-                        );
-                      })()}
-
-                      {/* Custom Size Details & Calculator when Custom is selected */}
-                      {form.watch(`items.${idx}.size`) === "Custom" && (
-                        <div className="rounded-md border p-3 bg-muted/30 space-y-2 mt-2">
-                          <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
-                            <span>📐 Custom Dimensions & Sizing</span>
-                            <div className="flex items-center gap-1.5">
-                              <Label className="text-[11px] text-muted-foreground">Unit:</Label>
-                              <Select
-                                value={form.watch(`items.${idx}.customUnit`) || "ft"}
-                                onValueChange={(newUnit) => {
-                                  form.setValue(`items.${idx}.customUnit`, newUnit);
-                                  recalcCustomPrice(
-                                    idx,
-                                    form.watch(`items.${idx}.customWidth`),
-                                    form.watch(`items.${idx}.customHeight`),
-                                    newUnit,
-                                    form.watch(`items.${idx}.customRate`)
+                                  const allSizes = form.watch(`items.${idx}.sizes`) || [];
+                                  const matchedSize = allSizes.find((sz) =>
+                                    typeof sz === "object" ? sz.size === val : sz === val
                                   );
+                                  if (
+                                    matchedSize &&
+                                    typeof matchedSize === "object" &&
+                                    matchedSize.price !== undefined &&
+                                    matchedSize.price !== null &&
+                                    Number(matchedSize.price) > 0
+                                  ) {
+                                    form.setValue(`items.${idx}.price`, Number(matchedSize.price) || 0, { shouldValidate: true });
+                                  } else if (form.watch(`items.${idx}.customRate`)) {
+                                    form.setValue(`items.${idx}.price`, Number(form.watch(`items.${idx}.customRate`)) || 0, { shouldValidate: true });
+                                  }
+                                } else {
+                                  const w = form.watch(`items.${idx}.customWidth`);
+                                  const h = form.watch(`items.${idx}.customHeight`);
+                                  const u = form.watch(`items.${idx}.customUnit`) || "ft";
+                                  const r = Number(form.watch(`items.${idx}.customRate`)) || Number(form.watch(`items.${idx}.price`)) || 0;
+                                  form.setValue(`items.${idx}.customRate`, r);
+                                  recalcCustomPrice(idx, w, h, u, r);
+                                }
+                              }}
+                            >
+                              <SelectTrigger className="h-9 text-xs bg-background">
+                                <SelectValue placeholder="Select size / variant" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {(form.watch(`items.${idx}.sizes`) || []).map((sz, szIdx) => {
+                                  if (!sz) return null;
+                                  const szPrice = typeof sz === "object" ? sz.price : undefined;
+                                  const szLabel =
+                                    typeof sz === "object"
+                                      ? szPrice !== undefined && szPrice !== null && Number(szPrice) > 0
+                                        ? `${sz.size || "Standard"} (₹${szPrice})`
+                                        : (sz.size || "Standard")
+                                      : String(sz);
+                                  const szVal = typeof sz === "object" ? (sz?.size || `size-${szIdx}`) : String(sz);
+                                  if (!szVal) return null;
+                                  return (
+                                    <SelectItem key={`${szVal}-${szIdx}`} value={szVal} className="text-xs">
+                                      {szLabel}
+                                    </SelectItem>
+                                  );
+                                })}
+                                {((form.watch(`items.${idx}.sizes`) || []).length === 0) && (
+                                  <SelectItem value="Standard" className="text-xs">
+                                    Standard {form.watch(`items.${idx}.customRate`) ? `(₹${form.watch(`items.${idx}.customRate`)})` : ""}
+                                  </SelectItem>
+                                )}
+                                <SelectItem value="Custom" className="text-xs font-semibold text-primary">
+                                  Custom (Enter Dimensions)
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          {/* 2. Quantity */}
+                          <div className="md:col-span-2">
+                            <Label className="text-xs mb-1.5 block font-medium">Quantity *</Label>
+                            <Input
+                              type="number"
+                              min="1"
+                              className="h-9 text-xs bg-background"
+                              {...form.register(`items.${idx}.quantity`, { valueAsNumber: true })}
+                            />
+                          </div>
+
+                          {/* 3. Unit Price (₹) */}
+                          <div className="md:col-span-2">
+                            <Label className="text-xs mb-1.5 block font-medium">Unit Price (₹) *</Label>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              readOnly
+                              tabIndex={-1}
+                              className="h-9 text-xs bg-muted/50 font-semibold cursor-not-allowed select-none"
+                              {...form.register(`items.${idx}.price`, { valueAsNumber: true })}
+                            />
+                          </div>
+
+                          {/* 4. File Upload Button in the SAME ROW with label "Attach approved draft" */}
+                          <div className="md:col-span-5">
+                            <Label htmlFor={`item-attachment-${idx}`} className="text-xs mb-1.5 block font-medium">
+                              Approved Draft *
+                            </Label>
+                            <div className="flex items-center gap-1.5">
+                              <input
+                                id={`item-attachment-${idx}`}
+                                type="file"
+                                aria-label="Attach approved draft"
+                                className="hidden"
+                                onChange={(e) => handleItemFileChange(idx, e.target.files?.[0] || null)}
+                              />
+                              <Button
+                                type="button"
+                                variant={currentAttachment ? "secondary" : "outline"}
+                                className={cn(
+                                  "h-9 flex-1 text-xs gap-1.5 justify-start truncate border cursor-pointer",
+                                  form.formState.errors?.items?.[idx]?.attachment
+                                    ? "border-destructive text-destructive bg-destructive/5 hover:bg-destructive/10"
+                                    : currentAttachment
+                                      ? "border-emerald-500/50 text-emerald-700 dark:text-emerald-300 bg-emerald-50/70 dark:bg-emerald-950/30 hover:bg-emerald-100/50"
+                                      : "border-dashed border-primary/40 text-primary hover:bg-primary/5"
+                                )}
+                                onClick={() => {
+                                  document.getElementById(`item-attachment-${idx}`)?.click();
                                 }}
                               >
-                                <SelectTrigger className="h-6 w-[100px] text-xs bg-background">
-                                  <SelectValue placeholder="Unit" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="ft" className="text-xs">Feet (ft)</SelectItem>
-                                  <SelectItem value="inch" className="text-xs">Inches (in)</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
+                                {currentAttachment ? (
+                                  <IconCheck className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                                ) : (
+                                  <IconUpload className="size-4 shrink-0 text-primary" />
+                                )}
+                                <span className="truncate">
+                                  {currentAttachment
+                                    ? currentAttachment.filename || "Draft attached"
+                                    : "Attach approved draft"}
+                                </span>
+                              </Button>
 
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
-                            <div>
-                              <Label className="text-[11px] text-muted-foreground">Length / Height</Label>
-                              <Input
-                                type="number"
-                                min="0.1"
-                                step="0.1"
-                                placeholder="Length"
-                                className="h-8 text-xs bg-background mt-1"
-                                value={form.watch(`items.${idx}.customHeight`) ?? ""}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  form.setValue(`items.${idx}.customHeight`, val);
-                                  recalcCustomPrice(
-                                    idx,
-                                    form.watch(`items.${idx}.customWidth`),
-                                    val,
-                                    form.watch(`items.${idx}.customUnit`) || "ft",
-                                    form.watch(`items.${idx}.customRate`)
-                                  );
-                                }}
-                              />
+                              {currentAttachment && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="size-9 text-destructive shrink-0 hover:bg-destructive/10"
+                                  title="Remove attached file"
+                                  onClick={() => {
+                                    handleItemFileChange(idx, null);
+                                    const inputEl = document.getElementById(`item-attachment-${idx}`);
+                                    if (inputEl) inputEl.value = "";
+                                  }}
+                                >
+                                  <IconTrash className="size-4" />
+                                </Button>
+                              )}
                             </div>
-
-                            <div>
-                              <Label className="text-[11px] text-muted-foreground">Width</Label>
-                              <Input
-                                type="number"
-                                min="0.1"
-                                step="0.1"
-                                placeholder="Width"
-                                className="h-8 text-xs bg-background mt-1"
-                                value={form.watch(`items.${idx}.customWidth`) ?? ""}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  form.setValue(`items.${idx}.customWidth`, val);
-                                  recalcCustomPrice(
-                                    idx,
-                                    val,
-                                    form.watch(`items.${idx}.customHeight`),
-                                    form.watch(`items.${idx}.customUnit`) || "ft",
-                                    form.watch(`items.${idx}.customRate`)
-                                  );
-                                }}
-                              />
-                            </div>
-
-                            <div>
-                              <Label className="text-[11px] text-muted-foreground">
-                                Rate / sq.{form.watch(`items.${idx}.customUnit`) || "ft"} (₹)
-                              </Label>
-                              <Input
-                                type="number"
-                                readOnly
-                                tabIndex={-1}
-                                placeholder="Rate"
-                                className="h-8 text-xs bg-muted/50 font-semibold cursor-not-allowed mt-1"
-                                value={form.watch(`items.${idx}.customRate`) ?? ""}
-                              />
-                            </div>
-                          </div>
-
-                          {/* Live Sq.Ft and Calculated Price Preview */}
-                          {(() => {
-                            const w = Number(form.watch(`items.${idx}.customWidth`)) || 0;
-                            const h = Number(form.watch(`items.${idx}.customHeight`)) || 0;
-                            const u = form.watch(`items.${idx}.customUnit`) || "ft";
-                            const r = Number(form.watch(`items.${idx}.customRate`)) || 0;
-                            if (w > 0 && h > 0) {
-                              const sqft =
-                                u === "inch"
-                                  ? Math.round(((w * h) / 144) * 100) / 100
-                                  : Math.round(w * h * 100) / 100;
-                              const calculatedPrice = r > 0 ? (sqft * r).toFixed(2) : 0;
-                              return (
-                                <div className="text-xs text-primary flex items-center justify-between font-medium bg-background px-3 py-1.5 rounded border border-primary/20">
-                                  <span>📐 Area: <strong>{sqft} sq.ft</strong> ({h} × {w} {u})</span>
-                                  {r > 0 ? (
-                                    <span>@ ₹{r}/sq.{u} = <strong>₹{calculatedPrice}</strong></span>
-                                  ) : (
-                                    <span>Base rate: ₹{r}</span>
-                                  )}
-                                </div>
-                              );
-                            }
-                            return (
-                              <p className="text-[11px] text-muted-foreground italic">
-                                Enter length and width to calculate sq.ft area and pricing.
+                            {form.formState.errors?.items?.[idx]?.attachment && (
+                              <p className="text-[11px] text-destructive mt-1 font-medium">
+                                {form.formState.errors.items[idx].attachment.message || "Attach approved draft is required"}
                               </p>
-                            );
-                          })()}
+                            )}
+                          </div>
                         </div>
-                      )}
 
-                      {/* File Attachment for item */}
-                      <div className="pt-2 border-t flex flex-col items-start gap-2">
-                        <div className="w-full">
-                          <Label htmlFor={`item-attachment-${idx}`} className="text-xs font-normal text-muted-foreground block">
-                            Attach creative design / approved layout:
-                          </Label>
-                          {form.formState.errors?.items?.[idx]?.attachment && (
-                            <p className="text-xs text-destructive mt-0.5 font-medium">
-                              {form.formState.errors.items[idx].attachment.message}
-                            </p>
-                          )}
+                        {/* Custom Dimensions when Custom size is selected */}
+                        {form.watch(`items.${idx}.size`) === "Custom" && (
+                          <div className="rounded-md border p-3 bg-muted/30 space-y-2 mt-2">
+                            <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
+                              <span>📐 Custom Dimensions & Sizing</span>
+                              <div className="flex items-center gap-1.5">
+                                <Label className="text-[11px] text-muted-foreground">Unit:</Label>
+                                <Select
+                                  value={form.watch(`items.${idx}.customUnit`) || "ft"}
+                                  onValueChange={(newUnit) => {
+                                    form.setValue(`items.${idx}.customUnit`, newUnit);
+                                    recalcCustomPrice(
+                                      idx,
+                                      form.watch(`items.${idx}.customWidth`),
+                                      form.watch(`items.${idx}.customHeight`),
+                                      newUnit,
+                                      form.watch(`items.${idx}.customRate`)
+                                    );
+                                  }}
+                                >
+                                  <SelectTrigger className="h-6 w-[100px] text-xs bg-background">
+                                    <SelectValue placeholder="Unit" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="ft" className="text-xs">Feet (ft)</SelectItem>
+                                    <SelectItem value="inch" className="text-xs">Inches (in)</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                              <div>
+                                <Label className="text-[11px] text-muted-foreground">Length / Height</Label>
+                                <Input
+                                  type="number"
+                                  min="0.1"
+                                  step="0.1"
+                                  placeholder="Length"
+                                  className="h-8 text-xs bg-background mt-1"
+                                  value={form.watch(`items.${idx}.customHeight`) ?? ""}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    form.setValue(`items.${idx}.customHeight`, val);
+                                    recalcCustomPrice(
+                                      idx,
+                                      form.watch(`items.${idx}.customWidth`),
+                                      val,
+                                      form.watch(`items.${idx}.customUnit`) || "ft",
+                                      form.watch(`items.${idx}.customRate`)
+                                    );
+                                  }}
+                                />
+                              </div>
+
+                              <div>
+                                <Label className="text-[11px] text-muted-foreground">Width</Label>
+                                <Input
+                                  type="number"
+                                  min="0.1"
+                                  step="0.1"
+                                  placeholder="Width"
+                                  className="h-8 text-xs bg-background mt-1"
+                                  value={form.watch(`items.${idx}.customWidth`) ?? ""}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    form.setValue(`items.${idx}.customWidth`, val);
+                                    recalcCustomPrice(
+                                      idx,
+                                      val,
+                                      form.watch(`items.${idx}.customHeight`),
+                                      form.watch(`items.${idx}.customUnit`) || "ft",
+                                      form.watch(`items.${idx}.customRate`)
+                                    );
+                                  }}
+                                />
+                              </div>
+
+                              <div>
+                                <Label className="text-[11px] text-muted-foreground">
+                                  Rate / sq.{form.watch(`items.${idx}.customUnit`) || "ft"} (₹)
+                                </Label>
+                                <Input
+                                  type="number"
+                                  readOnly
+                                  tabIndex={-1}
+                                  placeholder="Rate"
+                                  className="h-8 text-xs bg-muted/50 font-semibold cursor-not-allowed mt-1"
+                                  value={form.watch(`items.${idx}.customRate`) ?? ""}
+                                />
+                              </div>
+                            </div>
+
+                            {(() => {
+                              const w = Number(form.watch(`items.${idx}.customWidth`)) || 0;
+                              const h = Number(form.watch(`items.${idx}.customHeight`)) || 0;
+                              const u = form.watch(`items.${idx}.customUnit`) || "ft";
+                              const r = Number(form.watch(`items.${idx}.customRate`)) || 0;
+                              if (w > 0 && h > 0) {
+                                const sqft =
+                                  u === "inch"
+                                    ? Math.round(((w * h) / 144) * 100) / 100
+                                    : Math.round(w * h * 100) / 100;
+                                const calculatedPrice = r > 0 ? (sqft * r).toFixed(2) : 0;
+                                return (
+                                  <div className="text-xs text-primary flex items-center justify-between font-medium bg-background px-3 py-1.5 rounded border border-primary/20">
+                                    <span>📐 Area: <strong>{sqft} sq.ft</strong> ({h} × {w} {u})</span>
+                                    {r > 0 ? (
+                                      <span>@ ₹{r}/sq.{u} = <strong>₹{calculatedPrice}</strong></span>
+                                    ) : (
+                                      <span>Base rate: ₹{r}</span>
+                                    )}
+                                  </div>
+                                );
+                              }
+                              return (
+                                <p className="text-[11px] text-muted-foreground italic">
+                                  Enter length and width to calculate sq.ft area and pricing.
+                                </p>
+                              );
+                            })()}
+                          </div>
+                        )}
+
+                        {/* Card Footer: "+ Add {service.name}" button under each selected item */}
+                        <div className="pt-2.5 border-t border-border/50 flex flex-wrap items-center justify-between gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-8 text-xs text-primary border-primary/30 hover:bg-primary/5 hover:border-primary/60 gap-1.5 font-medium cursor-pointer"
+                            onClick={() => handleAddServiceInstance(itemName, itemServiceId)}
+                          >
+                            <IconPlus className="size-3.5" /> Add {itemName || "Service"}
+                          </Button>
+
+                          <span className="text-xs text-muted-foreground">
+                            Item Subtotal:{" "}
+                            <strong className="text-foreground">
+                              ₹{((Number(form.watch(`items.${idx}.quantity`)) || 0) * (Number(form.watch(`items.${idx}.price`)) || 0)).toFixed(2)}
+                            </strong>
+                          </span>
                         </div>
-                        <Input
-                          id={`item-attachment-${idx}`}
-                          type="file"
-                          className="max-w-xs text-xs h-8"
-                          onChange={(e) => handleItemFileChange(idx, e.target.files?.[0] || null)}
-                        />
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
 
-              <div className="flex justify-end">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={() =>
-                    appendItem({
-                      type: "Service",
-                      item: "",
-                      name: "",
-                      quantity: 1,
-                      price: 0,
-                      size: "",
-                      customSize: "",
-                      isCustomSize: false,
-                      customWidth: 0,
-                      customHeight: 0,
-                      customUnit: "ft",
-                      customRate: 0,
-                      sizes: [],
-                      attachment: null,
-                      attachmentFile: null,
-                    })
-                  }
-                >
-                  <IconPlus className="size-4" /> Add Item
-                </Button>
-              </div>
+            <Separator />
 
+            {/* Section 4: Funding Allocation */}
+            <div className="space-y-4">
               <div className="flex justify-end p-2 bg-muted/40 rounded border">
                 <span className="text-sm font-bold">
                   Estimated Items Total: ₹{totalCost.toFixed(2)}
                 </span>
               </div>
-            </div>
 
-            <Separator />
-
-            {/* Funding Allocation */}
-            <div className="space-y-4">
-              <h3 className="text-base font-semibold text-primary">3. Funding Allocation</h3>
+              <h3 className="text-base font-semibold text-primary">4. Funding Allocation</h3>
               <p className="text-xs text-muted-foreground">
                 Select whether this Event Order is funded through Department budget or Self Support. Whichever source is selected covers the full order amount.
               </p>
@@ -1212,7 +1453,7 @@ function EventOrderForm({
 
             {/* Submit Action */}
             <div className="flex justify-end gap-3 pt-4 border-t">
-              <Button type="button" variant="outline" onClick={onCancel || (() => navigate(`/${user?.role}/event-order`))}>
+              <Button type="button" variant="outline" onClick={onCancel || (() => navigate(user?.role === "department_admin" ? "/department_admin/" : `/${user?.role}/event-order`))}>
                 Cancel
               </Button>
               <Button type="submit" disabled={submitting}>
@@ -1244,14 +1485,13 @@ function EventOrderForm({
           <div className="space-y-4 text-sm">
             <div className="grid grid-cols-2 gap-3 rounded-md border bg-muted/20 p-3">
               <div>
-                <span className="block text-xs text-muted-foreground">Event</span>
+                <span className="block text-xs text-muted-foreground">Event Name</span>
                 <span className="font-medium">{draftOrder?.eventName || "-"}</span>
               </div>
               <div>
-                <span className="block text-xs text-muted-foreground">Event Dates</span>
+                <span className="block text-xs text-muted-foreground">Event Date</span>
                 <span className="font-medium">
-                  {draftOrder?.eventStartDate || "-"}
-                  {draftOrder?.eventEndDate ? ` to ${draftOrder.eventEndDate}` : ""}
+                  {formatdate(draftOrder?.eventStartDate || draftOrder?.eventDate)}
                 </span>
               </div>
               <div>
@@ -1262,17 +1502,9 @@ function EventOrderForm({
                 <span className="block text-xs text-muted-foreground">Branch / Campus</span>
                 <span className="font-medium">{draftOrder?.branch?.name || branchName}</span>
               </div>
-              <div>
+              <div className="col-span-2">
                 <span className="block text-xs text-muted-foreground">Assigned Shops</span>
                 <span className="font-medium">{draftOrder?.shop?.name || "All Shops"}</span>
-              </div>
-              <div>
-                <span className="block text-xs text-muted-foreground">Venue</span>
-                <span className="font-medium">
-                  {Array.isArray(draftOrder?.eventVenues) && draftOrder.eventVenues.length
-                    ? draftOrder.eventVenues.join(", ")
-                    : "-"}
-                </span>
               </div>
             </div>
 
@@ -1887,7 +2119,7 @@ function XeroxOrderForm({
 
             {/* Submit Action */}
             <div className="flex justify-end gap-3 pt-4 border-t">
-              <Button type="button" variant="outline" onClick={onCancel || (() => navigate(`/${user?.role}/xerox-order`))}>
+              <Button type="button" variant="outline" onClick={onCancel || (() => navigate(user?.role === "department_admin" ? "/department_admin/" : `/${user?.role}/xerox-order`))}>
                 Cancel
               </Button>
               <Button type="submit" disabled={submitting}>

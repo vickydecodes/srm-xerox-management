@@ -108,26 +108,21 @@ export const View = ({ order, exported, closeModal } = {}) => {
               <span className="font-medium text-foreground text-sm">{order?.eventName || "-"}</span>
             </div>
             <div>
-              <span className="text-muted-foreground block">Event Dates</span>
+              <span className="text-muted-foreground block">Event Date</span>
               <span className="font-medium text-foreground">
-                {order?.eventStartDate ? formatdate(order.eventStartDate) : "-"}
-                {order?.eventEndDate ? ` to ${formatdate(order.eventEndDate)}` : ""}
-              </span>
-            </div>
-            <div>
-              <span className="text-muted-foreground block">Venues</span>
-              <span className="font-medium text-foreground">
-                {Array.isArray(order?.eventVenues) && order.eventVenues.length > 0
-                  ? order.eventVenues.join(", ")
+                {order?.eventDate || order?.eventStartDate
+                  ? formatdate(order?.eventDate || order?.eventStartDate)
                   : "-"}
               </span>
             </div>
-            <div>
-              <span className="text-muted-foreground block">Convenors & Coordinators</span>
-              <span className="font-medium text-foreground">
-                {[...(order?.convenors || []), ...(order?.coordinators || [])].join(", ") || "-"}
-              </span>
-            </div>
+            {Array.isArray(order?.eventVenues) && order.eventVenues.length > 0 && (
+              <div>
+                <span className="text-muted-foreground block">Venues</span>
+                <span className="font-medium text-foreground">
+                  {order.eventVenues.join(", ")}
+                </span>
+              </div>
+            )}
             <div>
               <span className="text-muted-foreground block">Approval Ref & Date</span>
               <span className="font-medium text-foreground">
@@ -197,17 +192,13 @@ export const View = ({ order, exported, closeModal } = {}) => {
         {/* Funding Breakdown */}
         <div className="rounded-lg border p-4 bg-muted/10 space-y-2">
           <h4 className="font-semibold text-primary">Funding Allocation</h4>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
             <div className="p-2.5 rounded bg-background border">
               <span className="text-muted-foreground block">Management Amount</span>
               <span className="font-bold text-sm">₹{Number(order?.managementAmount || 0).toFixed(2)}</span>
             </div>
             <div className="p-2.5 rounded bg-background border">
-              <span className="text-muted-foreground block">Registration Fees</span>
-              <span className="font-bold text-sm">₹{Number(order?.registrationFeeAmount || 0).toFixed(2)}</span>
-            </div>
-            <div className="p-2.5 rounded bg-background border">
-              <span className="text-muted-foreground block">Sponsor / Self Support</span>
+              <span className="text-muted-foreground block">Self Support</span>
               <span className="font-bold text-sm">
                 ₹{((order?.self_supports || []).reduce((s, x) => s + Number(x?.amount || 0), 0)).toFixed(2)}
               </span>

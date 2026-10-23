@@ -199,7 +199,7 @@ export const View = ({ order, exported, closeModal } = {}) => {
               <span className="font-bold text-sm">₹{Number(order?.managementAmount || 0).toFixed(2)}</span>
             </div>
             <div className="p-2.5 rounded bg-background border">
-              <span className="text-muted-foreground block">Sponsor / Self Support</span>
+              <span className="text-muted-foreground block">Self Support</span>
               <span className="font-bold text-sm">
                 ₹{((order?.self_supports || []).reduce((s, x) => s + Number(x?.amount || 0), 0)).toFixed(2)}
               </span>

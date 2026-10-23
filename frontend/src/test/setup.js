@@ -48,11 +48,13 @@ beforeAll(() => {
   // ResizeObserver — required by: sidebar.jsx, resizable.jsx, chart.jsx,
   // scroll-area.jsx (Radix primitives use this internally).
   // -------------------------------------------------------------------------
-  global.ResizeObserver = vi.fn().mockImplementation(() => ({
-    observe: vi.fn(),
-    unobserve: vi.fn(),
-    disconnect: vi.fn(),
-  }));
+  class ResizeObserverMock {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+  global.ResizeObserver = ResizeObserverMock;
+  window.ResizeObserver = ResizeObserverMock;
 
   // -------------------------------------------------------------------------
   // IntersectionObserver — required by: datatable.jsx (infinite scroll /

@@ -70,7 +70,7 @@ const validateEventOrder = (data, ctx) => {
       if (!item.attachment && !item.attachmentFile) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: `Attach approved document is required for "${item.name}" (item #${index + 1})`,
+          message: `Attach approved draft is required for "${item.name}" (item #${index + 1})`,
           path: ['items', index, 'attachment'],
         });
       }

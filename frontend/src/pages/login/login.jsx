@@ -60,10 +60,10 @@ export default function Login() {
       <aside className="xrx-brand-panel">
         <div className="xrx-brand-header">
           <div className="xrx-logo-frame">
-            <img src="/final_logo.svg" alt="Reffero POS Billing & Inventory Portal" />
+            <img src="/final_logo.svg" alt="Repro POS Billing & Inventory Portal" />
           </div>
           <div>
-            <p className="xrx-wordmark">Reffero POS Billing & Inventory Portal</p>
+            <p className="xrx-wordmark">Repro POS Billing & Inventory Portal</p>
             <p className="xrx-brand-caption">Campus print services</p>
           </div>
         </div>

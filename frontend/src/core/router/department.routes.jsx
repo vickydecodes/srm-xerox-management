@@ -3,18 +3,16 @@ import {
   IconLogout2,
   IconUser,
   IconLayoutDashboard,
-  IconClipboardList,
   IconCreditCard,
   IconReceipt,
-  IconCalendarEvent,
-  IconPrinter,
   IconPlus,
+  IconClipboardList,
 } from "@tabler/icons-react";
+import { Navigate } from "react-router-dom";
 import ChangePassword from "@/pages/changepassword/changepassword";
 import Profile from "@/pages/profile/profile";
 import Dashboard from "@/pages/dashboard/dashboard";
-import EventOrder from "@/pages/event-order/event-order";
-import XeroxOrder from "@/pages/xerox-order/xerox-order";
+import DepartmentOrdersPage from "@/pages/order/department-orders";
 import OrderCreation from "@/pages/order-creation/order-creation";
 import Credits from "@/pages/credits/credits";
 import Bill from "@/pages/bill/bill";
@@ -39,27 +37,27 @@ export const departmentAdminRoutes = {
       icon: <IconPlus className="h-5 w-5 shrink-0" />,
     },
     {
+      path: "/department_admin/order",
+      label: "Orders",
+      title: "Department Orders",
+      description: "View and track department Event and Xerox printing orders",
+      element: <DepartmentOrdersPage />,
+      icon: <IconClipboardList className="h-5 w-5 shrink-0" />,
+    },
+    {
       path: "/department_admin/event-order",
       label: "Event Orders",
       title: "Event Orders",
-      description: "View and manage department event and work orders",
-      element: <EventOrder />,
-      icon: <IconCalendarEvent className="h-5 w-5 shrink-0" />,
+      description: "Redirect to Orders",
+      element: <Navigate to="/department_admin/order?tab=event" replace />,
+      hidden: true,
     },
     {
       path: "/department_admin/xerox-order",
       label: "Xerox Orders",
       title: "Xerox Orders",
-      description: "View and manage department xerox printing orders",
-      element: <XeroxOrder />,
-      icon: <IconPrinter className="h-5 w-5 shrink-0" />,
-    },
-    {
-      path: "/department_admin/order",
-      label: "Orders",
-      title: "Orders",
-      description: "View orders",
-      element: <EventOrder />,
+      description: "Redirect to Orders",
+      element: <Navigate to="/department_admin/order?tab=xerox" replace />,
       hidden: true,
     },
     {

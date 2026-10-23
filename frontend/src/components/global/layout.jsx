@@ -116,13 +116,13 @@ export default function Layout({ routes, logoutComponent }) {
                         <div className="flex flex-1 min-w-0 items-center gap-5">
                             <img
                                 src="/final_logo.svg"
-                                alt="Reffero POS Billing & Inventory Portal"
+                                alt="Repro POS Billing & Inventory Portal"
                                 className="h-16 md:h-20 w-auto min-w-[64px] object-contain shrink-0"
                             />
                             <div className="flex flex-col min-w-0 flex-1">
                                 <div className="flex flex-row flex-wrap items-center gap-x-3 gap-y-1">
                                     <span className="text-2xl md:text-3xl font-bold text-gray-700 dark:text-gray-500">
-                                        Reffero POS Billing &amp; Inventory Portal
+                                        Repro POS Billing &amp; Inventory Portal
                                     </span>
                                     <span className="text-2xl md:text-3xl font-bold text-gray-300 dark:text-neutral-700">
                                         /

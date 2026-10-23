@@ -55,16 +55,15 @@ export const useEventOrderColumns = (eventOrders) => {
       ),
     },
     {
-      accessorKey: "eventStartDate",
-      header: () => Hint("Event Date", "Start date of the scheduled event"),
+      id: "eventDate",
+      accessorKey: "eventDate",
+      header: () => Hint("Event Date", "Date of the scheduled event"),
       cell: ({ row }) => {
-        const start = row.getValue("eventStartDate");
-        const end = row.original?.eventEndDate;
-        if (!start) return <span className="text-muted-foreground">-</span>;
+        const dateVal = row.original?.eventDate || row.original?.eventStartDate;
+        if (!dateVal) return <span className="text-muted-foreground">-</span>;
         return (
-          <span className="text-sm">
-            {formatdate(start)}
-            {end && end !== start ? ` → ${formatdate(end)}` : ""}
+          <span className="text-sm font-medium">
+            {formatdate(dateVal)}
           </span>
         );
       },

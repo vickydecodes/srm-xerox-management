@@ -80,7 +80,7 @@ describe('OrderCreation Page', () => {
     useApi.mockReturnValue({
       eventOrders: { crud: { create: vi.fn() } },
       xeroxOrders,
-      services: { state: [{ _id: 's1', name: 'Color Poster', price: 150 }] },
+      services: { state: [{ _id: 's1', name: 'Color Poster', price: 150, isWorkOrder: true, is_work_order: true }] },
       shops: { state: [{ _id: 'sh1', name: 'Main Campus Xerox' }] },
       branches: { state: [{ _id: 'b1', name: 'KTR Campus' }] },
       departments: { state: [{ _id: 'd1', name: 'CSE' }] },
@@ -88,12 +88,12 @@ describe('OrderCreation Page', () => {
     });
   });
 
-  it('renders page header and tabs for Xerox Order and Work Order', () => {
+  it('renders page header and tabs for Xerox Order and Event Order', () => {
     render(<OrderCreation />);
 
     expect(screen.getByText('Create Requisition Order')).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /Xerox Order/i })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /Work Order/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Event Order|Work Order/i })).toBeInTheDocument();
   });
 
   it('loads resources (services, shops, branches, departments) on mount', () => {
@@ -105,44 +105,43 @@ describe('OrderCreation Page', () => {
     mockSearchParams = new URLSearchParams('tab=xerox');
     render(<OrderCreation />);
 
-    expect(screen.getByText('Xerox Order Specifications')).toBeInTheDocument();
+    expect(screen.getByText('Standard Xerox Requisition')).toBeInTheDocument();
   });
 
   it('defaults to work-order tab when tab param is work-order or event', () => {
     mockSearchParams = new URLSearchParams('tab=work-order');
     render(<OrderCreation />);
 
-    expect(screen.getByText('Work Order Specifications')).toBeInTheDocument();
+    expect(screen.getByText('Event Order Specifications')).toBeInTheDocument();
   });
 
-  it('only fetches and provides services with isWorkOrder: true to work order form', () => {
+  it('provides event order services with Required and Not Required options', () => {
     mockSearchParams = new URLSearchParams('tab=work-order');
     render(<OrderCreation />);
 
-    expect(screen.getByText('Work Order Specifications')).toBeInTheDocument();
-    expect(screen.getByText('Search work order services...')).toBeInTheDocument();
+    expect(screen.getByText('2. Event Order Services')).toBeInTheDocument();
+    expect(screen.getByText('Color Poster')).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /^Required for/i })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /^Not Required for/i })).toBeInTheDocument();
   });
 
-  it('omits the purpose field and associates the attachment label with its file input for event orders', () => {
+  it('ticking Required selects the service and shows size selection and Attach approved draft button in row', () => {
     mockSearchParams = new URLSearchParams('tab=work-order');
     render(<OrderCreation />);
 
-    expect(screen.queryByLabelText(/Event Purpose/i)).not.toBeInTheDocument();
-    expect(screen.getByLabelText('Attach creative design / approved layout:')).toHaveAttribute('type', 'file');
-  });
+    const requiredCheckbox = screen.getByRole('checkbox', { name: /^Required for/i });
+    fireEvent.click(requiredCheckbox);
 
-  it('renders size/variant dropdown for work order items with custom sizing support', () => {
-    mockSearchParams = new URLSearchParams('tab=work-order');
-    render(<OrderCreation />);
-
+    expect(screen.getByText('3. Configured Service Items & Approved Drafts')).toBeInTheDocument();
     expect(screen.getByText('Size / Variant')).toBeInTheDocument();
-    expect(screen.getByText('Select size / variant')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Attach approved draft/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Add Color Poster/i })).toBeInTheDocument();
   });
 
   it('switches tabs between Xerox Order and Work Order', async () => {
     render(<OrderCreation />);
 
-    const workOrderTab = screen.getByRole('tab', { name: /Work Order/i });
+    const workOrderTab = screen.getByRole('tab', { name: /Event Order|Work Order/i });
     fireEvent.pointerDown(workOrderTab);
     fireEvent.click(workOrderTab);
 
@@ -221,7 +220,7 @@ describe('OrderCreation Page', () => {
 
       await waitFor(() => {
         expect(xeroxOrders.submit).toHaveBeenCalledWith('draft-1');
-        expect(mockNavigate).toHaveBeenCalledWith('/department_admin/xerox-order');
+        expect(mockNavigate).toHaveBeenCalledWith('/department_admin/');
       });
     });
   });
