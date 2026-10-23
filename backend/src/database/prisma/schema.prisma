@@ -228,6 +228,7 @@ model Bill {
 
   branch        String?
   department    String?
+  shop          String?
   order         String?
   eventOrder    String?
   xeroxOrder    String?
@@ -235,6 +236,7 @@ model Bill {
   approvedBy    String?
   branchObj     Branch?     @relation(fields: [branch], references: [id])
   departmentObj Department? @relation(fields: [department], references: [id])
+  shopObj       Shop?       @relation(fields: [shop], references: [id])
   orderObj      Order?      @relation(fields: [order], references: [id])
   eventOrderObj EventOrder? @relation(fields: [eventOrder], references: [id])
   xeroxOrderObj XeroxOrder? @relation(fields: [xeroxOrder], references: [id])
@@ -303,11 +305,15 @@ model ErrorLog {
 
 model Setting {
   id              String   @id @default(uuid()) @map("_id")
+  shop            String?  @unique
+  shopObj         Shop?    @relation(fields: [shop], references: [id])
   srmCollegeEmail String   @default("srmxerox@srmist.edu.in")
   pdfTitle        String   @default("THE REPROGRAPHICS CENTRE")
   pdfPaperSize    String   @default("A5 Landscape")
   pdfMargin       Float    @default(30)
   pdfLogoSize     Float    @default(45)
+  pdfCustomWidth  Float?   @default(80)
+  pdfCustomHeight Float?  @default(200)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
@@ -325,4 +331,6 @@ model Shop {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   User      User[]
+  Setting   Setting[]
+  bills     Bill[]
 }

@@ -96,8 +96,8 @@ export const useManagerModule = (exported) => {
   };
 
   const {
-    fetch: baseFetch,
-    reset: baseReset,
+    fetch,
+    reset,
     sortByColumn,
     presets,
     csv,
@@ -110,8 +110,7 @@ export const useManagerModule = (exported) => {
     setQuery,
   });
 
-  const fetch = (incoming) => baseFetch({ role: ROLE, ...(incoming || {}) });
-  const reset = (extras) => baseReset({ role: ROLE, ...(extras || {}) });
+
 
   return {
     allow: {

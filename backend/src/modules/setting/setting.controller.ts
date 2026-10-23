@@ -7,21 +7,44 @@ import { wrapControllers } from '@core/constants/wrapcontroller.constant.ts';
 import { generatePdfBuffer } from '../bill/exportbill.util.ts';
 
 const controllers = {
-  getSettings: async (req: Request, res: Response) => {
-    const settings = await service.getSettings();
+  getSettings: async (req: AuthRequest, res: Response) => {
+    let shopId: string | null = null;
+    if (req.user?.role === 'super_admin') {
+      shopId = (req.query.shop as string) || null;
+    } else if (req.user?.shop) {
+      shopId = String(req.user.shop);
+    } else if (req.query.shop) {
+      shopId = req.query.shop as string;
+    }
+    const settings = await service.getSettings(shopId);
     return sendResponse.fetched(res, 'setting', settings);
   },
 
   updateSettings: async (req: AuthRequest, res: Response) => {
-    if (req.user?.role !== 'super_admin') {
+    const isSuperAdmin = req.user?.role === 'super_admin';
+    const isShopAdmin = req.user?.role === 'shop_admin';
+
+    if (!isSuperAdmin && !isShopAdmin) {
       return sendResponse.forbidden(res, 'Only super admins can update settings');
     }
-    const settings = await service.updateSettings(req.body);
+
+    let targetShop: string | null = null;
+    if (isSuperAdmin) {
+      targetShop = req.body.shop !== undefined ? req.body.shop : ((req.query.shop as string) || null);
+    } else {
+      if (!req.user?.shop) {
+        return sendResponse.forbidden(res, 'Shop administrator must be assigned to a shop');
+      }
+      targetShop = String(req.user.shop);
+    }
+
+    const settings = await service.updateSettings(req.body, targetShop);
     return sendResponse.updated(res, 'setting', settings);
   },
 
   previewPdf: async (req: AuthRequest, res: Response) => {
-    if (req.user?.role !== 'super_admin') {
+    const isAllowed = req.user?.role === 'super_admin' || req.user?.role === 'shop_admin' || req.user?.role === 'staff';
+    if (!isAllowed) {
       return sendResponse.forbidden(res, 'Only super admins can preview settings');
     }
 

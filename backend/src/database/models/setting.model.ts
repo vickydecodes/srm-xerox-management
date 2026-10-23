@@ -1,22 +1,28 @@
 import prisma from '@config/prisma.config.js';
 
 export interface ISetting {
+  shop?: string | null;
   srmCollegeEmail: string;
   pdfTitle: string;
   pdfPaperSize: string;
   pdfMargin: number;
   pdfLogoSize: number;
+  pdfCustomWidth?: number | null;
+  pdfCustomHeight?: number | null;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export class SettingDocument {
   _id!: string;
+  shop?: string | null;
   srmCollegeEmail!: string;
   pdfTitle!: string;
   pdfPaperSize!: string;
   pdfMargin!: number;
   pdfLogoSize!: number;
+  pdfCustomWidth?: number | null;
+  pdfCustomHeight?: number | null;
   createdAt!: Date;
   updatedAt!: Date;
 
@@ -35,15 +41,20 @@ export class SettingDocument {
     if (this.pdfPaperSize === undefined) this.pdfPaperSize = 'A5 Landscape';
     if (this.pdfMargin === undefined) this.pdfMargin = 30;
     if (this.pdfLogoSize === undefined) this.pdfLogoSize = 45;
+    if (this.pdfCustomWidth === undefined) this.pdfCustomWidth = 80;
+    if (this.pdfCustomHeight === undefined) this.pdfCustomHeight = 200;
   }
 
   async save() {
     const payload = {
+      shop: this.shop ? String(this.shop) : null,
       srmCollegeEmail: this.srmCollegeEmail,
       pdfTitle: this.pdfTitle,
       pdfPaperSize: this.pdfPaperSize,
       pdfMargin: this.pdfMargin,
       pdfLogoSize: this.pdfLogoSize,
+      pdfCustomWidth: this.pdfCustomWidth ?? 80,
+      pdfCustomHeight: this.pdfCustomHeight ?? 200,
     };
 
     if (this.isNew) {
@@ -96,8 +107,29 @@ export class SettingModel {
       }
       delete updateData.$inc;
     }
-    const existing = await prisma.setting.findFirst({ where: query as any });
-    if (!existing) return null;
+    const whereQuery: any = { ...query };
+    if (whereQuery._id) {
+      whereQuery.id = whereQuery._id;
+      delete whereQuery._id;
+    }
+    const existing = await prisma.setting.findFirst({ where: whereQuery as any });
+    if (!existing) {
+      if (options.upsert) {
+        const createPayload: any = {
+          ...whereQuery,
+          ...updateData,
+        };
+        // Normalize shop
+        if (createPayload.shop) {
+          createPayload.shop = String(createPayload.shop);
+        }
+        const created = await prisma.setting.create({
+          data: createPayload
+        });
+        return new SettingDocument({ ...created, _id: created.id });
+      }
+      return null;
+    }
     const updated = await prisma.setting.update({
       where: { id: existing.id },
       data: updateData as any
@@ -116,7 +148,12 @@ export class SettingModel {
   }
 
   static async findOne(query: any = {}) {
-    const doc = await prisma.setting.findFirst({ where: query as any });
+    const whereQuery: any = { ...query };
+    if (whereQuery._id) {
+      whereQuery.id = whereQuery._id;
+      delete whereQuery._id;
+    }
+    const doc = await prisma.setting.findFirst({ where: whereQuery as any });
     if (!doc) return null;
     return new SettingDocument({ ...doc, _id: doc.id });
   }

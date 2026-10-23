@@ -8,10 +8,10 @@ export const useSettingStore = create((set) => ({
   config: null,
   loading: false,
 
-  fetchSettings: async () => {
+  fetchSettings: async (shopId) => {
     set({ loading: true });
     try {
-      const res = await apiRequest('get', apiurls.settings.get.url());
+      const res = await apiRequest('get', apiurls.settings.get.url(shopId));
       set({ config: res.data, loading: false });
       return res.data;
     } catch (err) {
@@ -20,10 +20,14 @@ export const useSettingStore = create((set) => ({
     }
   },
 
-  updateSettings: async (payload) => {
+  updateSettings: async (payload, shopId) => {
     set({ loading: true });
     try {
-      const res = await apiRequest('put', apiurls.settings.update.url(), { data: payload });
+      const dataToSend = {
+        ...payload,
+        shop: shopId !== undefined ? shopId : payload?.shop,
+      };
+      const res = await apiRequest('put', apiurls.settings.update.url(shopId), { data: dataToSend });
       set({ config: res.data, loading: false });
       toast.success('Settings updated successfully');
       return res.data;

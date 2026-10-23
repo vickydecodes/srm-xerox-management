@@ -113,4 +113,40 @@ describe('Settings page', () => {
     );
     expect(settings.update).not.toHaveBeenCalled();
   });
-});
+
+  it('navigates to Bill Format & Sizing tab and displays paper format options', async () => {
+    const user = userEvent.setup();
+    setup();
+
+    const tab = screen.getByRole('tab', { name: /Bill Format & Sizing/i });
+    expect(tab).toBeInTheDocument();
+    await user.click(tab);
+
+    expect(screen.getByLabelText(/Invoice Heading \/ Shop Title/i)).toBeInTheDocument();
+    expect(screen.getByText(/Bill Sizing Option/i)).toBeInTheDocument();
+  });
+
+  it('renders custom width and height inputs when Custom sizing is configured', async () => {
+    const user = userEvent.setup();
+    setup(
+      buildSettingsModule({
+        config: {
+          srmCollegeEmail: 'srm@srmist.edu.in',
+          pdfTitle: 'Custom Store',
+          pdfPaperSize: 'Custom',
+          pdfCustomWidth: 100,
+          pdfCustomHeight: 180,
+          pdfMargin: 12,
+          pdfLogoSize: 35,
+        },
+      })
+    );
+
+    const tab = screen.getByRole('tab', { name: /Bill Format & Sizing/i });
+    await user.click(tab);
+
+    expect(screen.getByText(/Custom Page Dimensions/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/e\.g\. 80/i)).toHaveValue(100);
+    expect(screen.getByPlaceholderText(/e\.g\. 200/i)).toHaveValue(180);
+  });
+});

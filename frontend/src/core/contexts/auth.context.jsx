@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import handleApiError from "../errors/error.handler";
 import AppLoader from "@/components/global/loader";
 
-const AuthContext = createContext();
+export const AuthContext = createContext();
 
 export const useAuth = () => {
   const ctx = useContext(AuthContext);

@@ -5,7 +5,7 @@ export const useSettingModule = (exported) => {
   const store = useSettingStore();
   const { user } = useAuth();
 
-  const allowEdit = user?.role === 'staff';
+  const allowEdit = user?.role === 'super_admin' || user?.role === 'shop_admin' || user?.role === 'staff';
 
   return {
     state: store.config,

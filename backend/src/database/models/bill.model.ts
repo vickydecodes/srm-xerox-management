@@ -173,10 +173,15 @@ export class BillModel {
         items: true,
         branchObj: true,
         departmentObj: true,
+        shopObj: true,
         orderObj: true,
         eventOrderObj: true,
         xeroxOrderObj: true,
-        createdByObj: true
+        createdByObj: {
+          include: {
+            shopObj: true
+          }
+        }
       }
     });
     if (!doc) return null;
@@ -187,10 +192,14 @@ export class BillModel {
       _id: doc.id,
       branch: doc.branchObj,
       department: doc.departmentObj,
+      shop: doc.shopObj || doc.shop,
       order: doc.orderObj,
       eventOrder: doc.eventOrderObj,
       xeroxOrder: doc.xeroxOrderObj,
-      createdBy: doc.createdByObj,
+      createdBy: doc.createdByObj ? {
+        ...doc.createdByObj,
+        shop: doc.createdByObj.shopObj || doc.createdByObj.shop
+      } : null,
       items: doc.items.map((i: any) => ({ ...i, item: i.item }))
     };
     return new BillDocument(mappedDoc);
