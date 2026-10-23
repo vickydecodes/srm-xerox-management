@@ -103,6 +103,12 @@ export const useDepartmentColumns = (departments) => {
               </DropdownMenuItem>
 
               <DropdownMenuItem
+                onClick={() => departments.openReport(dept)}
+              >
+                Generate Report
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
                 onClick={() =>
                   departments.openActiveStatus(dept._id, dept.active)
                 }

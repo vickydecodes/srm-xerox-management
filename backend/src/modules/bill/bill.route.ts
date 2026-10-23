@@ -17,6 +17,10 @@ import {
   rejectCreditBill,
   getBillsByDepartment,
   downloadBillPdf,
+  downloadBillDocx,
+  getDepartmentBillReport,
+  downloadDepartmentBillReportDocx,
+  downloadDepartmentBillReportPdf,
 } from './bill.controller.js';
 
 const router = Router();
@@ -27,9 +31,13 @@ router.post('/', zodValidate(createBillSchema, 'body', 'CreateBillSchema'), crea
 
 router.get('/', getAllBills);
 
+router.get('/department/:id/report/pdf', downloadDepartmentBillReportPdf);
+router.get('/department/:id/report/docx', downloadDepartmentBillReportDocx);
+router.get('/department/:id/report', getDepartmentBillReport);
 router.get('/department/:id', getBillsByDepartment);
 router.get('/:id', getBillById);
 router.get('/:id/pdf', downloadBillPdf);
+router.get('/:id/docx', downloadBillDocx);
 
 router.put('/:id', zodValidate(updateBillSchema, 'body', 'UpdateBillSchema'), updateBill);
 

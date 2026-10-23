@@ -343,4 +343,52 @@ describe('Bill API Endpoint Suite', () => {
       expect(data.approvalStatus).to.equal('rejected');
     });
   });
+
+  it('should successfully download bill DOCX', async () => {
+    const res = await tester.get(`${baseRoute}/${creditBillId}/docx`, token);
+    expect(res.status).to.equal(200);
+    expect(res.header['content-type']).to.include(
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    );
+  });
+
+  it('should successfully download bill PDF for credit bill with department and branch', async () => {
+    const res = await tester.get(`${baseRoute}/${creditBillId}/pdf`, token);
+    expect(res.status).to.equal(200);
+    expect(res.header['content-type']).to.include('application/pdf');
+    expect(res.body).to.exist;
+  });
+
+  it('should successfully download bill PDF for walk-in bill without department or branch', async () => {
+    const res = await tester.get(`${baseRoute}/${serviceBillId}/pdf`, token);
+    expect(res.status).to.equal(200);
+    expect(res.header['content-type']).to.include('application/pdf');
+    expect(res.body).to.exist;
+  });
+
+  it('should successfully generate department bill report', async () => {
+    const res = await tester.get(`${baseRoute}/department/${testDepartmentId}/report`, token);
+    expect(res.status).to.equal(200);
+    expect(res.body.data).to.exist;
+    expect(res.body.data.department).to.exist;
+    expect(res.body.data.summary).to.exist;
+    expect(res.body.data.summary.totalBills).to.be.a('number');
+    expect(res.body.data.shopBreakdown).to.be.an('array');
+    expect(res.body.data.itemBreakdown).to.be.an('array');
+  });
+
+  it('should successfully download department bill report DOCX', async () => {
+    const res = await tester.get(`${baseRoute}/department/${testDepartmentId}/report/docx`, token);
+    expect(res.status).to.equal(200);
+    expect(res.header['content-type']).to.include(
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    );
+  });
+
+  it('should successfully download department bill report PDF', async () => {
+    const res = await tester.get(`${baseRoute}/department/${testDepartmentId}/report/pdf`, token);
+    expect(res.status).to.equal(200);
+    expect(res.header['content-type']).to.include('application/pdf');
+    expect(res.body).to.exist;
+  });
 });

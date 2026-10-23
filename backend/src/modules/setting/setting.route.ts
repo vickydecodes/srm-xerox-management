@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { authMiddleware } from '@core/middlewares/auth.middleware.js';
 import { zodValidate } from '@core/middlewares/zod.validator.js';
 import { updateSettingSchema } from './setting.validator.js';
-import { getSettings, updateSettings, previewPdf } from './setting.controller.js';
+import { getSettings, updateSettings, previewPdf, previewDocx } from './setting.controller.js';
 
 const router = Router();
 
@@ -18,6 +18,11 @@ router.post(
   '/preview-pdf',
   zodValidate(updateSettingSchema, 'body', 'UpdateSettingSchema'),
   previewPdf
+);
+router.post(
+  '/preview-docx',
+  zodValidate(updateSettingSchema, 'body', 'UpdateSettingSchema'),
+  previewDocx
 );
 
 export const basePath = '/settings';

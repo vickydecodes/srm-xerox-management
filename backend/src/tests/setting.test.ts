@@ -207,4 +207,38 @@ describe('Setting API Endpoint Suite', () => {
     expect(res.headers['content-type']).to.include('application/pdf');
     expect(res.body).to.exist;
   });
+
+  it('should successfully generate preview DOCX for 80mm thermal format', async () => {
+    const res = await tester.post(
+      `${baseRoute}/preview-docx`,
+      {
+        pdfTitle: 'PREVIEW THERMAL 80MM DOCX',
+        pdfPaperSize: '80mm',
+        pdfMargin: 8,
+        pdfLogoSize: 28,
+      },
+      token
+    );
+
+    expect(res.status).to.equal(200);
+    expect(res.headers['content-type']).to.include('application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    expect(res.body).to.exist;
+  });
+
+  it('should successfully generate preview DOCX for A5 Landscape format', async () => {
+    const res = await tester.post(
+      `${baseRoute}/preview-docx`,
+      {
+        pdfTitle: 'PREVIEW A5 DOCX',
+        pdfPaperSize: 'A5 Landscape',
+        pdfMargin: 25,
+        pdfLogoSize: 45,
+      },
+      token
+    );
+
+    expect(res.status).to.equal(200);
+    expect(res.headers['content-type']).to.include('application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    expect(res.body).to.exist;
+  });
 });

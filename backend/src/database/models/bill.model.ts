@@ -32,6 +32,8 @@ export class BillDocument {
   paymentMethod!: string;
   branch?: any;
   department?: any;
+  shop?: any;
+  shopObj?: any;
   order?: any;
   eventOrder?: any;
   xeroxOrder?: any;
@@ -78,6 +80,7 @@ export class BillDocument {
 
     const branchId = toId(this.branch);
     const departmentId = toId(this.department);
+    const shopId = toId(this.shop);
     const orderId = toId(this.order);
     const eventOrderId = toId(this.eventOrder);
     const xeroxOrderId = toId(this.xeroxOrder);
@@ -98,6 +101,7 @@ export class BillDocument {
           remarks: this.remarks,
           branch: branchId,
           department: departmentId,
+          shop: shopId,
           order: orderId,
           eventOrder: eventOrderId,
           xeroxOrder: xeroxOrderId,
@@ -150,6 +154,7 @@ export class BillDocument {
           remarks: this.remarks,
           branch: branchId,
           department: departmentId,
+          shop: shopId,
           order: orderId,
           eventOrder: eventOrderId,
           xeroxOrder: xeroxOrderId,
@@ -190,8 +195,8 @@ export class BillModel {
     const mappedDoc = {
       ...doc,
       _id: doc.id,
-      branch: doc.branchObj,
-      department: doc.departmentObj,
+      branch: doc.branchObj || doc.branch,
+      department: doc.departmentObj || doc.department,
       shop: doc.shopObj || doc.shop,
       order: doc.orderObj,
       eventOrder: doc.eventOrderObj,
@@ -268,21 +273,30 @@ export class BillModel {
         items: true,
         branchObj: true,
         departmentObj: true,
+        shopObj: true,
         orderObj: true,
         eventOrderObj: true,
         xeroxOrderObj: true,
-        createdByObj: true
+        createdByObj: {
+          include: {
+            shopObj: true
+          }
+        }
       }
     });
     return docs.map((doc: any) => new BillDocument({
       ...doc,
       _id: doc.id,
-      branch: doc.branchObj,
-      department: doc.departmentObj,
+      branch: doc.branchObj || doc.branch,
+      department: doc.departmentObj || doc.department,
+      shop: doc.shopObj || doc.shop,
       order: doc.orderObj,
       eventOrder: doc.eventOrderObj,
       xeroxOrder: doc.xeroxOrderObj,
-      createdBy: doc.createdByObj,
+      createdBy: doc.createdByObj ? {
+        ...doc.createdByObj,
+        shop: doc.createdByObj.shopObj || doc.createdByObj.shop
+      } : null,
       items: doc.items.map((i: any) => ({ ...i, item: i.item }))
     }));
   }

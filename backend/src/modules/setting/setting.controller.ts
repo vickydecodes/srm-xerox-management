@@ -89,7 +89,56 @@ const controllers = {
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'inline; filename=preview.pdf');
     res.send(pdfBuffer);
-  }
+  },
+
+  previewDocx: async (req: AuthRequest, res: Response) => {
+    const isAllowed = req.user?.role === 'super_admin' || req.user?.role === 'shop_admin' || req.user?.role === 'staff';
+    if (!isAllowed) {
+      return sendResponse.forbidden(res, 'Only super admins can preview settings');
+    }
+
+    const docSetting = req.body;
+
+    const dummyBill = {
+      code: 'PREV-1024',
+      createdAt: new Date(),
+      department: { name: 'Preview Department' },
+      branch: { name: 'Preview Branch', code: 'MAIN' },
+      createdBy: {
+        email: 'operator@srmist.edu.in',
+        shop: { name: 'Preview Xerox Store' },
+      },
+      items: [
+        {
+          name: 'A4 B&W Print',
+          type: 'Service',
+          price: 2,
+          quantity: 10,
+          total: 20,
+        },
+        {
+          name: 'Binding',
+          type: 'Service',
+          price: 50,
+          quantity: 1,
+          total: 50,
+        },
+      ],
+      subtotal: 70,
+      discount: 0,
+      tax: 0,
+      total: 70,
+      paymentMethod: 'CASH',
+      status: 'PAID',
+    };
+
+    const { generateDocxBuffer } = await import('../bill/exportbill2.util.js');
+    const docxBuffer = await generateDocxBuffer(dummyBill, docSetting);
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader('Content-Disposition', 'inline; filename=preview.docx');
+    res.send(docxBuffer);
+  },
 };
 
-export const { getSettings, updateSettings, previewPdf } = wrapControllers(controllers);
+export const { getSettings, updateSettings, previewPdf, previewDocx } = wrapControllers(controllers);

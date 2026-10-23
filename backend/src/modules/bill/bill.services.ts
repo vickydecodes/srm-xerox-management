@@ -14,6 +14,7 @@ import { UPDATE_OPTIONS, SOFT_DELETE, RETRIEVE, getVisibility } from './bill.con
 import { enhanceBill } from './bill.util.ts';
 import { billFilterConfig } from './bill.filterconfig.ts';
 import { applyCreditBalance } from '@modules/department/department.services.ts';
+import prisma from '@config/prisma.config.js';
 
 export const adjustStockForBill = async (
   oldItems: IBillItem[],
@@ -419,3 +420,207 @@ export const setBillActiveStatus = async (id: string, active: boolean) => {
     { new: true }
   );
 };
+
+export const getDepartmentBillReport = async (
+  departmentId: string,
+  filters?: { from?: string; to?: string; status?: string }
+) => {
+  const dept = await Department.findById(departmentId);
+  if (!dept) {
+    throw new Error('Department not found');
+  }
+
+  let branchObj: any = null;
+  if (dept.branch) {
+    branchObj = await prisma.branch.findUnique({
+      where: { id: String(dept.branch) },
+    });
+  }
+
+  const whereClause: any = {
+    deleted: false,
+    OR: [
+      { department: departmentId },
+      { orderObj: { department: departmentId } },
+      { eventOrderObj: { department: departmentId } },
+      { xeroxOrderObj: { department: departmentId } },
+    ],
+  };
+
+  if (filters?.status && filters.status !== 'ALL') {
+    whereClause.status = filters.status;
+  }
+
+  if (filters?.from || filters?.to) {
+    whereClause.createdAt = {
+      ...(filters.from ? { gte: new Date(filters.from) } : {}),
+      ...(filters.to ? { lte: new Date(filters.to) } : {}),
+    };
+  }
+
+  const rawBills = await prisma.bill.findMany({
+    where: whereClause,
+    include: {
+      items: true,
+      shopObj: true,
+      branchObj: true,
+      departmentObj: true,
+      createdByObj: {
+        include: {
+          shopObj: true,
+        },
+      },
+      orderObj: true,
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  let totalBills = rawBills.length;
+  let paidBillsCount = 0;
+  let paidBillsTotal = 0;
+  let unpaidBillsCount = 0;
+  let unpaidBillsTotal = 0;
+  let totalAmount = 0;
+  let totalSubtotal = 0;
+  let totalDiscount = 0;
+  let totalTax = 0;
+  let totalItemsCount = 0;
+
+  const shopMap = new Map<string, any>();
+  const itemMap = new Map<string, any>();
+
+  const mappedBills = rawBills.map((b: any) => {
+    const isPaid = b.status === 'PAID';
+    if (isPaid) {
+      paidBillsCount += 1;
+      paidBillsTotal += b.total;
+    } else {
+      unpaidBillsCount += 1;
+      unpaidBillsTotal += b.total;
+    }
+    totalAmount += b.total;
+    totalSubtotal += b.subtotal;
+    totalDiscount += b.discount;
+    totalTax += b.tax;
+
+    const shopName =
+      b.shopObj?.name ||
+      b.createdByObj?.shopObj?.name ||
+      b.orderObj?.shopObj?.name ||
+      'Central Xerox Store';
+    const shopId =
+      b.shop ||
+      b.createdByObj?.shop ||
+      b.orderObj?.shop ||
+      'default-shop';
+
+    let billItemsQty = 0;
+    (b.items || []).forEach((item: any) => {
+      const qty = item.quantity || 1;
+      billItemsQty += qty;
+      totalItemsCount += qty;
+
+      const itemKey = `${item.name}-${item.type}`;
+      if (!itemMap.has(itemKey)) {
+        itemMap.set(itemKey, {
+          name: item.name || 'Service Item',
+          type: item.type === 'InventoryProduct' ? 'Product' : 'Service',
+          totalQuantity: 0,
+          totalAmount: 0,
+          billCount: 0,
+        });
+      }
+      const itemStat = itemMap.get(itemKey);
+      itemStat.totalQuantity += qty;
+      itemStat.totalAmount += item.total || qty * item.price;
+      itemStat.billCount += 1;
+    });
+
+    if (!shopMap.has(shopId)) {
+      shopMap.set(shopId, {
+        shopId,
+        shopName,
+        billsCount: 0,
+        itemsCount: 0,
+        paidBillsCount: 0,
+        paidAmount: 0,
+        unpaidBillsCount: 0,
+        unpaidAmount: 0,
+        totalAmount: 0,
+      });
+    }
+    const shopStat = shopMap.get(shopId);
+    shopStat.billsCount += 1;
+    shopStat.itemsCount += billItemsQty;
+    if (isPaid) {
+      shopStat.paidBillsCount += 1;
+      shopStat.paidAmount += b.total;
+    } else {
+      shopStat.unpaidBillsCount += 1;
+      shopStat.unpaidAmount += b.total;
+    }
+    shopStat.totalAmount += b.total;
+
+    return {
+      _id: b.id,
+      code: b.code,
+      createdAt: b.createdAt,
+      shopName,
+      status: b.status,
+      paymentMethod: b.paymentMethod,
+      subtotal: b.subtotal,
+      discount: b.discount,
+      tax: b.tax,
+      total: b.total,
+      itemsCount: billItemsQty,
+      items: (b.items || []).map((i: any) => ({
+        name: i.name,
+        type: i.type,
+        quantity: i.quantity,
+        price: i.price,
+        total: i.total,
+      })),
+    };
+  });
+
+  const shopBreakdown = Array.from(shopMap.values()).sort(
+    (a, b) => b.totalAmount - a.totalAmount
+  );
+  const itemBreakdown = Array.from(itemMap.values()).sort(
+    (a, b) => b.totalAmount - a.totalAmount
+  );
+
+  return {
+    department: {
+      _id: dept._id,
+      name: dept.name,
+      code: dept.code,
+      creditBalance: dept.creditBalance || 0,
+      outstandingCredit: dept.outstandingCredit || 0,
+      branch: branchObj
+        ? { _id: branchObj.id, name: branchObj.name, code: branchObj.code }
+        : null,
+    },
+    filters: {
+      from: filters?.from || null,
+      to: filters?.to || null,
+      status: filters?.status || 'ALL',
+    },
+    summary: {
+      totalBills,
+      paidBillsCount,
+      paidBillsTotal,
+      unpaidBillsCount,
+      unpaidBillsTotal,
+      totalAmount,
+      totalSubtotal,
+      totalDiscount,
+      totalTax,
+      totalItemsCount,
+    },
+    shopBreakdown,
+    itemBreakdown,
+    bills: mappedBills,
+  };
+};
+

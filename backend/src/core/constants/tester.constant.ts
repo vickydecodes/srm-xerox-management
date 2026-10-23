@@ -29,6 +29,16 @@ export const tester = {
 
   // Auth/Setup helper
   setupAdmin: async () => {
+    // Safety check: ensure tests ONLY run on an isolated test database
+    const dbUrl = process.env.DATABASE_URL || '';
+    if (!dbUrl.includes('test') && !dbUrl.includes('schema=test')) {
+      throw new Error(
+        `🚨 CRITICAL SAFETY GUARD TRIGGERED:\n` +
+        `Attempted to execute test suite wipe on non-test database: "${dbUrl}".\n` +
+        `Tests MUST run against a test database (e.g. srm_xerox_test_db) to prevent development data loss.`
+      );
+    }
+
     // Clear all tables before test starts
     try {
       await prisma.$transaction([

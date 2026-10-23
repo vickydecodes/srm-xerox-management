@@ -203,6 +203,118 @@ const controllers = {
     res.setHeader('Content-Disposition', `inline; filename=bill-${id}.pdf`);
     res.send(pdfBuffer);
   },
+
+  downloadBillDocx: async (req: AccessRequest<{ id: string }>, res: Response) => {
+    const { id } = req.params;
+    const bill = await service.getBillById(id);
+    if (!bill) {
+      return sendResponse.notFound(res, 'bill');
+    }
+
+    const role = req.user?.role;
+    if (role === 'department_admin') {
+      const userDept = req.user?.department ? String(req.user.department) : (req.user?.id ? (await User.findById(req.user.id))?.department?.toString() : undefined);
+      if (bill.paymentMethod !== 'CREDIT' || String(bill.department) !== String(userDept)) {
+        return sendResponse.forbidden?.(res, 'Access denied to this bill') ?? res.status(403).json({ message: 'Forbidden' });
+      }
+    } else if (role === 'branch_admin' || role === 'manager') {
+      const userBranch = req.user?.branch ? String(req.user.branch) : (req.user?.id ? (await User.findById(req.user.id))?.branch?.toString() : undefined);
+      let isBranch = String(bill.branch) === String(userBranch);
+      if (!isBranch && bill.department) {
+        const dept = await Department.findById(bill.department);
+        if (dept && String(dept.branch) === String(userBranch)) {
+          isBranch = true;
+        }
+      }
+      if (bill.paymentMethod !== 'CREDIT' || !isBranch) {
+        return sendResponse.forbidden?.(res, 'Access denied to this bill') ?? res.status(403).json({ message: 'Forbidden' });
+      }
+    }
+
+    const { generateBillDocx } = await import('./exportbill2.util.js');
+    const docxBuffer = await generateBillDocx(id);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader('Content-Disposition', `attachment; filename=bill-${id}.docx`);
+    res.send(docxBuffer);
+  },
+
+  getDepartmentBillReport: async (req: AccessRequest<{ id: string }>, res: Response) => {
+    const { id } = req.params;
+    const role = req.user?.role;
+
+    if (role === 'department_admin') {
+      const userDept = req.user?.department ? String(req.user.department) : (req.user?.id ? (await User.findById(req.user.id))?.department?.toString() : undefined);
+      if (!userDept || userDept !== id) {
+        return sendResponse.forbidden?.(res, 'Access denied to report for this department') ?? res.status(403).json({ message: 'Forbidden' });
+      }
+    } else if (role === 'branch_admin' || role === 'manager') {
+      const userBranch = req.user?.branch ? String(req.user.branch) : (req.user?.id ? (await User.findById(req.user.id))?.branch?.toString() : undefined);
+      const dept = await Department.findById(id);
+      if (!dept || String(dept.branch) !== String(userBranch)) {
+        return sendResponse.forbidden?.(res, 'Access denied to report for this department') ?? res.status(403).json({ message: 'Forbidden' });
+      }
+    }
+
+    const { from, to, status } = req.query as { from?: string; to?: string; status?: string };
+    const report = await service.getDepartmentBillReport(id, { from, to, status });
+    return sendResponse.fetched(res, 'department bill report', report);
+  },
+
+  downloadDepartmentBillReportDocx: async (req: AccessRequest<{ id: string }>, res: Response) => {
+    const { id } = req.params;
+    const role = req.user?.role;
+
+    if (role === 'department_admin') {
+      const userDept = req.user?.department ? String(req.user.department) : (req.user?.id ? (await User.findById(req.user.id))?.department?.toString() : undefined);
+      if (!userDept || userDept !== id) {
+        return sendResponse.forbidden?.(res, 'Access denied to report for this department') ?? res.status(403).json({ message: 'Forbidden' });
+      }
+    } else if (role === 'branch_admin' || role === 'manager') {
+      const userBranch = req.user?.branch ? String(req.user.branch) : (req.user?.id ? (await User.findById(req.user.id))?.branch?.toString() : undefined);
+      const dept = await Department.findById(id);
+      if (!dept || String(dept.branch) !== String(userBranch)) {
+        return sendResponse.forbidden?.(res, 'Access denied to report for this department') ?? res.status(403).json({ message: 'Forbidden' });
+      }
+    }
+
+    const { from, to, status } = req.query as { from?: string; to?: string; status?: string };
+    const report = await service.getDepartmentBillReport(id, { from, to, status });
+
+    const { generateDepartmentReportDocx } = await import('./exportbill2.util.js');
+    const docxBuffer = await generateDepartmentReportDocx(report);
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader('Content-Disposition', `attachment; filename=department-report-${id}.docx`);
+    res.send(docxBuffer);
+  },
+
+  downloadDepartmentBillReportPdf: async (req: AccessRequest<{ id: string }>, res: Response) => {
+    const { id } = req.params;
+    const role = req.user?.role;
+
+    if (role === 'department_admin') {
+      const userDept = req.user?.department ? String(req.user.department) : (req.user?.id ? (await User.findById(req.user.id))?.department?.toString() : undefined);
+      if (!userDept || userDept !== id) {
+        return sendResponse.forbidden?.(res, 'Access denied to report for this department') ?? res.status(403).json({ message: 'Forbidden' });
+      }
+    } else if (role === 'branch_admin' || role === 'manager') {
+      const userBranch = req.user?.branch ? String(req.user.branch) : (req.user?.id ? (await User.findById(req.user.id))?.branch?.toString() : undefined);
+      const dept = await Department.findById(id);
+      if (!dept || String(dept.branch) !== String(userBranch)) {
+        return sendResponse.forbidden?.(res, 'Access denied to report for this department') ?? res.status(403).json({ message: 'Forbidden' });
+      }
+    }
+
+    const { from, to, status } = req.query as { from?: string; to?: string; status?: string };
+    const report = await service.getDepartmentBillReport(id, { from, to, status });
+
+    const { generateDepartmentReportPdf } = await import('./exportbill.util.js');
+    const pdfBuffer = await generateDepartmentReportPdf(report);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename=department-report-${id}.pdf`);
+    res.send(pdfBuffer);
+  },
 };
 
 export const {
@@ -218,4 +330,8 @@ export const {
   approveCreditBill,
   rejectCreditBill,
   downloadBillPdf,
+  downloadBillDocx,
+  getDepartmentBillReport,
+  downloadDepartmentBillReportDocx,
+  downloadDepartmentBillReportPdf,
 } = wrapControllers(controllers);

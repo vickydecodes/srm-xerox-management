@@ -12,16 +12,24 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { MoreHorizontal, Printer, Eye } from "lucide-react";
+import { MoreHorizontal, Printer, Eye, FileDown } from "lucide-react";
 import { Hint } from "@/core/utils/tooltip.util";
-import { printPdf } from "@/core/api/api.service";
+import { printPdf, downloadDocx } from "@/core/api/api.service";
 import { useAuth } from "@/core/contexts/auth.context";
 
-export const printBillPdf = async (billId, code) => {
+export const printBillPdf = async (billId) => {
   try {
     await printPdf(`/bills/${billId}/pdf`);
   } catch (err) {
     console.error("Failed to print bill PDF:", err);
+  }
+};
+
+export const downloadBillDocx = async (billId, code) => {
+  try {
+    await downloadDocx(`/bills/${billId}/docx`, `bill-${code || billId}.docx`);
+  } catch (err) {
+    console.error("Failed to download bill DOCX:", err);
   }
 };
 
@@ -133,10 +141,19 @@ export const useBillColumns = (bills) => {
                 variant="ghost"
                 size="icon"
                 className="size-8 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:text-indigo-200 dark:hover:bg-indigo-950/50"
-                onClick={() => printBillPdf(bill._id, bill.code)}
+                onClick={() => printBillPdf(bill._id)}
                 title="Print Bill"
               >
                 <Printer className="size-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8 text-blue-600 hover:text-blue-900 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-200 dark:hover:bg-blue-950/50"
+                onClick={() => downloadBillDocx(bill._id, bill.code)}
+                title="Download DOCX (Word)"
+              >
+                <FileDown className="size-4" />
               </Button>
             </div>
           );
@@ -148,7 +165,8 @@ export const useBillColumns = (bills) => {
               variant="ghost"
               size="icon"
               className="size-8 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:text-indigo-200 dark:hover:bg-indigo-950/50"
-              onClick={() => printBillPdf(bill._id, bill.code)}
+              onClick={() => printBillPdf(bill._id)}
+              title="Print Bill"
             >
               <Printer className="size-4" />
             </Button>
@@ -168,8 +186,12 @@ export const useBillColumns = (bills) => {
                   Edit
                 </DropdownMenuItem>
 
-                <DropdownMenuItem onClick={() => printBillPdf(bill._id, bill.code)}>
+                <DropdownMenuItem onClick={() => printBillPdf(bill._id)}>
                   Print Bill
+                </DropdownMenuItem>
+
+                <DropdownMenuItem onClick={() => downloadBillDocx(bill._id, bill.code)}>
+                  Download Word (DOCX)
                 </DropdownMenuItem>
 
                 <DropdownMenuItem onClick={() => bills.togglePaymentStatus(bill)}>
@@ -184,8 +206,6 @@ export const useBillColumns = (bills) => {
                 >
                   Delete Permanently
                 </DropdownMenuItem>
-
-
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

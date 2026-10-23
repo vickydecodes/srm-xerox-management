@@ -4,6 +4,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useApi } from "@/core/contexts/api.context";
+import { useAuth } from "@/core/contexts/auth.context";
+import { useUI } from "@/core/contexts/ui.context";
+import { DepartmentReportModal } from "@/modules/department/department-report.modal";
 import { toast } from "sonner";
 import {
   IconBuildingCommunity,
@@ -12,13 +15,29 @@ import {
   IconCoin,
   IconClipboardList,
   IconCreditCard,
+  IconFileDescription,
 } from "@tabler/icons-react";
 
 export default function DaDashboard({ data, refreshData }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { openModal } = useUI();
+
   const stats = data?.stats || {};
   const recentOrders = data?.recentOrders || [];
   const recentBills = data?.recentBills || [];
+
+  const handleOpenReport = () => {
+    const deptId =
+      typeof user?.department === "object"
+        ? user.department?._id || user.department?.id
+        : user?.department;
+    if (deptId) {
+      openModal(DepartmentReportModal, { departmentId: deptId, department: user?.department });
+    } else {
+      toast.error("No department linked to your account");
+    }
+  };
 
   const currencyFormatter = (val) =>
     new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(val);
@@ -64,20 +83,32 @@ export default function DaDashboard({ data, refreshData }) {
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-500">
       
-      {/* Quick Actions Bar - Minimalist */}
-      <div className="flex flex-wrap items-center gap-2">
-        {quickActions.map((act, i) => (
-          <Button
-            key={i}
-            variant="outline"
-            size="sm"
-            onClick={() => navigate(act.path)}
-            className="flex items-center gap-2 text-xs font-medium h-8 border-border/60 shadow-none text-muted-foreground hover:text-foreground"
-          >
-            {React.cloneElement(act.icon, { className: "w-3.5 h-3.5" })}
-            {act.title}
-          </Button>
-        ))}
+      {/* Quick Actions Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {quickActions.map((act, i) => (
+            <Button
+              key={i}
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(act.path)}
+              className="flex items-center gap-2 text-xs font-medium h-8 border-border/60 shadow-none text-muted-foreground hover:text-foreground"
+            >
+              {React.cloneElement(act.icon, { className: "w-3.5 h-3.5" })}
+              {act.title}
+            </Button>
+          ))}
+        </div>
+
+        <Button
+          variant="default"
+          size="sm"
+          onClick={handleOpenReport}
+          className="flex items-center gap-2 text-xs font-semibold h-8 bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs"
+        >
+          <IconFileDescription className="w-3.5 h-3.5" />
+          Generate Report
+        </Button>
       </div>
 
       {/* Main KPIs - Vercel Style Grid */}

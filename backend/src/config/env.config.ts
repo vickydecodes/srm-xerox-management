@@ -1,6 +1,12 @@
 import dotenv from 'dotenv';
+import path from 'path';
 
 dotenv.config();
+
+if (process.env.NODE_ENV === 'test') {
+  dotenv.config({ path: path.resolve(process.cwd(), '.env.test'), override: true });
+  dotenv.config({ path: path.resolve(process.cwd(), 'backend/.env.test'), override: true });
+}
 
 type ENVTYPE = {
   NODE_ENV: string;

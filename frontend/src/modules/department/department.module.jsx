@@ -38,8 +38,12 @@ export const useDepartmentModule = (exported) => {
   };
 
   const openClearCreditByBill = (department) => {
-  return openModal(modals.clearCreditByBill, { department, exported });
-};
+    return openModal(modals.clearCreditByBill, { department, exported });
+  };
+
+  const openReport = (department) => {
+    return openModal(modals.report, { department, exported });
+  };
 
   const openCreate = () => {
     return openModal(modals.create, {
@@ -128,6 +132,7 @@ export const useDepartmentModule = (exported) => {
     openErase,
     openRetrieve,
     openActiveStatus,
+    openReport,
     crud,
     fetch,
     reset,

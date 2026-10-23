@@ -125,7 +125,7 @@ export default function Settings() {
     debounceRef.current = setTimeout(() => {
       loadPreview();
     }, 800);
-  }, [pdfTitle, pdfPaperSize, pdfMargin, pdfLogoSize, pdfCustomWidth, pdfCustomHeight, selectedShop]);
+  }, [pdfTitle, pdfPaperSize, pdfMargin, pdfLogoSize, pdfCustomWidth, pdfCustomHeight, srmCollegeEmail, selectedShop]);
 
   const handleSave = async () => {
     if (!srmCollegeEmail.trim() || !pdfTitle.trim()) return;
@@ -460,7 +460,7 @@ export default function Settings() {
                     <RefreshCw className={`h-4 w-4 ${previewLoading ? 'animate-spin' : ''}`} />
                   </Button>
                 </CardHeader>
-                <CardContent className="p-0 flex-1 relative bg-muted/10">
+                <CardContent className="p-0 flex-1 relative bg-muted/10 overflow-hidden">
                   {previewLoading && !previewUrl && (
                     <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm z-10">
                       <div className="flex flex-col items-center gap-2">

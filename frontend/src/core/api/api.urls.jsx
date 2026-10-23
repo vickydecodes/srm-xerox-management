@@ -339,6 +339,7 @@ const apiurls = {
     get: { method: "get", url: (shopId) => `${base_url}/settings${shopId ? `?shop=${shopId}` : ''}` },
     update: { method: "put", url: (shopId) => `${base_url}/settings${shopId ? `?shop=${shopId}` : ''}` },
     previewPdf: { method: "post", url: () => `${base_url}/settings/preview-pdf` },
+    previewDocx: { method: "post", url: () => `${base_url}/settings/preview-docx` },
   },
   search: {
     products: { method: "get", url: () => `${base_url}/searches/products` },

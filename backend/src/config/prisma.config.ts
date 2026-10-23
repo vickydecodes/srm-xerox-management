@@ -7,6 +7,13 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 const currentDir = typeof __dirname !== 'undefined' ? __dirname : path.dirname(fileURLToPath(import.meta.url));
+
+if (process.env.NODE_ENV === 'test') {
+  dotenv.config({ path: path.resolve(currentDir, '../../.env.test'), override: true });
+  dotenv.config({ path: path.resolve(process.cwd(), 'backend/.env.test'), override: true });
+  dotenv.config({ path: path.resolve(process.cwd(), '.env.test'), override: true });
+}
+
 if (!process.env.DATABASE_URL) {
   dotenv.config({ path: path.resolve(currentDir, '../../.env') });
 }
