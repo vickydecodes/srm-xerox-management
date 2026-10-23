@@ -394,6 +394,14 @@ function EventOrderForm({
     );
   }, [workOrderServices, serviceSearch]);
 
+  const alphabetizedServices = useMemo(
+    () =>
+      [...filteredServices].sort((a, b) =>
+        String(a?.name || "").localeCompare(String(b?.name || ""), undefined, { sensitivity: "base" })
+      ),
+    [filteredServices]
+  );
+
   const handleMarkRemainingNotRequired = () => {
     setServiceRequirements((prev) => {
       const updated = { ...prev };
@@ -879,7 +887,7 @@ function EventOrderForm({
                 </div>
               ) : (
                 <div className="border rounded-lg overflow-hidden bg-card divide-y">
-                  {filteredServices.map((service) => {
+                  {alphabetizedServices.map((service, serviceIndex) => {
                     if (!service) return null;
                     const sId = String(service._id || service.id || "");
                     if (!sId) return null;
@@ -903,41 +911,18 @@ function EventOrderForm({
                       >
                         {/* Service Header Row with Checkboxes */}
                         <div className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                          <div className="flex items-center gap-3">
-                            <div
-                              className={cn(
-                                "w-2.5 h-2.5 rounded-full shrink-0",
-                                isRequired
-                                  ? "bg-emerald-500 ring-2 ring-emerald-500/20"
-                                  : currentReq === "not_required"
-                                    ? "bg-muted-foreground/30"
-                                    : "bg-amber-400"
-                              )}
-                            />
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-semibold text-sm text-foreground">{service.name}</span>
-                                {service.code && (
-                                  <span className="text-[10px] text-muted-foreground uppercase bg-muted px-1.5 py-0.5 rounded font-mono">
-                                    {service.code}
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-xs text-muted-foreground mt-0.5">
-                                {service.description || (service.unit ? `Unit: ${service.unit}` : "Standard Event Service")}
-                                {service.price ? ` • Base rate: ₹${service.price}` : ""}
-                              </p>
-                            </div>
-                          </div>
+                          <span className="text-sm font-semibold text-foreground">
+                            {serviceIndex + 1}. Do you need {service.name}?
+                          </span>
 
-                          <div className="flex items-center gap-3 shrink-0">
+                          <div className="flex items-center gap-1 rounded-lg bg-muted/60 p-1 shrink-0">
                             <label
                               htmlFor={`req-required-${sId}`}
                               className={cn(
                                 "flex items-center gap-2 px-3 py-1.5 rounded-md border text-xs font-medium cursor-pointer transition-colors select-none",
                                 isRequired
-                                  ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-semibold shadow-2xs"
-                                  : "border-border/60 hover:bg-muted/40 text-foreground"
+                                  ? "border-emerald-500/50 bg-background text-emerald-700 dark:text-emerald-300 font-semibold shadow-2xs"
+                                  : "border-transparent hover:bg-background/70 text-foreground"
                               )}
                             >
                               <Checkbox
@@ -959,8 +944,8 @@ function EventOrderForm({
                               className={cn(
                                 "flex items-center gap-2 px-3 py-1.5 rounded-md border text-xs font-medium cursor-pointer transition-colors select-none",
                                 currentReq === "not_required"
-                                  ? "border-neutral-500/50 bg-neutral-500/10 text-neutral-800 dark:text-neutral-200 font-semibold shadow-2xs"
-                                  : "border-border/60 hover:bg-muted/40 text-muted-foreground"
+                                  ? "border-neutral-500/50 bg-background text-neutral-800 dark:text-neutral-200 font-semibold shadow-2xs"
+                                  : "border-transparent hover:bg-background/70 text-muted-foreground"
                               )}
                             >
                               <Checkbox

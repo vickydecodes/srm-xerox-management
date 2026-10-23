@@ -120,9 +120,32 @@ describe('OrderCreation Page', () => {
     render(<OrderCreation />);
 
     expect(screen.getByText('2. Event Order Services')).toBeInTheDocument();
-    expect(screen.getByText('Color Poster')).toBeInTheDocument();
+    expect(screen.getByText('1. Do you need Color Poster?')).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: /^Required for/i })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: /^Not Required for/i })).toBeInTheDocument();
+  });
+
+  it('lists event order services alphabetically by product name', () => {
+    mockSearchParams = new URLSearchParams('tab=work-order');
+    useApi.mockReturnValue({
+      eventOrders: { crud: { create: vi.fn() } },
+      xeroxOrders,
+      services: {
+        state: [
+          { _id: 's2', name: 'Invitation', isWorkOrder: true },
+          { _id: 's1', name: 'Color Poster', isWorkOrder: true },
+        ],
+      },
+      shops: { state: [{ _id: 'sh1', name: 'Main Campus Xerox' }] },
+      branches: { state: [{ _id: 'b1', name: 'KTR Campus' }] },
+      departments: { state: [{ _id: 'd1', name: 'CSE' }] },
+      search: { searchProducts: vi.fn().mockResolvedValue([]) },
+    });
+
+    render(<OrderCreation />);
+
+    expect(screen.getByText('1. Do you need Color Poster?')).toBeInTheDocument();
+    expect(screen.getByText('2. Do you need Invitation?')).toBeInTheDocument();
   });
 
   it('ticking Required selects the service and shows size selection and Attach approved draft button in row', () => {
