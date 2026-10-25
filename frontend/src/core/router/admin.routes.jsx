@@ -170,27 +170,27 @@ export const adminRoutes = {
     //   element: <Bill />,
     // },
 
-    {
-      path: "/super_admin/order-creation",
-      label: "Create Order",
-      title: "Create Requisition Order",
-      description: "Create a Xerox Order or Work Order",
-      icon: <IconPlus className="h-5 w-5 shrink-0" />,
-      element: <OrderCreation />,
-    },
-    {
-      path: "/super_admin/order",
-      label: "Orders",
-      title: "Orders",
-      description: "View and manage all department Event and Xerox printing orders",
-      icon: <IconClipboardList className="h-5 w-5 shrink-0" />,
-      element: (
-        <OrdersPage
-          title="Orders"
-          description="View and manage all department Event and Xerox printing orders"
-        />
-      ),
-    },
+    // {
+    //   path: "/super_admin/order-creation",
+    //   label: "Create Order",
+    //   title: "Create Requisition Order",
+    //   description: "Create a Xerox Order or Work Order",
+    //   icon: <IconPlus className="h-5 w-5 shrink-0" />,
+    //   element: <OrderCreation />,
+    // },
+    // {
+    //   path: "/super_admin/order",
+    //   label: "Orders",
+    //   title: "Orders",
+    //   description: "View and manage all department Event and Xerox printing orders",
+    //   icon: <IconClipboardList className="h-5 w-5 shrink-0" />,
+    //   element: (
+    //     <OrdersPage
+    //       title="Orders"
+    //       description="View and manage all department Event and Xerox printing orders"
+    //     />
+    //   ),
+    // },
     {
       path: "/super_admin/event-order",
       label: "Event Orders",
