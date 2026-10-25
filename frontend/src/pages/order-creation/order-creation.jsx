@@ -564,6 +564,7 @@ function EventOrderForm({
       delete rest.fundingMethod;
       delete rest.registrationFeeAmount;
       delete rest.shop;
+      delete rest.code;
 
       // Ensure eventDate is present for backend API
       rest.eventDate = rest.eventStartDate || rest.eventDate;
@@ -1683,6 +1684,7 @@ function XeroxOrderForm({
       }
       delete payload.fundingMethod;
       delete payload.shop;
+      delete payload.code;
 
       const formData = new FormData();
       Object.entries(payload).forEach(([key, val]) => {

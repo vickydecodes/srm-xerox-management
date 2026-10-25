@@ -104,6 +104,7 @@ export class XeroxOrderDocument {
       this.isNew = true;
     }
 
+    this.code = data.code && String(data.code).trim() ? String(data.code).trim() : undefined;
     this.self_supports = data.self_supports || data.sponsors || [];
     if (!this.items) this.items = [];
     if (!this.proofs) this.proofs = [];
@@ -121,12 +122,21 @@ export class XeroxOrderDocument {
   async runPreSaveHooks() {
     // 1. Counter for code
     if (this.status !== 'draft' && !this.code) {
-      const counter = await CounterModel.findOneAndUpdate(
+      let counter = await CounterModel.findOneAndUpdate(
         { key: 'xerox_order' },
         { $inc: { value: 1 } },
         { upsert: true, new: true }
       );
-      this.code = `XO-${String(counter!.value).padStart(4, '0')}`;
+      let newCode = `XO-${String(counter!.value).padStart(4, '0')}`;
+      while (await (prisma as any).xeroxOrder.findUnique({ where: { code: newCode } })) {
+        counter = await CounterModel.findOneAndUpdate(
+          { key: 'xerox_order' },
+          { $inc: { value: 1 } },
+          { upsert: true, new: true }
+        );
+        newCode = `XO-${String(counter!.value).padStart(4, '0')}`;
+      }
+      this.code = newCode;
     }
 
     // 2. Item total calculation
@@ -172,7 +182,7 @@ export class XeroxOrderDocument {
     await this.runPreSaveHooks();
 
     const payload = {
-      code: this.code,
+      code: this.code && this.code.trim() ? this.code.trim() : null,
       purpose: this.purpose,
       attachmentEmail: this.attachmentEmail,
       managementAmount: this.managementAmount,

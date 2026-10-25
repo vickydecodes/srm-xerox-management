@@ -4,18 +4,53 @@ export const parsePrismaError = (err: any) => {
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     if (err.code === 'P2002') {
       const target = err.meta?.target;
-      let field = 'Field';
+      let field: string | undefined;
+
       if (Array.isArray(target) && target.length > 0) {
-        field = target[0];
+        field = String(target[0]);
       } else if (typeof target === 'string') {
         field = target;
       }
-      
+
+      if (!field && err.meta?.driverAdapterError) {
+        const daError = err.meta.driverAdapterError as any;
+        const constraint =
+          daError?.cause?.constraint?.index ||
+          daError?.cause?.originalMessage ||
+          '';
+
+        // Match table_column_key, e.g., Order_code_key -> code
+        const match = constraint.match(/(?:public\.)?["']?\w+["']?_["']?(\w+)["']?_key/i);
+        if (match && match[1]) {
+          field = match[1];
+        } else {
+          // Check for Key (col)=(val) already exists
+          const keyMatch = constraint.match(/Key\s*\(([^)]+)\)=/i);
+          if (keyMatch && keyMatch[1]) {
+            field = keyMatch[1].trim();
+          }
+        }
+      }
+
+      if (!field && typeof err.meta?.constraint === 'string') {
+        const match = err.meta.constraint.match(/(?:public\.)?["']?\w+["']?_["']?(\w+)["']?_key/i);
+        if (match && match[1]) {
+          field = match[1];
+        }
+      }
+
+      const displayField = field
+        ? field
+            .split('_')
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' ')
+        : 'Record';
+
       return {
-        message: `${field.charAt(0).toUpperCase() + field.slice(1)} already exists`,
+        message: `${displayField} already exists`,
         code: 'DUPLICATE_KEY',
         status: 409,
-        field: field,
+        field: field || 'record',
       };
     }
     

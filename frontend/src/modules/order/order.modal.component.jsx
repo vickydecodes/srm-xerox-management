@@ -556,6 +556,7 @@ export const Create = ({
     run: (data) => {
       const { proofFiles, ...rest } = data;
       delete rest.fundingMethod;
+      delete rest.code;
 
       const itemAttachmentFiles = [];
       if (Array.isArray(rest.items)) {
