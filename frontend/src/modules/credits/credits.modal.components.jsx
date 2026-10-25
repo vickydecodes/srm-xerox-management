@@ -71,6 +71,7 @@ export const Create = ({ closeModal, exported }) => {
   useEffect(() => {
     if (allDepts.length > 0) {
       const filtered = allDepts.filter((d) => {
+        if (user?.role === "shop_admin") return true;
         if (user?.role === "super_admin") return true;
         if (user?.role === "branch_admin" || user?.role === "manager") {
           const uBranch = user.branch?._id || user.branch;

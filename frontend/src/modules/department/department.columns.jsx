@@ -10,8 +10,12 @@ import {
 import { MoreHorizontal } from "lucide-react";
 import { Hint } from "@/core/utils/tooltip.util";
 import formatDate from "@/core/utils/formatdate.util";
+import { useAuth } from "@/core/contexts/auth.context";
 
 export const useDepartmentColumns = (departments) => {
+  const { user } = useAuth();
+  const canClearCredit = user?.role === "shop_admin";
+
   return [
     {
       accessorKey: "code",
@@ -91,16 +95,20 @@ export const useDepartmentColumns = (departments) => {
               <DropdownMenuItem onClick={() => departments.openEdit(dept)}>
                 Edit
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => departments.openManageCredit(dept)}
-              >
-                Manage Credit
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => departments.openClearCreditByBill(dept)}
-              >
-                Clear Credit (by Bill)
-              </DropdownMenuItem>
+              {canClearCredit && (
+                <>
+                  <DropdownMenuItem
+                    onClick={() => departments.openManageCredit(dept)}
+                  >
+                    Manage Credit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => departments.openClearCreditByBill(dept)}
+                  >
+                    Clear Credit (by Bill)
+                  </DropdownMenuItem>
+                </>
+              )}
 
               <DropdownMenuItem
                 onClick={() => departments.openReport(dept)}

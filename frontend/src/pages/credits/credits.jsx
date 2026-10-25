@@ -28,7 +28,11 @@ export default function Credits() {
       data={state}
       columns={columns}
       searchKey={'remarks'}
-      create={createbtn('Create New Credit', () => credits.openCreate(), true)}
+      create={
+        credits.allow.create
+          ? createbtn('Create New Credit', () => credits.openCreate(), true)
+          : null
+      }
       manualPagination={true}
       reset={credits.reset}
       loading={credits.loading.getAll}

@@ -6,10 +6,12 @@ import Branch from '@db/models/branch.model.ts';
 import Bill from '@db/models/bill.model.ts';
 import CreditPayment from '@db/models/credit.model.ts';
 import { tester } from '@core/constants/tester.constant.ts';
+import { generateToken } from '../lib/jwt.ts';
 
 const baseRoute = '/api/v1/departments';
 
 let token: string;
+let shopAdminToken: string;
 let cleanupAdmin: () => Promise<void>;
 let adminUserId: string;
 
@@ -22,6 +24,10 @@ beforeAll(async () => {
   await bootstrap();
   const setup = await tester.setupAdmin();
   token = setup.token;
+  shopAdminToken = generateToken({
+    id: setup.user._id,
+    role: 'shop_admin',
+  });
   cleanupAdmin = setup.cleanup;
   adminUserId = setup.user._id.toString();
 
@@ -176,7 +182,7 @@ describe('Department API Endpoint Suite', () => {
         paymentMethod: 'CASH',
         remarks: 'Advance credit deposit',
       },
-      token
+      shopAdminToken
     );
 
     tester.assertUpdated(res, 'department', (data) => {
@@ -212,12 +218,25 @@ describe('Department API Endpoint Suite', () => {
         paymentMethod: 'UPI',
         remarks: 'Full settlement of bill',
       },
-      token
+      shopAdminToken
     );
 
     tester.assertUpdated(res, 'department');
 
     const updatedBill = await Bill.findById(testCreditBillId);
     expect(updatedBill?.status).to.equal('PAID');
+  });
+
+  it('should reject credit clearing by non-shop admins', async () => {
+    const res = await tester.post(
+      `${baseRoute}/${creditDeptId}/clear-credit`,
+      {
+        amount: 500,
+        paymentMethod: 'CASH',
+      },
+      token
+    );
+
+    tester.assertForbidden(res, 'Only shop admins can clear credit bills');
   });
 });

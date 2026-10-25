@@ -84,6 +84,10 @@ const controllers = {
     },
     res: Response
   ) => {
+    if (req.user?.role !== 'shop_admin') {
+      return sendResponse.forbidden(res, 'Only shop admins can clear credit bills');
+    }
+
     const { id } = req.params;
     const result = await service.clearCredit(id, req.user!.id, req.body);
     if (!result) return sendResponse.notFound(res, 'department');

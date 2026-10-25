@@ -81,24 +81,32 @@ export const createEventOrder = async (
 
 export const getAllEventOrders = async (
   queries: Record<string, unknown>,
-  options?: { branchId?: string }
+  options?: { branchId?: string; approvedByBranchOnly?: boolean }
 ) => {
-  const rawQuery = options?.branchId
-    ? { branch: toObjectId(options.branchId) }
-    : undefined;
+  const rawQuery: Record<string, unknown> = {};
+  if (options?.branchId) {
+    rawQuery.branch = toObjectId(options.branchId);
+  }
+  if (options?.approvedByBranchOnly) {
+    rawQuery.branchAdminApproval = {
+      path: ['status'],
+      equals: 'approved',
+    };
+  }
 
   return dynamicFilter(
     EventOrder,
     eventOrderFilterConfig,
     queries,
     {
-      rawQuery,
+      rawQuery: Object.keys(rawQuery).length ? rawQuery : undefined,
     }
   );
 };
 
 export const getEventOrderById = async (id: string) => {
-  return EventOrder.findById(id);
+  const order = await EventOrder.findById(id);
+  return order ? enhanceEventOrder(order) : null;
 };
 
 export const updateEventOrder = async (

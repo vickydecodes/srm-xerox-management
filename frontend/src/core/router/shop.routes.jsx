@@ -10,6 +10,7 @@ import {
   IconCalendarEvent,
   IconPrinter,
   IconPackages,
+  IconCreditCard,
 } from "@tabler/icons-react";
 
 import Bill from "@/pages/bill/bill";
@@ -23,6 +24,7 @@ import XeroxOrder from "@/pages/xerox-order/xerox-order";
 import OrdersPage from "@/pages/order/orders";
 import InventoryProduct from "@/pages/inventory-product/inventory-product";
 import Settings from "@/pages/settings/settings"; 
+import Credits from "@/pages/credits/credits";
 
 
 export const shopAdminRoutes = {
@@ -73,6 +75,14 @@ export const shopAdminRoutes = {
         />
       ),
       icon: <IconClipboardList className="h-5 w-5 shrink-0" />,
+    },
+    {
+      path: "/shop_admin/credits",
+      label: "Credit Tracker",
+      title: "Credit Tracking & Balances",
+      description: "Review department credit bills and record settlements.",
+      icon: <IconCreditCard className="h-5 w-5 shrink-0" />,
+      element: <Credits />,
     },
     {
       path: "/shop_admin/event-order",

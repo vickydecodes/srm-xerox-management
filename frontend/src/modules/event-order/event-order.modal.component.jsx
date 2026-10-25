@@ -89,7 +89,7 @@ export const View = ({ order, exported, closeModal } = {}) => {
               Event Order: {order?.code || "Draft"}
             </DialogTitle>
             <DialogDescription className="text-xs">
-              Created on {formatdate(order?.createdAt)} • {order?.department?.name || "Department"}
+              Created on {formatdate(order?.createdAt)}
             </DialogDescription>
           </div>
           <Badge variant="outline" className={statusStyles[order?.status] || ""}>
@@ -99,6 +99,24 @@ export const View = ({ order, exported, closeModal } = {}) => {
       </DialogHeader>
 
       <div className="space-y-5 text-sm">
+        <div className="rounded-lg border p-4 bg-muted/20 space-y-3">
+          <h4 className="font-semibold text-primary">Order Form Details</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+            <div>
+              <span className="text-muted-foreground block">Email</span>
+              <span className="font-medium text-foreground">{order?.attachmentEmail || "-"}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground block">Branch</span>
+              <span className="font-medium text-foreground">{order?.branch?.name || "-"}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground block">Department</span>
+              <span className="font-medium text-foreground">{order?.department?.name || "-"}</span>
+            </div>
+          </div>
+        </div>
+
         {/* Event Details Card */}
         <div className="rounded-lg border p-4 bg-muted/20 space-y-3">
           <h4 className="font-semibold text-primary">Event Information</h4>
@@ -217,9 +235,6 @@ export const View = ({ order, exported, closeModal } = {}) => {
                 <div key={idx} className="flex items-center justify-between p-2 rounded border bg-background text-xs">
                   <div className="flex items-center gap-2 truncate">
                     <span className="truncate font-medium">{proof.filename || `Proof #${idx + 1}`}</span>
-                    <Badge variant={proof.verified ? "default" : "secondary"} className="text-[10px]">
-                      {proof.verified ? "Verified" : "Unverified"}
-                    </Badge>
                   </div>
                   <a
                     href={proof.proof}

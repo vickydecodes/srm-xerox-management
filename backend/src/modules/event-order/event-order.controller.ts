@@ -83,7 +83,7 @@ const controllers = {
   },
 
   getAllEventOrders: async (
-    req: Request,
+    req: AuthRequest,
     res: Response
   ) => {
     const queries = buildQuery(req);
@@ -92,7 +92,10 @@ const controllers = {
 
     const result = await service.getAllEventOrders(
       queries,
-      { branchId: branch }
+      {
+        branchId: branch,
+        approvedByBranchOnly: req.user?.role === 'shop_admin',
+      }
     );
 
     return sendResponse.paginated(

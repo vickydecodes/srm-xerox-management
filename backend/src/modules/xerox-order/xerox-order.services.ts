@@ -81,24 +81,32 @@ export const createXeroxOrder = async (
 
 export const getAllXeroxOrders = async (
   queries: Record<string, unknown>,
-  options?: { branchId?: string }
+  options?: { branchId?: string; approvedByBranchOnly?: boolean }
 ) => {
-  const rawQuery = options?.branchId
-    ? { branch: toObjectId(options.branchId) }
-    : undefined;
+  const rawQuery: Record<string, unknown> = {};
+  if (options?.branchId) {
+    rawQuery.branch = toObjectId(options.branchId);
+  }
+  if (options?.approvedByBranchOnly) {
+    rawQuery.branchAdminApproval = {
+      path: ['status'],
+      equals: 'approved',
+    };
+  }
 
   return dynamicFilter(
     XeroxOrder,
     xeroxOrderFilterConfig,
     queries,
     {
-      rawQuery,
+      rawQuery: Object.keys(rawQuery).length ? rawQuery : undefined,
     }
   );
 };
 
 export const getXeroxOrderById = async (id: string) => {
-  return XeroxOrder.findById(id);
+  const order = await XeroxOrder.findById(id);
+  return order ? enhanceXeroxOrder(order) : null;
 };
 
 export const updateXeroxOrder = async (
