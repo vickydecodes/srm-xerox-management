@@ -62,7 +62,7 @@ export default function OrderCreation() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
-  const { eventOrders, xeroxOrders, services, shops, branches, departments, search } = useApi();
+  const { eventOrders, xeroxOrders, services, shops, branches, departments, search, settings } = useApi();
   const { createPreset } = useLoader();
 
   const branchList = useBranchStore((s) => s.list) || branches?.state || [];
@@ -90,12 +90,21 @@ export default function OrderCreation() {
     services,
     shops,
     branches,
-    departments
+    departments,
+    settings
   );
 
   useEffect(() => {
     loadResources();
   }, []);
+
+  // Resolve college email from settings (supports common module shapes)
+  const collegeEmail =
+    settings?.state?.srmCollegeEmail ||
+    settings?.data?.srmCollegeEmail ||
+    (Array.isArray(settings?.state) ? settings.state[0]?.srmCollegeEmail : null) ||
+    settings?.srmCollegeEmail ||
+    "srm.netevents@gmail.com";
 
   const handleTabChange = (val) => {
     setActiveTab(val);
@@ -142,6 +151,7 @@ export default function OrderCreation() {
             departments={deptList}
             shops={shopList}
             searchProducts={search?.searchProducts}
+            collegeEmail={collegeEmail}
             onSubmitSuccess={() => navigate(user?.role === "department_admin" ? "/department_admin/" : `/${user?.role}/xerox-order`)}
             onCancel={() => navigate(user?.role === "department_admin" ? "/department_admin/" : `/${user?.role}/xerox-order`)}
             xeroxOrders={xeroxOrders}
@@ -170,6 +180,7 @@ export default function OrderCreation() {
             )}
             servicesLoading={servicesLoading}
             searchProducts={search?.searchProducts}
+            collegeEmail={collegeEmail}
             onSubmitSuccess={() => navigate(user?.role === "department_admin" ? "/department_admin/" : `/${user?.role}/event-order`)}
             onCancel={() => navigate(user?.role === "department_admin" ? "/department_admin/" : `/${user?.role}/event-order`)}
             eventOrders={eventOrders}
@@ -272,6 +283,7 @@ function EventOrderForm({
   services,
   servicesLoading = false,
   searchProducts,
+  collegeEmail = "srmxerox@srmist.edu.in",
   onSubmitSuccess,
   onCancel,
   eventOrders,
@@ -709,6 +721,21 @@ function EventOrderForm({
       <CardContent>
         <Form {...form}>
           <form onSubmit={handleFormSubmit} className="space-y-6">
+            {/* Note: Send approved design copies */}
+            <div className="flex items-start gap-2.5 rounded-lg border border-amber-300/70 bg-amber-50 px-3.5 py-2.5 text-amber-900 dark:border-amber-700/50 dark:bg-amber-950/30 dark:text-amber-200">
+              <IconAlertCircle className="size-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+              <p className="text-xs leading-relaxed">
+                <span className="font-semibold">NOTE:</span> Send your approved design copies to{" "}
+                <a
+                  href={`mailto:${collegeEmail}`}
+                  className="font-semibold underline underline-offset-2 hover:text-amber-700 dark:hover:text-amber-100"
+                >
+                  {collegeEmail}
+                </a>
+                .
+              </p>
+            </div>
+
             {/* General Info Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
@@ -1547,6 +1574,7 @@ function XeroxOrderForm({
   departments,
   shops,
   searchProducts,
+  collegeEmail = "srmxerox@srmist.edu.in",
   onSubmitSuccess,
   onCancel,
   xeroxOrders,
@@ -1768,6 +1796,21 @@ function XeroxOrderForm({
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-6">
+            {/* Note: Send approved design copies */}
+            <div className="flex items-start gap-2.5 rounded-lg border border-amber-300/70 bg-amber-50 px-3.5 py-2.5 text-amber-900 dark:border-amber-700/50 dark:bg-amber-950/30 dark:text-amber-200">
+              <IconAlertCircle className="size-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+              <p className="text-xs leading-relaxed">
+                <span className="font-semibold">NOTE:</span> Send your approved design copies to{" "}
+                <a
+                  href={`mailto:${collegeEmail}`}
+                  className="font-semibold underline underline-offset-2 hover:text-amber-700 dark:hover:text-amber-100"
+                >
+                  {collegeEmail}
+                </a>
+                .
+              </p>
+            </div>
+
             {/* General Info */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>

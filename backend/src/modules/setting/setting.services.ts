@@ -20,7 +20,7 @@ export const getSettings = async (shopId?: string | null) => {
   if (!settings) {
     settings = await new Setting({
       shop: null,
-      srmCollegeEmail: 'srmxerox@srmist.edu.in',
+      srmCollegeEmail: 'srm.netevents@gmail.com',
       pdfTitle: 'THE REPROGRAPHICS CENTRE',
       pdfPaperSize: 'A5 Landscape',
       pdfMargin: 30,
