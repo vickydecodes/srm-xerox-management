@@ -56,6 +56,7 @@ import { useBranchStore } from "@/modules/branch/branch.store";
 import { useDepartmentStore } from "@/modules/department/department.store";
 import { useServiceStore } from "@/modules/service/service.store";
 import { useShopStore } from "@/modules/shop/shop.store";
+import { useSettingStore } from "@/modules/setting/setting.store";
 import formatdate from "@/core/utils/formatdate.util";
 
 export default function OrderCreation() {
@@ -98,8 +99,12 @@ export default function OrderCreation() {
     loadResources();
   }, []);
 
+  const settingConfig = useSettingStore((s) => s.config);
+
   // Resolve college email from settings (supports common module shapes)
   const collegeEmail =
+    settingConfig?.srmCollegeEmail ||
+    settings?.config?.srmCollegeEmail ||
     settings?.state?.srmCollegeEmail ||
     settings?.data?.srmCollegeEmail ||
     (Array.isArray(settings?.state) ? settings.state[0]?.srmCollegeEmail : null) ||

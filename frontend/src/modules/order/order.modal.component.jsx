@@ -24,6 +24,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/core/contexts/auth.context";
 import { useShopStore } from "@/modules/shop/shop.store";
+import { useSettingStore } from "@/modules/setting/setting.store";
 import {
   orderCreateSchema,
   orderEditSchema,
@@ -607,8 +608,12 @@ export const Create = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const settingConfig = useSettingStore((s) => s.config);
   const collegeEmail =
-    exported?.settings?.config?.srmCollegeEmail || "srmxerox@srmist.edu.in";
+    settingConfig?.srmCollegeEmail ||
+    exported?.settings?.config?.srmCollegeEmail ||
+    exported?.settings?.state?.srmCollegeEmail ||
+    "srmxerox@srmist.edu.in";
 
   const handleOrderFormInvalid = (errors) => {
     console.error("Order form validation errors:", errors);
@@ -836,8 +841,12 @@ export const Edit = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const settingConfig = useSettingStore((s) => s.config);
   const collegeEmail =
-    exported?.settings?.config?.srmCollegeEmail || "srmxerox@srmist.edu.in";
+    settingConfig?.srmCollegeEmail ||
+    exported?.settings?.config?.srmCollegeEmail ||
+    exported?.settings?.state?.srmCollegeEmail ||
+    "srmxerox@srmist.edu.in";
 
   return (
     <DialogContent className="w-2xl max-h-[85vh] overflow-y-auto">

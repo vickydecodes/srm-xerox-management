@@ -336,8 +336,20 @@ const apiurls = {
     },
   },
   settings: {
-    get: { method: "get", url: (shopId) => `${base_url}/settings${shopId ? `?shop=${shopId}` : ''}` },
-    update: { method: "put", url: (shopId) => `${base_url}/settings${shopId ? `?shop=${shopId}` : ''}` },
+    get: {
+      method: "get",
+      url: (shopId) => {
+        const id = typeof shopId === "string" ? shopId : (shopId?.shop || null);
+        return `${base_url}/settings${id ? `?shop=${encodeURIComponent(id)}` : ''}`;
+      },
+    },
+    update: {
+      method: "put",
+      url: (shopId) => {
+        const id = typeof shopId === "string" ? shopId : (shopId?.shop || null);
+        return `${base_url}/settings${id ? `?shop=${encodeURIComponent(id)}` : ''}`;
+      },
+    },
     previewPdf: { method: "post", url: () => `${base_url}/settings/preview-pdf` },
     previewDocx: { method: "post", url: () => `${base_url}/settings/preview-docx` },
   },

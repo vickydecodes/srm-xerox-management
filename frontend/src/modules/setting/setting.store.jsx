@@ -11,7 +11,8 @@ export const useSettingStore = create((set) => ({
   fetchSettings: async (shopId) => {
     set({ loading: true });
     try {
-      const res = await apiRequest('get', apiurls.settings.get.url(shopId));
+      const sanitizedShopId = typeof shopId === 'string' ? shopId : (shopId?.shop || null);
+      const res = await apiRequest('get', apiurls.settings.get.url(sanitizedShopId));
       set({ config: res.data, loading: false });
       return res.data;
     } catch (err) {

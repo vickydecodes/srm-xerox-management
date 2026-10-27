@@ -10,6 +10,9 @@ export default defineConfig({
   server: {
     port: 5175,
   },
+  optimizeDeps: {
+    include: ['docx-preview'],
+  },
   resolve: {
     alias: {
       // eslint-disable-next-line 
