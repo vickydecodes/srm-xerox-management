@@ -78,11 +78,39 @@ export const adjustStockForBill = async (
     const newQty = newMap.get(itemId) || 0;
     const diff = newQty - oldQty;
 
-    if (diff !== 0) {
-      await InventoryProduct.findByIdAndUpdate(
-        itemId,
-        { $inc: { quantity: -diff } }
-      );
+    if (diff > 0) {
+      // DEDUCTING STOCK: Atomic conditional decrement to protect against simultaneous checkout races.
+      // Only decrements if available stock is >= diff.
+      const result = await prisma.inventoryProduct.updateMany({
+        where: {
+          id: itemId,
+          quantity: { gte: diff },
+        },
+        data: {
+          quantity: { decrement: diff },
+        },
+      });
+
+      if (result.count === 0) {
+        const product = await prisma.inventoryProduct.findUnique({
+          where: { id: itemId },
+          select: { quantity: true, product: true },
+        });
+        const available = product?.quantity ?? 0;
+        const error: any = new Error(
+          `Insufficient stock. Available: ${available}, Requested: ${diff}`
+        );
+        error.statusCode = 400;
+        throw error;
+      }
+    } else if (diff < 0) {
+      // RESTORING STOCK (e.g. bill item removed, reduced, or bill deleted)
+      await prisma.inventoryProduct.update({
+        where: { id: itemId },
+        data: {
+          quantity: { increment: Math.abs(diff) },
+        },
+      });
     }
   }
 };
