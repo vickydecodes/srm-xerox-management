@@ -124,7 +124,7 @@ export const AuthProvider = ({ children }) => {
       toast.success("Login successful");
       navigate(`/${activeUser.role}/`);
     } catch (err) {
-      return err;
+      throw err;
     } finally {
       setLoggingIn(false);
     }
