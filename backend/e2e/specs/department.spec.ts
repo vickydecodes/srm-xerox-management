@@ -75,7 +75,13 @@ test.describe('Backend Department API CRUD E2E', () => {
     expect(body.data.name).toBe(`PW Dept Updated ${suffix}`);
   });
 
-  test('DELETE /api/v1/departments/:id & PUT retrieve & DELETE erase', async ({ request }) => {
+  test('PATCH /api/v1/departments/:id/active-status & DELETE & PUT retrieve & DELETE erase', async ({ request }) => {
+    const statusRes = await request.patch(`${API_PREFIX}/departments/${deptId}/active-status`, {
+      headers: session.authHeaders,
+      data: { active: false },
+    });
+    expect(statusRes.status()).toBe(200);
+
     const delRes = await request.delete(`${API_PREFIX}/departments/${deptId}`, {
       headers: session.authHeaders,
     });

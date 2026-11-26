@@ -78,4 +78,27 @@ test.describe('Backend InventoryProduct API E2E', () => {
     const body = await res.json();
     expect(body.data.quantity).toBe(75);
   });
+
+  test('PATCH /api/v1/inventory-products/:id/active-status & DELETE & PUT retrieve & DELETE erase', async ({ request }) => {
+    const statusRes = await request.patch(`${API_PREFIX}/inventory-products/${inventoryProductId}/active-status`, {
+      headers: session.authHeaders,
+      data: { active: false },
+    });
+    expect(statusRes.status()).toBe(200);
+
+    const delRes = await request.delete(`${API_PREFIX}/inventory-products/${inventoryProductId}`, {
+      headers: session.authHeaders,
+    });
+    expect(delRes.status()).toBe(200);
+
+    const retRes = await request.put(`${API_PREFIX}/inventory-products/${inventoryProductId}/retrieve`, {
+      headers: session.authHeaders,
+    });
+    expect(retRes.status()).toBe(200);
+
+    const eraseRes = await request.delete(`${API_PREFIX}/inventory-products/${inventoryProductId}/erase`, {
+      headers: session.authHeaders,
+    });
+    expect(eraseRes.status()).toBe(200);
+  });
 });

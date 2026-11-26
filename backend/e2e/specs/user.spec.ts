@@ -49,6 +49,15 @@ test.describe('Backend User API CRUD E2E', () => {
     expect(Array.isArray(body.data)).toBe(true);
   });
 
+  test('GET /api/v1/users/:id - fetches user by ID', async ({ request }) => {
+    const res = await request.get(`${API_PREFIX}/users/${createdUserId}`, {
+      headers: session.authHeaders,
+    });
+    expect(res.status()).toBe(200);
+    const body = await res.json();
+    expect(body.data._id || body.data.id).toBe(createdUserId);
+  });
+
   test('PUT /api/v1/users/:id - updates user', async ({ request }) => {
     const res = await request.put(`${API_PREFIX}/users/${createdUserId}`, {
       headers: session.authHeaders,
@@ -59,7 +68,23 @@ test.describe('Backend User API CRUD E2E', () => {
     expect(body.data.name).toBe(`PW User Updated ${suffix}`);
   });
 
-  test('DELETE /api/v1/users/:id/erase - erases user', async ({ request }) => {
+  test('PATCH /api/v1/users/:id/active-status & DELETE & PUT retrieve & DELETE erase', async ({ request }) => {
+    const statusRes = await request.patch(`${API_PREFIX}/users/${createdUserId}/active-status`, {
+      headers: session.authHeaders,
+      data: { active: false },
+    });
+    expect(statusRes.status()).toBe(200);
+
+    const delRes = await request.delete(`${API_PREFIX}/users/${createdUserId}`, {
+      headers: session.authHeaders,
+    });
+    expect(delRes.status()).toBe(200);
+
+    const retRes = await request.put(`${API_PREFIX}/users/${createdUserId}/retrieve`, {
+      headers: session.authHeaders,
+    });
+    expect(retRes.status()).toBe(200);
+
     const res = await request.delete(`${API_PREFIX}/users/${createdUserId}/erase`, {
       headers: session.authHeaders,
     });

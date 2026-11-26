@@ -57,7 +57,13 @@ test.describe('Backend Shop API CRUD E2E', () => {
     expect(body.data.name).toBe(`PW Shop Updated ${suffix}`);
   });
 
-  test('DELETE /api/v1/shops/:id & retrieve & erase', async ({ request }) => {
+  test('PATCH /api/v1/shops/:id/active-status & DELETE & retrieve & erase', async ({ request }) => {
+    const statusRes = await request.patch(`${API_PREFIX}/shops/${shopId}/active-status`, {
+      headers: session.authHeaders,
+      data: { active: false },
+    });
+    expect(statusRes.status()).toBe(200);
+
     const delRes = await request.delete(`${API_PREFIX}/shops/${shopId}`, {
       headers: session.authHeaders,
     });

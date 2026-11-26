@@ -88,4 +88,16 @@ test.describe('Backend Credit Payment API E2E', () => {
     });
     expect(res.status()).toBe(200);
   });
+
+  test('PUT /api/v1/credits/:id - updates credit payment remarks', async ({ request }) => {
+    const res = await request.put(`${API_PREFIX}/credits/${creditPaymentId}`, {
+      headers: session.authHeaders,
+      data: {
+        remarks: 'Updated Playwright credit settlement',
+      },
+    });
+    expect(res.status()).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+  });
 });

@@ -45,7 +45,15 @@ test.describe('Backend EventOrder API CRUD E2E', () => {
         approvedReferralNumber: `REF-${suffix}`,
         approvedDate: new Date().toISOString(),
         attachmentEmail: 'pw@srm.edu',
-        items: [],
+        items: [
+          {
+            type: 'Service',
+            item: 'dummy-service',
+            name: 'Event Banner',
+            quantity: 5,
+            price: 100,
+          },
+        ],
       },
     });
     expect(res.status()).toBe(201);
@@ -70,7 +78,34 @@ test.describe('Backend EventOrder API CRUD E2E', () => {
     expect(res.status()).toBe(200);
   });
 
-  test('DELETE /api/v1/event-orders/:id/erase - erases event order', async ({ request }) => {
+  test('PUT /api/v1/event-orders/:id - updates event order', async ({ request }) => {
+    const res = await request.put(`${API_PREFIX}/event-orders/${eventOrderId}`, {
+      headers: session.authHeaders,
+      data: { eventName: `Updated PW Event ${suffix}` },
+    });
+    expect(res.status()).toBe(200);
+  });
+
+  test('PATCH /api/v1/event-orders/:id/submit - enforces proof document requirement before workflow', async ({ request }) => {
+    const submitRes = await request.patch(`${API_PREFIX}/event-orders/${eventOrderId}/submit`, {
+      headers: session.authHeaders,
+    });
+    expect(submitRes.status()).toBe(400);
+    const body = await submitRes.json();
+    expect(body.message).toMatch(/proof document/i);
+  });
+
+  test('DELETE /api/v1/event-orders/:id & PUT retrieve & erase', async ({ request }) => {
+    const delRes = await request.delete(`${API_PREFIX}/event-orders/${eventOrderId}`, {
+      headers: session.authHeaders,
+    });
+    expect(delRes.status()).toBe(200);
+
+    const retRes = await request.put(`${API_PREFIX}/event-orders/${eventOrderId}/retrieve`, {
+      headers: session.authHeaders,
+    });
+    expect(retRes.status()).toBe(200);
+
     const res = await request.delete(`${API_PREFIX}/event-orders/${eventOrderId}/erase`, {
       headers: session.authHeaders,
     });

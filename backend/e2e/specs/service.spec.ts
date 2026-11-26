@@ -59,7 +59,23 @@ test.describe('Backend Service API CRUD E2E', () => {
     expect(body.data.price).toBe(8);
   });
 
-  test('DELETE /api/v1/services/:id/erase - erases service', async ({ request }) => {
+  test('PATCH /api/v1/services/:id/active-status & DELETE & PUT retrieve & DELETE erase', async ({ request }) => {
+    const statusRes = await request.patch(`${API_PREFIX}/services/${serviceId}/active-status`, {
+      headers: session.authHeaders,
+      data: { active: false },
+    });
+    expect(statusRes.status()).toBe(200);
+
+    const delRes = await request.delete(`${API_PREFIX}/services/${serviceId}`, {
+      headers: session.authHeaders,
+    });
+    expect(delRes.status()).toBe(200);
+
+    const retRes = await request.put(`${API_PREFIX}/services/${serviceId}/retrieve`, {
+      headers: session.authHeaders,
+    });
+    expect(retRes.status()).toBe(200);
+
     const res = await request.delete(`${API_PREFIX}/services/${serviceId}/erase`, {
       headers: session.authHeaders,
     });

@@ -62,7 +62,23 @@ test.describe('Backend Product API CRUD E2E', () => {
     expect(body.data.description).toBe('Updated E2E description');
   });
 
-  test('DELETE /api/v1/products/:id/erase - erases product', async ({ request }) => {
+  test('PATCH /api/v1/products/:id/active-status & DELETE & PUT retrieve & DELETE erase', async ({ request }) => {
+    const statusRes = await request.patch(`${API_PREFIX}/products/${productId}/active-status`, {
+      headers: session.authHeaders,
+      data: { active: false },
+    });
+    expect(statusRes.status()).toBe(200);
+
+    const delRes = await request.delete(`${API_PREFIX}/products/${productId}`, {
+      headers: session.authHeaders,
+    });
+    expect(delRes.status()).toBe(200);
+
+    const retRes = await request.put(`${API_PREFIX}/products/${productId}/retrieve`, {
+      headers: session.authHeaders,
+    });
+    expect(retRes.status()).toBe(200);
+
     const res = await request.delete(`${API_PREFIX}/products/${productId}/erase`, {
       headers: session.authHeaders,
     });

@@ -27,4 +27,32 @@ test.describe('Backend Dashboard API E2E', () => {
     });
     expect(res.status()).toBe(403);
   });
+
+  test('GET /api/v1/dashboards/manager - rejects super_admin with 403', async ({ request }) => {
+    const res = await request.get(`${API_PREFIX}/dashboards/manager`, {
+      headers: session.authHeaders,
+    });
+    expect(res.status()).toBe(403);
+  });
+
+  test('GET /api/v1/dashboards/department-admin - rejects super_admin with 403', async ({ request }) => {
+    const res = await request.get(`${API_PREFIX}/dashboards/department-admin`, {
+      headers: session.authHeaders,
+    });
+    expect(res.status()).toBe(403);
+  });
+
+  test('GET /api/v1/dashboards/shop-admin - rejects super_admin with 403', async ({ request }) => {
+    const res = await request.get(`${API_PREFIX}/dashboards/shop-admin`, {
+      headers: session.authHeaders,
+    });
+    expect(res.status()).toBe(403);
+  });
+
+  test('GET /api/v1/dashboards/staff - rejects super_admin with 403', async ({ request }) => {
+    const res = await request.get(`${API_PREFIX}/dashboards/staff`, {
+      headers: session.authHeaders,
+    });
+    expect(res.status()).toBe(403);
+  });
 });

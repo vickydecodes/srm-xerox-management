@@ -66,7 +66,57 @@ test.describe('Backend XeroxOrder API CRUD E2E', () => {
     expect(res.status()).toBe(200);
   });
 
-  test('DELETE /api/v1/xerox-orders/:id/erase - erases xerox order', async ({ request }) => {
+  test('PUT /api/v1/xerox-orders/:id - updates xerox order', async ({ request }) => {
+    const res = await request.put(`${API_PREFIX}/xerox-orders/${xeroxOrderId}`, {
+      headers: session.authHeaders,
+      data: { purpose: `Updated PW Xerox ${suffix}` },
+    });
+    expect(res.status()).toBe(200);
+  });
+
+  test('PATCH /api/v1/xerox-orders/:id workflow transitions (submit -> approve -> in-progress -> ready -> delivered)', async ({ request }) => {
+    const submitRes = await request.patch(`${API_PREFIX}/xerox-orders/${xeroxOrderId}/submit`, {
+      headers: session.authHeaders,
+    });
+    expect(submitRes.status()).toBe(200);
+
+    const branchApproveRes = await request.patch(`${API_PREFIX}/xerox-orders/${xeroxOrderId}/branch-approve`, {
+      headers: session.authHeaders,
+    });
+    expect(branchApproveRes.status()).toBe(200);
+
+    const superApproveRes = await request.patch(`${API_PREFIX}/xerox-orders/${xeroxOrderId}/super-admin-approve`, {
+      headers: session.authHeaders,
+    });
+    expect(superApproveRes.status()).toBe(200);
+
+    const inProgressRes = await request.patch(`${API_PREFIX}/xerox-orders/${xeroxOrderId}/in-progress`, {
+      headers: session.authHeaders,
+    });
+    expect(inProgressRes.status()).toBe(200);
+
+    const readyRes = await request.patch(`${API_PREFIX}/xerox-orders/${xeroxOrderId}/ready-for-pickup`, {
+      headers: session.authHeaders,
+    });
+    expect(readyRes.status()).toBe(200);
+
+    const deliveredRes = await request.patch(`${API_PREFIX}/xerox-orders/${xeroxOrderId}/delivered`, {
+      headers: session.authHeaders,
+    });
+    expect(deliveredRes.status()).toBe(200);
+  });
+
+  test('DELETE /api/v1/xerox-orders/:id & PUT retrieve & erase', async ({ request }) => {
+    const delRes = await request.delete(`${API_PREFIX}/xerox-orders/${xeroxOrderId}`, {
+      headers: session.authHeaders,
+    });
+    expect(delRes.status()).toBe(200);
+
+    const retRes = await request.put(`${API_PREFIX}/xerox-orders/${xeroxOrderId}/retrieve`, {
+      headers: session.authHeaders,
+    });
+    expect(retRes.status()).toBe(200);
+
     const res = await request.delete(`${API_PREFIX}/xerox-orders/${xeroxOrderId}/erase`, {
       headers: session.authHeaders,
     });

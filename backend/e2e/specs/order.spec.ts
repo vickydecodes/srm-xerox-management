@@ -84,11 +84,25 @@ test.describe('Backend Order API CRUD E2E', () => {
     expect(body.data.purpose).toBe(`Updated PW order ${suffix}`);
   });
 
-  test('DELETE /api/v1/orders/:id & erase', async ({ request }) => {
+  test('PATCH /api/v1/orders/:id/submit - enforces proof document requirement before workflow', async ({ request }) => {
+    const submitRes = await request.patch(`${API_PREFIX}/orders/${orderId}/submit`, {
+      headers: session.authHeaders,
+    });
+    expect(submitRes.status()).toBe(400);
+    const body = await submitRes.json();
+    expect(body.message).toMatch(/proof document/i);
+  });
+
+  test('DELETE /api/v1/orders/:id & PUT retrieve & erase', async ({ request }) => {
     const delRes = await request.delete(`${API_PREFIX}/orders/${orderId}`, {
       headers: session.authHeaders,
     });
     expect(delRes.status()).toBe(200);
+
+    const retRes = await request.put(`${API_PREFIX}/orders/${orderId}/retrieve`, {
+      headers: session.authHeaders,
+    });
+    expect(retRes.status()).toBe(200);
 
     const eraseRes = await request.delete(`${API_PREFIX}/orders/${orderId}/erase`, {
       headers: session.authHeaders,
