@@ -7,6 +7,8 @@
     "check": "tsx src/scripts/bootloader.ts",
     "pretest": "tsx src/scripts/test_db_setup.ts",
     "test": "vitest run",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "dev": "npm run check && tsx watch src/server.ts",
     "build": "prisma generate && tsup src/server.ts --format esm --clean --external @prisma/client",
     "migrate:deploy": "prisma migrate deploy",
@@ -67,6 +69,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.1",
     "@prisma/cli-engine": "^0.4.0",
     "@types/axios": "^0.9.36",
     "@types/chalk": "^0.4.31",
